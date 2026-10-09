@@ -25,12 +25,12 @@
 # Python/JS changes need a server restart; XML data needs -u elksbulletin.
 # =============================================================================
 {
-    "name": "Elks Bulletin — Lodge Newsletter Builder",
+    "name": "Elks Newsletter — Lodge Newsletter Builder",
     "version": "19.0.1.33.0",
     "category": "Marketing",
     "summary": "Drag-and-drop, print-ready lodge newsletter in Grand Lodge style.",
     "description": """
-Elks Bulletin — v19.0.1.33.0
+Elks Newsletter — v19.0.1.33.0
 ============================
 A lodge newsletter builder that works like Odoo's email-marketing editor
 (a side panel of drag-in content blocks) but produces a print-ready,

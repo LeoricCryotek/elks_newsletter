@@ -1,5 +1,8 @@
 """Run the actual Studio model methods against an in-memory ORM boundary."""
 import json
+import re
+from datetime import date
+from lxml import etree
 from pathlib import Path
 import unittest
 
@@ -78,6 +81,35 @@ class StudioModelTests(unittest.TestCase):
         self.assertIn('window.ElksPaperRenderer.mountAll()', markup)
         self.assertIn('elks-paper-sheet', markup)
         self.assertNotIn('class=\\"page ', markup)
+
+    def test_masthead_uses_real_template_and_resolves_lodge_images(self):
+        issue = self.issue()
+        Legacy = load_methods('models/elks_bulletin_issue.py', 'ElksBulletinIssue',
+                              {'_render_print_body_inner'}, {'lxml_html': lxml_html, 'etree': etree, 're': re, 'Markup': str})
+        issue._render_print_body_inner = Legacy._render_print_body_inner.__get__(issue)
+        issue._wrap_emoji_fonts = lambda root: None
+        issue._bake_box_border = lambda root: None
+        tree = etree.parse(str(ROOT / 'views/snippets/elks_bulletin_snippets.xml'))
+        class QWeb:
+            def _render(self, template, values):
+                node = tree.xpath('//template[@id="s_elks_masthead"]')[0]
+                return ''.join(etree.tostring(child, encoding='unicode') for child in node)
+        issue.env = {'ir.qweb': QWeb()}
+        issue.lodge_logo_bw = b'BWLOGO'; issue.lodge_logo = b'COLORLOGO'; issue.lodge_building = b'BUILDING'
+        issue.lodge_website = 'https://lodge.example'; issue.lodge_number = '896'
+        issue.city_state = 'Lewiston, Idaho'; issue.issue_ref = 'Volume 120, No. 10'; issue.issue_date = date(2026, 10, 1)
+        root = lxml_html.fromstring(issue._studio_resolve_dynamic('masthead'))
+        self.assertEqual(root.xpath('.//*[@data-elks-field="logo_lodge_bw"]')[0].get('src'), 'data:image/png;base64,BWLOGO')
+        self.assertEqual(root.xpath('.//*[@data-elks-field="lodge_building_entry"]')[0].get('src'), 'data:image/png;base64,BUILDING')
+        self.assertIn('October 2026', root.text_content())
+        self.assertIn('https://lodge.example', root.text_content())
+        self.assertIn('Lodge 896', root.text_content())
+        issue.lodge_logo_bw = False
+        self.assertIn('data:image/png;base64,COLORLOGO', issue._studio_resolve_dynamic('masthead'))
+        issue.lodge_logo = False; issue.lodge_building = False
+        markup = issue._studio_resolve_dynamic('masthead')
+        self.assertNotIn('placeholder.png', markup)
+        self.assertNotIn('<img', markup)
 
     def test_live_resolution_does_not_save_and_enforces_access_and_final_lock(self):
         issue = self.issue()

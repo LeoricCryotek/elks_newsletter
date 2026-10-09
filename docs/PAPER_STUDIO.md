@@ -30,7 +30,8 @@ page** to split an article. Undo can recover recent edits and deleted pages.
 
 The **Bulletin widgets** picker includes the original masthead, section bar,
 officer message (with officer selection), mailing panel, member photo grid,
-column layouts, spacer, continuation label and page break, plus every lodge-data
+column layouts, photo-and-text pairs (photo on either side with adjustable widths),
+spacer, continuation label and page break, plus every lodge-data
 widget: new members, memorials, officers, calendar, charity, volunteer leaderboard,
 events, upcoming events, project dollars and dues reminders. Mailing contact details come from lodge settings. The editable postage permit
 text starts from the existing bulletin template and must be checked for your lodge.
