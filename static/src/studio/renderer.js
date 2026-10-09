@@ -103,6 +103,12 @@
                 story.style.width = 'auto'; story.style.maxWidth = 'none'; story.style.flex = 'none';
             }
         }
+        const body = element('div', 'paper-block-body');
+        while (node.firstChild) body.append(node.firstChild);
+        node.append(body); node.style.display = 'flex'; node.style.flexDirection = 'column';
+        node.style.minHeight = `${block.boxHeight || 0}px`;
+        node.style.justifyContent = {top:'flex-start',middle:'center',bottom:'flex-end'}[block.vertical || 'top'];
+        node.style.alignSelf = {top:'flex-start',middle:'center',bottom:'flex-end'}[block.vertical || 'top'];
         return node;
     }
     function render(root, payload) {
@@ -114,7 +120,15 @@
             sheet.dataset.pageId = page.id;
             sheet.style.height = payload.paperSize === 'legal' ? '1344px' : '1056px';
             const content = element('div', 'paper-content');
-            page.blocks.forEach(block => content.append(blockNode(block)));
+            let row, used = 3;
+            page.blocks.forEach(block => {
+                const span = Number(block.span || 3);
+                if (used + span > 3) { row = element('div', 'paper-row'); content.append(row); used = 0; }
+                const node = blockNode(block);
+                node.style.width = `calc((100% - 40px) * ${span} / 3 + ${(span - 1) * 20}px)`;
+                row.append(node); used += span;
+                row.style.justifyContent = row.children.length === 1 ? {left:'flex-start',center:'center',right:'flex-end'}[block.horizontal || 'left'] : 'flex-start';
+            });
             const footer = element('footer', 'paper-footer');
             footer.append(element('span', '', payload.lodge || payload.title),
                 element('span', '', `Page ${i + 1} of ${payload.document.pages.length}`),

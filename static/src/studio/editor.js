@@ -129,7 +129,7 @@
     function attachHandles() {
         $('sheets').querySelectorAll('[data-block-id]').forEach(node => {
             const handle = document.createElement('span'); handle.tabIndex = 0; handle.className = 'block-drag-handle';
-            handle.textContent = '⠿ Move'; handle.title = 'Drag to reorder or move to another page';
+            handle.textContent = '⠿ Drag'; handle.title = 'Drag to reorder or move to another page';
             handle.draggable = false;
             handle.addEventListener('pointerdown',event=>beginPointerDrag(event,{blockId:node.dataset.blockId})); handle.contentEditable = 'false'; handle.disabled = !editable();
             handle.addEventListener('dragstart', event => {
@@ -198,12 +198,13 @@
         if (options) Object.entries(options).forEach(([value, text]) => {
             const option = document.createElement('option'); option.value = value; option.textContent = text; input.append(option);
         });
-        else { input.type = 'number'; input.min = key === 'fontSize' ? '8' : '0'; input.max = key === 'fontSize' ? '72' : key === 'height' ? '900' : '100'; }
-        input.value = selected().block[key] ?? ({ gap: 12, fontSize: 16, font: 'sans', align: 'left', ratio: 'equal', source: 'new_members', width: 100, height: 240, fit: 'contain', layout: 'columns', photoWidth: 33, padding: 0, border: 0, radius: 0, photoBorder: 0, photoRadius: 0 }[key]);
+        else if (key === 'month') { input.type = 'month'; }
+        else { input.type = 'number'; input.min = key === 'fontSize' ? '8' : '0'; input.max = key === 'fontSize' ? '72' : ['height','boxHeight'].includes(key) ? '900' : '100'; }
+        input.value = selected().block[key] ?? ({ gap: 12, fontSize: 16, font: 'sans', align: 'left', ratio: 'equal', source: 'new_members', width: 100, height: 240, fit: 'contain', layout: 'columns', photoWidth: 33, padding: 0, border: 0, radius: 0, photoBorder: 0, photoRadius: 0, month: '', span: 3, horizontal: 'left', vertical: 'top', boxHeight: 0 }[key]);
         input.addEventListener('change', () => {
             if (!editable()) return;
-            remember(); selected().block[key] = options ? input.value : Number(input.value);
-            if (key === 'source' || key === 'officer') { delete selected().block.resolvedHTML; refreshData(); }
+            remember(); selected().block[key] = options || key === 'month' ? input.value : Number(input.value);
+            if (['source','officer','month'].includes(key)) { delete selected().block.resolvedHTML; refreshData(); }
             change(); render();
         });
         wrap.append(label, input); return wrap;
@@ -220,6 +221,16 @@
             const text = document.createElement('p'); text.className = 'muted'; text.textContent = 'Select a block on the page to change its appearance or position.'; panel.append(text); return;
         }
         const title = document.createElement('h2'); title.textContent = labels[block.kind]; panel.append(title);
+        panel.append(field('Widget width (columns out of 3)', 'span', {1:'1 column · one third',2:'2 columns · two thirds',3:'3 columns · full width'}),
+                     field('Widget position', 'horizontal', {left:'Left',center:'Center',right:'Right'}),
+                     field('Vertical alignment', 'vertical', {top:'Top',middle:'Middle',bottom:'Bottom'}), field('Minimum frame height (px)', 'boxHeight'));
+        if (block.kind === 'dynamic' && ['calendar','new_members','leaderboard'].includes(block.source)) {
+            panel.append(field('Month shown (blank = issue settings)', 'month'));
+        }
+        if (block.kind === 'dynamic' && ['new_members','in_memoriam'].includes(block.source)) {
+            panel.append(actionButton('Choose members…',()=>send('manage-members',{source:block.source,month:block.month || ''})));
+            const note = document.createElement('p'); note.className = 'muted'; note.textContent = block.source === 'new_members' ? 'Automatic list uses initiation dates. A curated selection overrides month filtering.' : 'Automatic list uses deaths in the month before the issue, including archived members. Choose members to override it.'; panel.append(note);
+        }
         if (block.kind === 'spacer') panel.append(field('Height (px)', 'height'));
         else if (block.kind === 'dynamic') panel.append(field('Lodge data', 'source', sources));
         else {
@@ -427,6 +438,7 @@
         if (event.data.type === 'resolve-error' && event.data.requestId === resolveId) {
             resolveId = null; $('data-status').textContent = 'Data refresh failed'; showNotice(event.data.message);
         }
+        if (event.data.type === 'refresh-data') refreshData();
         if (['load','saved'].includes(event.data.type)) load(event.data.payload);
         if (event.data.type === 'error') { pending = false; showNotice(event.data.message); $('save-status').textContent = dirty ? 'Unsaved changes' : 'Saved'; setDisabled(); }
     });

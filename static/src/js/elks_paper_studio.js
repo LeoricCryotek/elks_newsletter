@@ -40,6 +40,13 @@ export class ElksPaperStudio extends Component {
         const { type, requestId } = event.data;
         if (type === 'ready') return this.onFrameLoad();
         if (type === 'dirty') { this.dirty = Boolean(event.data.dirty); return; }
+        if (type === 'manage-members') {
+            try {
+                const action = await this.orm.call('elks.newsletter.issue','action_studio_manage_members',[[this.issueId],event.data.source,event.data.month || '']);
+                await this.actionService.doAction(action,{onClose:()=>this.send({type:'refresh-data'})});
+            } catch (error) { this.send({type:'resolve-error',requestId,message:error.data?.message || error.message}); this.notification.add(error.data?.message || error.message,{type:'danger'}); }
+            return;
+        }
         if (type === 'resolve') {
             try {
                 const blocks = await this.orm.call('elks.newsletter.issue', 'action_studio_resolve', [[this.issueId], event.data.document]);

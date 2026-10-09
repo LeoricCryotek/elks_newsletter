@@ -27,10 +27,10 @@ class MemoryIssue:
 
 
 Issue = load_methods('models/elks_newsletter_studio.py', 'ElksBulletinIssueStudio',
-                     {'write', 'action_studio_load', 'action_studio_save', '_studio_print_markup', '_studio_resolve_dynamic', 'action_studio_resolve', 'action_new_paper_newsletter'},
+                     {'write', 'action_studio_load', 'action_studio_save', '_studio_print_markup', '_studio_resolve_dynamic', 'action_studio_resolve', 'action_new_paper_newsletter', 'action_studio_manage_members'},
                      {'normalise_document': paper.normalise_document, 'initial_document': paper.initial_document,
                       'UserError': StudioError, '_': lambda value: value, 'Markup': str, 'json': json,
-                      'lxml_html': lxml_html, 'ASSETS': ROOT / 'static/src/studio'}, MemoryIssue)
+                      'lxml_html': lxml_html, 'date': date, 'ASSETS': ROOT / 'static/src/studio'}, MemoryIssue)
 
 
 class StudioModelTests(unittest.TestCase):
@@ -131,6 +131,32 @@ class StudioModelTests(unittest.TestCase):
         markup = issue._studio_resolve_dynamic('masthead')
         self.assertNotIn('placeholder.png', markup)
         self.assertNotIn('<img', markup)
+
+    def test_member_wizard_uses_block_month_and_respects_access_and_final_lock(self):
+        issue = self.issue(); writes = []
+        class Wizard:
+            def browse(self, identifier): return self
+            def write(self, values): writes.append(values)
+        issue.env = {'wizard': Wizard()}
+        issue.action_select_new_members = lambda: {'res_model': 'wizard', 'res_id': 7}
+        issue._effective_new_members = lambda element: type('Members', (), {'ids': [1, 2]})()
+        action = issue.action_studio_manage_members('new_members', '2026-09')
+        self.assertEqual(action['res_id'], 7)
+        self.assertEqual(writes, [{'partner_ids': [(6, 0, [1, 2])]}])
+        with self.assertRaises(StudioError): issue.action_studio_manage_members('new_members', '2026-13')
+        issue.denied = True
+        with self.assertRaises(PermissionError): issue.action_studio_manage_members('new_members')
+        issue.denied = False; issue.state = 'final'
+        with self.assertRaises(StudioError): issue.action_studio_manage_members('in_memoriam')
+
+    def test_calendar_override_reaches_existing_builder(self):
+        issue = self.issue(); seen = []
+        class QWeb:
+            def _render(self, template, values): return '<div data-elks-block="calendar"></div>'
+        issue.env = {'ir.qweb': QWeb()}
+        issue._render_print_body_inner = lambda markup: seen.append(markup) or markup
+        issue._studio_resolve_dynamic('calendar:2026-09')
+        self.assertIn('data-elks-cal-month="2026-09"', seen[0])
 
     def test_live_resolution_does_not_save_and_enforces_access_and_final_lock(self):
         issue = self.issue()

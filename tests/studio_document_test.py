@@ -50,6 +50,14 @@ class PaperDocumentTests(unittest.TestCase):
         for values in [{'padding': -1}, {'border': 100}, {'layout': 'script'}, {'photoWidth': 101}]:
             with self.assertRaises(ValueError): paper.normalise_document(self.document(**values))
 
+    def test_widget_width_alignment_and_month_validation(self):
+        calls = []
+        block = paper.normalise_document(self.document(kind='dynamic', source='calendar', month='2026-09', span=1, horizontal='right', vertical='bottom', boxHeight=200), lambda key: calls.append(key) or '<p>Calendar</p>')['pages'][0]['blocks'][0]
+        self.assertEqual(calls, ['calendar:2026-09'])
+        self.assertEqual(block['span'], 1)
+        for values in [{'span': 1.5}, {'vertical': 'unknown'}, {'month': '2026-13'}, {'month': 'bad'}]:
+            with self.assertRaises(ValueError): paper.normalise_document(self.document(kind='dynamic', source='calendar', **values))
+
     def test_gallery_rejects_external_photos(self):
         with self.assertRaises(ValueError): paper.normalise_document(self.document(kind='gallery', photos=[{'src': 'https://private/photo'}]))
         self.assertEqual(len(paper.normalise_document(self.document(kind='gallery', photos=[{'src': '', 'caption': '<p>Member</p>'}]))['pages'][0]['blocks'][0]['photos']), 1)

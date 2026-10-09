@@ -1,5 +1,6 @@
 """Paper Studio: optional structured editions alongside the legacy layout."""
 import json
+from datetime import date
 from pathlib import Path
 
 from markupsafe import Markup
@@ -80,6 +81,11 @@ class ElksBulletinIssueStudio(models.Model):
         markup = str(markup)
         if source == 'message' and officer:
             markup = markup.replace('o_elks_officer_exalted_ruler', 'o_elks_officer_' + officer)
+        if source in ('calendar', 'new_members', 'leaderboard') and officer:
+            tree = lxml_html.fragment_fromstring(markup, create_parent='div')
+            attr = {'calendar': 'data-elks-cal-month', 'new_members': 'data-elks-nm-month', 'leaderboard': 'data-elks-lb-month'}[source]
+            for node in tree.xpath('.//*[@data-elks-block]'): node.set(attr, officer)
+            markup = ''.join(lxml_html.tostring(child, encoding='unicode') for child in tree)
         rendered = self._render_print_body_inner(markup)
         fragment = lxml_html.fragment_fromstring(str(rendered), create_parent='div')
         # Preserve the legacy widget's design, with editable content slots.
@@ -146,6 +152,24 @@ class ElksBulletinIssueStudio(models.Model):
         return [{'id': block['id'], 'source': block['source'], 'resolvedHTML': block['resolvedHTML']}
                 for page in resolved['pages'] for block in page['blocks']
                 if block['kind'] in ('dynamic', 'widget')]
+
+    def action_studio_manage_members(self, source, month=""):
+        self.ensure_one()
+        self.check_access('write')
+        if self.state == 'final':
+            raise UserError(_('Reset this edition to Draft before changing its member lists.'))
+        if source == 'new_members':
+            element = None
+            if month:
+                try: date.fromisoformat(month + '-01')
+                except (ValueError, TypeError): raise UserError(_('Choose a valid month.')) from None
+                element = lxml_html.Element('div', {'data-elks-nm-month': month})
+            action = self.action_select_new_members()
+            if element is not None:
+                self.env[action['res_model']].browse(action['res_id']).write({'partner_ids': [(6, 0, self._effective_new_members(element).ids)]})
+            return action
+        if source == 'in_memoriam': return self.action_select_in_memoriam()
+        raise UserError(_('Choose New Members or In Memoriam.'))
 
     def action_studio_save(self, document, paper_size, revision):
         self.ensure_one()

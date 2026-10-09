@@ -55,7 +55,7 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 24px 0; }
 @media(max-width: 1000px) { .studio-workspace { grid-template-columns: 130px minmax(300px,1fr) 200px; } .paper-desk { padding: 24px; } }
 
 .paper-block { position: relative; }
-.block-drag-handle { position: absolute; z-index: 2; right: 0; top: -13px; font: 11px Arial; padding: 2px 6px; cursor: grab; opacity: 0; background: #eee7f5; }
+.block-drag-handle { position: absolute; z-index: 2; right: 0; top: -13px; font: 11px Arial; padding: 2px 6px; cursor: grab; opacity: 1; background: #eee7f5; }
 .paper-block:hover > .block-drag-handle, .paper-block.selected > .block-drag-handle, .block-drag-handle:focus { opacity: 1; }
 .drop-before { box-shadow: 0 -4px #725198; }
 #widget-gallery { width: min(850px,90vw); max-height: 80vh; border: 1px solid #d4c8e2; border-radius: 12px; padding: 24px; }

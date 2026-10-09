@@ -86,3 +86,27 @@ or drag it onto a sheet. Hover or select a block and drag its **Move** handle to
 reorder it or move it onto another page. Dropping on a block inserts before it;
 dropping on empty page space appends. Moves support Undo. Layout stays in the
 page's normal reading order rather than arbitrary overlapping positions.
+
+## Widget sizes and data controls (19.0.1.37.0)
+
+The header shows **Paper Studio · v37**. If it does not, the updated editor has
+not loaded. Upgrade `elks_newsletter`, restart workers and reopen Paper Studio;
+this release versions the iframe and its CSS/JavaScript asset URLs.
+
+Select a block and set **Widget width (columns out of 3)** to one third, two
+thirds or full width. Consecutive blocks fill the same row when their total width
+fits. Drag the visible **Drag** handle to reorder or move between pages. Use
+**Widget position** for a single narrow block's left/center/right placement.
+**Vertical alignment** places a block top/middle/bottom beside its row's tallest
+block; **Minimum frame height** also allows positioning its content within a
+larger frame. This editor uses rows and blocks, not free overlapping coordinates.
+
+Select a calendar and choose **Month shown**. Blank follows the issue month.
+New Members and Volunteer Leaderboard have the same month override and update
+live. **Choose members…** opens the existing Odoo selection wizard directly from
+New Members or In Memoriam. Its curated list applies to the entire issue and
+supersedes automatic month filtering. The New Members wizard initially uses the
+selected block's month. Reset to Automatic in that wizard restores date filtering.
+The memorial's automatic window remains the calendar month before the issue date.
+The underlying Odoo initiation/death dates determine automatic membership lists;
+the newsletter's member picker changes who appears, not those source records.

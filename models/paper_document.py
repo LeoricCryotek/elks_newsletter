@@ -3,6 +3,7 @@ import base64
 import json
 import re
 from uuid import uuid4
+from datetime import date
 from html import escape as escape_text
 
 from lxml import etree, html
@@ -110,6 +111,11 @@ def normalise_document(document, resolve=None):
                         photoRadius=number(block.get('photoRadius'), 0, 0, 100),
                         photoWidth=number(block.get('photoWidth'), 33, 15, 60),
                         layout=block.get('layout', 'columns'))
+            item.update(span=number(block.get('span'), 3, 1, 3),
+                        horizontal=block.get('horizontal', 'left'), vertical=block.get('vertical', 'top'),
+                        boxHeight=number(block.get('boxHeight'), 0, 0, 900))
+            if item['span'] not in (1, 2, 3) or item['horizontal'] not in ('left', 'center', 'right') or item['vertical'] not in ('top', 'middle', 'bottom'):
+                raise ValueError('Choose a supported widget size and alignment.')
             if item['layout'] not in ('columns', 'wrap'):
                 raise ValueError('Choose columns or text wrapping.')
             if item['align'] not in ('left', 'center', 'right', 'justify') or item['font'] not in ('sans', 'serif', 'script'):
@@ -178,6 +184,15 @@ def normalise_document(document, resolve=None):
                         if item['officer'] not in OFFICERS:
                             raise ValueError('Choose a lodge officer.')
                 resolve_key = source + ':' + item['officer'] if source == 'message' else source
+                if source in ('calendar', 'new_members', 'leaderboard'):
+                    month = block.get('month', '')
+                    if not isinstance(month, str) or (month and not re.fullmatch(r'\d{4}-\d{2}', month)):
+                        raise ValueError('Choose a month in YYYY-MM format.')
+                    if month:
+                        try: date.fromisoformat(month + '-01')
+                        except ValueError: raise ValueError('Choose a valid calendar month.') from None
+                        resolve_key += ':' + month
+                    item['month'] = month
                 item['resolvedHTML'] = str(resolve(resolve_key)) if resolve else ''
             cleaned['blocks'].append(item)
         result['pages'].append(cleaned)
