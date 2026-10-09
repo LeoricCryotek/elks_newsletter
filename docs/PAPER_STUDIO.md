@@ -191,3 +191,19 @@ Select a thumbnail, then Page settings → Lock page. Locked pages retain their 
 ### Review cleanup (v49)
 
 Officer photo-side controls match the rendered default. Failed pagination restores its original structured layout and removes temporary styles. Saving locked snapshots checks final page/widget IDs to prevent accidental duplication when a locked widget is moved through an external client.
+
+### Headings and images inside content (v51)
+
+Place the cursor in editable text, officer message, or a column. Use Heading, Subheading, or Paragraph to format the current paragraph. Insert image uploads a PNG/JPEG/WebP/GIF at the cursor inside that content. Inline images start at half width and retain their proportions in print. Add a block → Image creates a standalone image widget with its existing sizing, crop, caption, and framing controls. Uploaded inline images survive server sanitization; external images and executable attributes are removed.
+
+### Multiple image upload and ordering (v52)
+
+Add a block → Image gallery, then Upload multiple images. Up to 12 images per gallery, with a 5 MB limit per image and the overall newsletter size limit. Initial empty slots are replaced; later uploads append. Select an image in Block settings and choose Image earlier/later, Sort images A–Z, or Remove selected image. Filenames become editable captions and provide the alphabetical sort key. The regular Image gallery uses rectangular photos; existing member photo grids keep circular portraits.
+
+### Single-column layout (v53)
+
+Columns widgets offer Single column, two-column width ratios, and Three columns. Reducing the count combines content in reading order without dropping text or images. Increasing it adds empty columns. Undo restores the original arrangement.
+
+### Full-page PDF inserts (v54)
+
+Full-page PDF insert accepts an unencrypted PDF up to 12 MB and imports up to 12 pages, subject to the newsletter’s 60-page and 24 MB limits. Each page becomes a locked sheet after the selected page; drag thumbnails to reorder. Letter/Legal scaling contains the whole source without cropping, with no newsletter header/footer overlay. Imports render at up to 300 dpi (16 million pixels maximum per page) as JPEG images, so text is no longer selectable and PDF links/forms are flattened. PDF.js is bundled with its Apache 2.0 license in static/lib/pdfjs; conversion runs in the browser without a server PDF rasterizer. Source PDFs remain on your computer; the newsletter stores rendered page images.

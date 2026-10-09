@@ -50,7 +50,7 @@
         } else if (block.kind === 'columns') {
             const columns = element('div', 'paper-columns');
             const ratio = block.ratio || 'equal';
-            columns.style.gridTemplateColumns = block.columns.length === 3 ? '1fr 1fr 1fr'
+            columns.style.gridTemplateColumns = block.columns.length === 1 ? '1fr' : block.columns.length === 3 ? '1fr 1fr 1fr'
                 : ratio === 'wide-left' ? '2fr 1fr' : ratio === 'wide-right' ? '1fr 2fr' : '1fr 1fr';
             block.columns.forEach((html, i) => columns.append(richText(html, `columns.${i}`, block)));
             node.append(columns);
@@ -86,7 +86,7 @@
             grid.style.gridTemplateColumns = 'repeat(3,1fr)';
             block.photos.forEach((photo, i) => {
                 const card = element('div', 'paper-member-card');
-                if (photo.src) { const image = element('img', 'paper-photo'); image.src = photo.src; image.style.width = '88px'; image.style.height = '88px'; image.style.objectFit = 'cover'; image.style.borderRadius = '50%'; card.append(image); }
+                if (photo.src) { const image = element('img', 'paper-photo'); image.src = photo.src; image.style.width = block.galleryMode === 'photos' ? '100%' : '88px'; image.style.height = block.galleryMode === 'photos' ? '160px' : '88px'; image.style.objectFit = 'cover'; image.style.borderRadius = block.galleryMode === 'photos' ? '0' : '50%'; card.append(image); }
                 else card.append(element('div', 'paper-missing-photo', 'Choose member photo'));
                 card.append(richText(photo.caption, `photos.${i}.caption`, block)); grid.append(card);
             }); node.append(grid);
@@ -153,6 +153,7 @@
         payload.document.pages.forEach((page, i) => {
             const sheet = element('article', 'elks-paper-sheet');
             sheet.dataset.pageId = page.id;
+            if(page.fullPage)sheet.classList.add('paper-full-page');
             sheet.style.height = payload.paperSize === 'legal' ? '1344px' : '1056px';
             const content = element('div', 'paper-content');
             let row, used = 3, rowVertical;
@@ -172,6 +173,10 @@
                 const origin = block.continuation && block.flowGroup && positions.find(entry => entry.block.flowGroup === block.flowGroup && !entry.block.continuation);
                 const displayBlock = origin && !block.storyTitle ? {...block,storyTitle:storyTitle(origin.block)} : block;
                 const node = blockNode(displayBlock, next?.page);
+                if(page.fullPage){node.style.marginBottom='0';node.style.padding='0';node.style.border='0';
+                    const image=node.querySelector('img');if(image){image.style.width='100%';image.style.height=sheet.style.height;image.style.objectFit='contain';}
+                    node.querySelectorAll('.paper-richtext').forEach(caption=>caption.remove());
+                }
                 node.style.width = `calc((100% - 40px) * ${span} / 3 + ${(span - 1) * 20}px)`;
                 row.append(node); used += span;
                 row.style.justifyContent = row.children.length === 1 ? {left:'flex-start',center:'center',right:'flex-end'}[block.horizontal || 'left'] : 'flex-start';
@@ -184,7 +189,7 @@
             footer.append(element('span', '', payload.lodge || payload.title),
                 element('span', '', `Page ${i + 1} of ${payload.document.pages.length}`),
                 element('span', '', payload.month || ''));
-            sheet.append(content, footer);
+            sheet.append(content);if(!page.fullPage)sheet.append(footer);
             root.append(sheet);
         });
     }

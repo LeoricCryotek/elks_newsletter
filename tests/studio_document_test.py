@@ -108,9 +108,24 @@ class PaperDocumentTests(unittest.TestCase):
         self.assertEqual(document['pages'][0]['blocks'][0]['src'], '')
 
     def test_two_and_three_column_arrangements_are_valid(self):
-        for columns in [['<p>Left</p>', '<p>Right</p>'], ['One', 'Two', 'Three']]:
+        for columns in [['<p>Single</p>'], ['<p>Left</p>', '<p>Right</p>'], ['One', 'Two', 'Three']]:
             block = paper.normalise_document(self.document(kind='columns', columns=columns))['pages'][0]['blocks'][0]
             self.assertEqual(len(block['columns']), len(columns))
+
+    def test_inline_images_keep_safe_upload_and_heading(self):
+        value=paper.clean_text('<h2>Heading</h2><p>Text<img src="data:image/png;base64,AAAA" style="width:50%;position:fixed" onerror="attack()"></p>')
+        self.assertIn('<h2>Heading</h2>',value)
+        self.assertIn('data:image/png;base64,AAAA',value)
+        self.assertIn('width:50%',value)
+        self.assertNotIn('onerror',value)
+        self.assertNotIn('position',value)
+        self.assertNotIn('<img',paper.clean_text('<img src="https://example.com/image.png">'))
+
+    def test_full_page_insert_accepts_only_one_image(self):
+        doc=self.document(kind='image',src='data:image/png;base64,AAAA');doc['pages'][0].update(fullPage=True,locked=True)
+        self.assertTrue(paper.normalise_document(doc)['pages'][0]['fullPage'])
+        doc['pages'][0]['blocks'][0]['kind']='text'
+        with self.assertRaises(ValueError):paper.normalise_document(doc)
 
     def test_page_lock_survives_validation(self):
         doc=self.document();doc['pages'][0]['locked']=True

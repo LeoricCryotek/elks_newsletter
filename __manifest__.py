@@ -26,17 +26,17 @@
 # =============================================================================
 {
     "name": "Elks Newsletter — Lodge Newsletter Builder",
-    "version": "19.0.1.50.0",
+    "version": "19.0.1.54.0",
     "category": "Marketing",
     "summary": "Drag-and-drop, print-ready lodge newsletter in Grand Lodge style.",
     "description": """
-Elks Newsletter — v19.0.1.50.0
+Elks Newsletter — v19.0.1.54.0
 ============================
 A lodge newsletter builder that works like Odoo's email-marketing editor
 (a side panel of drag-in content blocks) but produces a print-ready,
 page-sized document (US Letter / Legal) instead of an email.
 
-Standard Elks widgets (19.0.1.50.0)
+Standard Elks widgets (19.0.1.54.0)
 -----------------------------------
 Adds the sections most Elks bulletins carry, in both Paper Studio and the
 original editor. Lodge-data widgets: Member Birthdays and Membership Milestones
@@ -48,7 +48,7 @@ Youth Programs, Sickness & Distress (prefilled from the latest lodge meeting
 minutes) and Lodge Meetings & Hours (contact lines from Lodge Settings). Paper
 Studio also gains an Elk of the Month photo-and-story preset.
 
-Paper Studio publisher flow (19.0.1.50.0)
+Paper Studio publisher flow (19.0.1.54.0)
 -----------------------------------
 Add linked text/story continuation and event-entry pagination, automatic/manual
 flow policies, keep-together controls, page-space feedback and bounded local

@@ -3,7 +3,7 @@
     <t t-name="elks_newsletter.PaperStudio">
         <div class="o_elks_paper_studio">
             <iframe t-ref="frame" title="Newsletter Paper Studio"
-                    src="/elks_newsletter/static/src/studio/editor.html?v=50"
+                    src="/elks_newsletter/static/src/studio/editor.html?v=54"
                     t-on-load="onFrameLoad"/>
         </div>
     </t>

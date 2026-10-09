@@ -60,3 +60,7 @@
 .paper-align-page > .paper-fill-remainder { flex-grow:1; }
 
 .paper-align-page > .paper-bottom-anchor { margin-top:auto; }
+
+.paper-richtext img { max-width:100%; height:auto; vertical-align:middle; }
+
+.elks-paper-sheet.paper-full-page { padding:0; }

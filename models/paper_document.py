@@ -20,12 +20,12 @@ WIDGET_SOURCES = ('masthead', 'message', 'section_bar', 'mailing',
 MONTH_SOURCES = ('calendar', 'new_members', 'leaderboard', 'birthdays', 'anniversaries')
 OFFICERS = ('exalted_ruler', 'leading_knight', 'loyal_knight', 'lecturing_knight', 'secretary', 'treasurer', 'tiler', 'esquire', 'chaplain', 'inner_guard', 'organist', 'pianist', 'sergeant_at_arms', 'presiding_justice', 'boardchair', 'trustee1y', 'trustee2y', 'trustee3y', 'trustee4y', 'trustee5y', 'assistant_secretary', 'assistant_treasurer', 'house_chair', 'activities_chair', 'membership_chair', 'lodge_advisor')
 KINDS = ('text', 'heading', 'columns', 'image', 'dynamic', 'widget', 'spacer', 'gallery', 'photo_text')
-TAGS = {'p', 'div', 'span', 'br', 'b', 'strong', 'em', 'i', 'u', 's', 'ul', 'ol', 'li', 'a', 'h1', 'h2', 'h3', 'blockquote'}
+TAGS = {'p', 'div', 'span', 'br', 'b', 'strong', 'em', 'i', 'u', 's', 'ul', 'ol', 'li', 'a', 'h1', 'h2', 'h3', 'blockquote', 'img'}
 
 
 def clean_text(value):
     """Keep rich text formatting without script, resource or positioning hooks."""
-    if not isinstance(value, str) or len(value) > 150000:
+    if not isinstance(value, str) or len(value) > 7000000:
         raise ValueError('Text blocks must contain fewer than 150,000 characters.')
     root = html.fragment_fromstring(value or '<p></p>', create_parent='div')
     for element in list(root.iterdescendants()):
@@ -34,7 +34,7 @@ def clean_text(value):
             if parent is not None:
                 parent.remove(element)
             continue
-        if element.tag.lower() in {'script', 'style', 'iframe', 'object', 'embed', 'svg', 'math', 'img', 'form', 'input', 'button'}:
+        if element.tag.lower() in {'script', 'style', 'iframe', 'object', 'embed', 'svg', 'math', 'form', 'input', 'button'}:
             element.drop_tree()
             continue
         if element.tag.lower() not in TAGS:
@@ -42,6 +42,20 @@ def clean_text(value):
             continue
         attrs = dict(element.attrib)
         element.attrib.clear()
+        if element.tag == 'img':
+            src = attrs.get('src', '')
+            match = re.fullmatch(r'data:image/(png|jpeg|webp|gif);base64,([A-Za-z0-9+/=]+)', src)
+            if not match:
+                element.drop_tree()
+                continue
+            try:
+                data = base64.b64decode(match[2], validate=True)
+            except ValueError:
+                raise ValueError('The inline image data is invalid.') from None
+            if len(data) > 5000000:
+                raise ValueError('Each inline image must be smaller than 5 MB.')
+            element.set('src', src)
+            element.set('alt', attrs.get('alt', '')[:200])
         if element.tag == 'a':
             href = attrs.get('href', '').strip()
             if re.match(r'^(https?://|mailto:)', href, re.I):
@@ -51,7 +65,9 @@ def clean_text(value):
         for declaration in attrs.get('style', '').split(';'):
             name, _, val = declaration.partition(':')
             name, val = name.strip().lower(), val.strip().lower()
-            if name == 'font-weight' and val in ('bold', 'normal', '400', '700'):
+            if element.tag == 'img' and name == 'width' and re.fullmatch(r'(?:[1-9][0-9]?|100)%', val):
+                styles.append(f'width:{val}')
+            elif name == 'font-weight' and val in ('bold', 'normal', '400', '700'):
                 styles.append(f'{name}:{val}')
             elif name == 'font-style' and val in ('italic', 'normal'):
                 styles.append(f'{name}:{val}')
@@ -59,6 +75,8 @@ def clean_text(value):
                 styles.append(f'{name}:{val}')
         if styles:
             element.set('style', ';'.join(styles))
+    if len(root.text_content()) > 150000:
+        raise ValueError('Text blocks must contain fewer than 150,000 characters.')
     return escape_text(root.text or '') + ''.join(etree.tostring(child, encoding='unicode', method='html') for child in root)
 
 
@@ -105,7 +123,11 @@ def normalise_document(document, resolve=None):
             raise ValueError('Each page supports up to 100 content blocks.')
         if not isinstance(page.get('locked', False), bool):
             raise ValueError('Choose a supported page lock setting.')
-        cleaned = {'id': identifier(page.get('id')), 'blocks': [], 'locked': page.get('locked', False)}
+        if not isinstance(page.get('fullPage', False), bool):
+            raise ValueError('Choose a supported full-page insert setting.')
+        if page.get('fullPage') and (len(page['blocks']) != 1 or page['blocks'][0].get('kind') != 'image'):
+            raise ValueError('A full-page insert must contain exactly one image.')
+        cleaned = {'id': identifier(page.get('id')), 'blocks': [], 'locked': page.get('locked', False), 'fullPage':page.get('fullPage',False)}
         for block in page['blocks']:
             if not isinstance(block, dict) or block.get('kind') not in KINDS:
                 raise ValueError('This content block is not supported.')
@@ -158,8 +180,8 @@ def normalise_document(document, resolve=None):
                 item['html'] = clean_text(block.get('html', ''))
             elif block['kind'] == 'columns':
                 columns = block.get('columns')
-                if not isinstance(columns, list) or not 2 <= len(columns) <= 3:
-                    raise ValueError('A column block needs two or three columns.')
+                if not isinstance(columns, list) or not 1 <= len(columns) <= 3:
+                    raise ValueError('A column block needs one, two or three columns.')
                 item['columns'] = [clean_text(column) for column in columns]
                 item['ratio'] = block.get('ratio', 'equal')
                 if item['ratio'] not in ('equal', 'wide-left', 'wide-right'):
@@ -195,8 +217,11 @@ def normalise_document(document, resolve=None):
                     raise ValueError('Choose a supported photo and text layout.')
             elif block['kind'] == 'gallery':
                 photos = block.get('photos', [])
-                if not isinstance(photos, list) or not 1 <= len(photos) <= 6:
-                    raise ValueError('A member photo grid needs one to six photos.')
+                if not isinstance(photos, list) or not 1 <= len(photos) <= 12:
+                    raise ValueError('An image gallery needs one to twelve photos.')
+                item['galleryMode'] = block.get('galleryMode', 'members')
+                if item['galleryMode'] not in ('members', 'photos'):
+                    raise ValueError('Choose a supported gallery style.')
                 item['photos'] = []
                 for photo in photos:
                     if not isinstance(photo, dict):

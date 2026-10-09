@@ -9,7 +9,7 @@
     const uid = () => crypto.randomUUID().replaceAll('-', '');
     const sources = { new_members: 'New members', in_memoriam: 'In memoriam', officers: 'Lodge officers', calendar: 'Lodge calendar', charity: 'Charity totals', leaderboard: 'Volunteer leaderboard', events: 'Events', upcoming_events: 'Upcoming events', project_dollars: 'Project dollars', delinquents: 'Dues reminder', birthdays: 'Member birthdays', anniversaries: 'Membership milestones', applications: 'Applications for membership', committees: 'Committee chairs' };
     const monthSources = ['calendar','new_members','leaderboard','birthdays','anniversaries'];
-    const labels = { text: 'Text', heading: 'Heading', columns: 'Columns', image: 'Photo', dynamic: 'Lodge data', widget: 'Bulletin widget', spacer: 'Spacer', gallery: 'Member photo grid', photo_text: 'Photo and text' };
+    const labels = { text: 'Text', heading: 'Heading', columns: 'Columns', image: 'Photo', dynamic: 'Lodge data', widget: 'Bulletin widget', spacer: 'Spacer', gallery: 'Image gallery', photo_text: 'Photo and text' };
     const officers = {'exalted_ruler': 'Exalted Ruler', 'leading_knight': 'Leading Knight', 'loyal_knight': 'Loyal Knight', 'lecturing_knight': 'Lecturing Knight', 'secretary': 'Secretary', 'treasurer': 'Treasurer', 'tiler': 'Tiler', 'esquire': 'Esquire', 'chaplain': 'Chaplain', 'inner_guard': 'Inner Guard', 'organist': 'Organist', 'pianist': 'Pianist', 'sergeant_at_arms': 'Sergeant At Arms', 'presiding_justice': 'Presiding Justice', 'boardchair': 'Boardchair', 'trustee1y': 'Trustee1Y', 'trustee2y': 'Trustee2Y', 'trustee3y': 'Trustee3Y', 'trustee4y': 'Trustee4Y', 'trustee5y': 'Trustee5Y', 'assistant_secretary': 'Assistant Secretary', 'assistant_treasurer': 'Assistant Treasurer', 'house_chair': 'House Chair', 'activities_chair': 'Activities Chair', 'membership_chair': 'Membership Chair', 'lodge_advisor': 'Lodge Advisor'};
     let galleryPhoto = 0;
     let resolveId = null;
@@ -101,7 +101,7 @@
     }
     function setDisabled() {
         const disabled = !editable();
-        document.querySelectorAll('[data-add],#save,#add-page,#paper-size,#lock-page,#page-up,#page-down,#delete-page,[data-format],#split-text,#undo,#widget-picker,#refresh-data,#fit-pages,#auto-flow,#compact-pages,#browse-widgets').forEach(node => node.disabled = disabled);
+        document.querySelectorAll('[data-add],#save,#add-page,#paper-size,#lock-page,#page-up,#page-down,#delete-page,[data-format],#insert-image,#split-text,#undo,#widget-picker,#refresh-data,#fit-pages,#auto-flow,#compact-pages,#browse-widgets,#import-pdf').forEach(node => node.disabled = disabled);
         $('undo').disabled = disabled || !undo.length;
         $('preview').disabled = pending || (payload?.readonly && payload?.mode === 'legacy');
         $('reload').disabled = pending;
@@ -192,7 +192,7 @@
         const sheet = event.target.closest('.elks-paper-sheet'); if (!sheet) return;
         const targetId = event.target.closest('[data-block-id]')?.dataset.blockId;
         const targetPage = payload.document.pages.find(p => p.id === sheet.dataset.pageId);
-        if(targetPage.locked){dragging=null;return showNotice('Unlock the destination page before moving widgets into it.');}
+        if(targetPage.locked || targetPage.fullPage){dragging=null;return showNotice('Unlock the destination page before moving widgets into it.');}
         const move = dragging; dragging = null;
         if (move.widget) {
             activePage = targetPage.id; insertWidget(move.widget);
@@ -270,9 +270,19 @@
         if (key === 'lineHeight') { input.min = '1'; input.max = '2.4'; }
         if (key === 'paragraphGap') input.max = '32';
         input.value = selected().block[key] ?? ({ side: selected().block.source === 'message' ? 'right' : 'left', gap: 12, fontSize: 16, font: 'sans', align: 'left', ratio: 'equal', source: 'new_members', width: 100, height: 240, fit: 'contain', layout: 'columns', photoWidth: 33, padding: 0, border: 0, radius: 0, photoBorder: 0, photoRadius: 0, lineHeight: 1.4, paragraphGap: 8, month: '', keepTogether: false, span: 3, horizontal: 'left', vertical: 'top', boxHeight: 0 }[key]);
+        if(key==='ratio' && selected().block.kind==='columns') {
+            if(selected().block.columns.length===1)input.value='single';
+            if(selected().block.columns.length===3)input.value='three';
+        }
         input.addEventListener('change', () => {
             if (!editable()) return;
             remember(); selected().block[key] = key === 'keepTogether' ? input.value === 'true' : options || key === 'month' ? input.value : Number(input.value);
+            if(key==='ratio' && selected().block.kind==='columns') {
+                const block=selected().block,count=input.value==='single' ? 1 : input.value==='three' ? 3 : 2;
+                if(block.columns.length>count)block.columns=[...block.columns.slice(0,count-1),block.columns.slice(count-1).join('')];
+                while(block.columns.length<count)block.columns.push('<p></p>');
+                if(['single','three'].includes(input.value))block.ratio='equal';
+            }
             if(key==='fontSize')delete selected().block.fitFont;
             if (['source','officer','month'].includes(key)) { delete selected().block.resolvedHTML; refreshData(); }
             change(); render();
@@ -311,10 +321,15 @@
         if (block.kind === 'gallery') {
             const select = document.createElement('select');
             block.photos.forEach((photo, i) => { const option = document.createElement('option'); option.value = i; option.textContent = `Member photo ${i + 1}`; select.append(option); });
-            galleryPhoto = 0; select.addEventListener('change', () => galleryPhoto = Number(select.value));
-            panel.append(select, actionButton('Choose member photo', () => $('photo-file').click()));
+            galleryPhoto = Math.min(galleryPhoto,block.photos.length-1);select.value=galleryPhoto; select.addEventListener('change', () => galleryPhoto = Number(select.value));
+            panel.append(select, actionButton('Choose photo', () => $('photo-file').click()),actionButton('Upload multiple images',()=>$('gallery-files').click()));
+            const reorder=(offset)=>{const next=galleryPhoto+offset;if(next<0 || next>=block.photos.length)return;remember();[block.photos[galleryPhoto],block.photos[next]]=[block.photos[next],block.photos[galleryPhoto]];galleryPhoto=next;change();render();};
+            panel.append(actionButton('Image earlier',()=>reorder(-1)),actionButton('Image later',()=>reorder(1)),actionButton('Sort images A–Z',()=>{
+                const caption=photo=>{const node=document.createElement('div');node.innerHTML=photo.caption || '';return node.textContent;};
+                remember();block.photos.sort((a,b)=>caption(a).localeCompare(caption(b),undefined,{numeric:true}));galleryPhoto=0;change();render();
+            }),actionButton('Remove selected image',()=>{if(block.photos.length===1)return showNotice('Keep one image, or delete the gallery widget.');remember();block.photos.splice(galleryPhoto,1);galleryPhoto=0;change();render();},true));
         }
-        if (block.kind === 'columns' && block.columns.length === 2) panel.append(field('Column widths', 'ratio', { equal: 'Half / half', 'wide-left': 'Two thirds / one third', 'wide-right': 'One third / two thirds' }));
+        if (block.kind === 'columns') panel.append(field('Column widths', 'ratio', { single:'Single column',three:'Three columns',equal: 'Half / half', 'wide-left': 'Two thirds / one third', 'wide-right': 'One third / two thirds' }));
         if (block.kind === 'photo_text') panel.append(field('Photo position', 'side', { left: 'Left', right: 'Right' }), field('Column widths', 'ratio', { equal: 'Half / half', 'wide-left': 'Two thirds / one third', 'wide-right': 'One third / two thirds' }));
         if (block.kind === 'image' || block.kind === 'photo_text') panel.append(actionButton(block.src ? 'Replace photo' : 'Choose photo', () => $('photo-file').click()), field('Photo width (%)', 'width'), field('Photo height (px)', 'height'), field('Photo fitting', 'fit', { contain: 'Show whole photo', cover: 'Fill and crop' }));
         if (block.kind === 'widget' && block.source === 'message') panel.append(field('Photo position', 'side', {left:'Left',right:'Right'}));
@@ -362,14 +377,14 @@
         if (kind === 'image' || kind === 'photo_text') Object.assign(block, { src: '', caption: '<p>Photo caption.</p>', width: 100, height: 240, fit: 'contain' });
         if (kind === 'dynamic' || kind === 'widget') block.source = source || 'new_members';
         if (kind === 'widget') { block.html = ''; if (source === 'message') block.officer = 'exalted_ruler'; }
-        if (kind === 'gallery') block.photos = Array.from({ length: 3 }, () => ({ src: '', caption: '<p><b>Member name</b><br>Initiated — date</p>' }));
+        if (kind === 'gallery') {block.galleryMode=preset==='photo_grid' ? 'members' : 'photos';block.photos=Array.from({length:preset==='photo_grid' ? 3 : 1},()=>({src:'',caption:''}));}
         if (kind === 'spacer') block.height = 48;
         if (preset === 'three_columns') block.columns.push('<p>Third column.</p>');
         if (preset === 'two_thirds') block.ratio = 'wide-left';
         if (preset === 'continued') block.html = '<p><i>Continued on page …</i></p>';
         if (preset === 'elk_of_month') { block.html = '<h2>Elk of the Month</h2><p>Tell members why this Elk was chosen and what they do for the lodge and community.</p>'; block.caption = '<p><b>Member name</b></p>'; }
         let target=payload.document.pages.find(page=>page.id===activePage);
-        if(target.locked){target={id:uid(),blocks:[]};payload.document.pages.push(target);activePage=target.id;}
+        if(target.locked || target.fullPage){target={id:uid(),blocks:[]};payload.document.pages.push(target);activePage=target.id;}
         target.blocks.push(block); selectedId = block.id; change(); render(); refreshData();
     }
     const picker = $('widget-picker');
@@ -438,8 +453,35 @@
     document.querySelectorAll('[data-format]').forEach(button => {
         button.addEventListener('mousedown', event => event.preventDefault());
         button.addEventListener('click', () => {
-            if (editable() && lastSelection) { const selection = window.getSelection(); selection.removeAllRanges(); selection.addRange(lastSelection); document.execCommand(button.dataset.format); }
+            if (editable() && lastSelection) { const selection = window.getSelection(); selection.removeAllRanges(); selection.addRange(lastSelection); document.execCommand(button.dataset.format,false,button.dataset.value || null); }
         });
+    });
+    let inlineTarget=null;
+    $('insert-image').addEventListener('mousedown',event=>event.preventDefault());
+    $('insert-image').addEventListener('click',()=>{
+        if(!editable() || !lastSelection)return showNotice('Place the cursor inside editable text first.');
+        const node=lastSelection.startContainer.nodeType===Node.ELEMENT_NODE ? lastSelection.startContainer : lastSelection.startContainer.parentElement;
+        const rich=node.closest('.paper-richtext[contenteditable="true"]');
+        if(!rich || !$('sheets').contains(rich))return showNotice('Place the cursor inside editable text first.');
+        inlineTarget={range:lastSelection.cloneRange(),rich};pending=true;setDisabled();$('inline-image-file').click();
+    });
+    $('inline-image-file').addEventListener('cancel',()=>{pending=false;inlineTarget=null;setDisabled();});
+    $('inline-image-file').addEventListener('change',async event=>{
+        const file=event.target.files[0];event.target.value='';
+        try {
+            if(!file || !inlineTarget)return;
+            if(file.size>5000000 || !['image/png','image/jpeg','image/webp','image/gif'].includes(file.type))return showNotice('Choose a PNG, JPEG, WebP or GIF image smaller than 5 MB.');
+            const src=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(file);});
+            if(!inlineTarget.rich.isConnected)return showNotice('Select the insertion point again.');
+            remember();
+            const image=document.createElement('img');image.src=src;image.alt='';image.style.width='50%';
+            const range=inlineTarget.range;range.deleteContents();range.insertNode(image);range.setStartAfter(image);range.collapse(true);
+            const selection=window.getSelection();selection.removeAllRanges();selection.addRange(range);
+            pending=false;
+            inlineTarget.rich.dispatchEvent(new Event('input',{bubbles:true}));
+            inlineTarget.rich.focus();lastSelection=range.cloneRange();measure();
+        } catch(error){showNotice('The image could not be inserted. Choose the image again.');}
+        finally {pending=false;inlineTarget=null;setDisabled();}
     });
     $('split-text').addEventListener('mousedown', event => event.preventDefault());
     $('split-text').addEventListener('click', () => {
@@ -458,6 +500,55 @@
         $('sheets').querySelector(`[data-page-id="${next.id}"]`).scrollIntoView({ block: 'start' });
     });
     document.querySelectorAll('[data-add]').forEach(button => button.addEventListener('click', () => add(button.dataset.add)));
+    $('import-pdf').addEventListener('click',()=>{if(editable())$('pdf-file').click();});
+    $('pdf-file').addEventListener('change',async event=>{
+        const file=event.target.files[0];event.target.value='';
+        if(!editable() || !file)return;
+        if(file.size>12000000)return showNotice('Choose a PDF smaller than 12 MB.');
+        pending=true;setDisabled();let pdf;
+        try {
+            const pdfjs=await import('../../lib/pdfjs/pdf.mjs');
+            pdfjs.GlobalWorkerOptions.workerSrc=new URL('../../lib/pdfjs/pdf.worker.mjs',window.location.href).href;
+            pdf=await pdfjs.getDocument({data:new Uint8Array(await file.arrayBuffer()),isEvalSupported:false}).promise;
+            if(pdf.numPages>12 || payload.document.pages.length+pdf.numPages>60)throw new Error('Insert up to 12 PDF pages at a time, with 60 newsletter pages maximum.');
+            const pages=[];
+            for(let index=1;index<=pdf.numPages;index++) {
+                showNotice(`Importing ${file.name}: page ${index} of ${pdf.numPages}…`);
+                const page=await pdf.getPage(index),base=page.getViewport({scale:1});
+                const scale=Math.min(300/72,Math.sqrt(16000000/(base.width*base.height)));
+                const viewport=page.getViewport({scale});const canvas=document.createElement('canvas');canvas.width=Math.ceil(viewport.width);canvas.height=Math.ceil(viewport.height);
+                await page.render({canvasContext:canvas.getContext('2d'),viewport,background:'white'}).promise;
+                const src=canvas.toDataURL('image/jpeg',0.92);canvas.width=canvas.height=0;page.cleanup();
+                if(src.length>6600000)throw new Error('This PDF page is too large. Use a smaller source PDF.');
+                pages.push({id:uid(),locked:true,fullPage:true,blocks:[{id:uid(),kind:'image',src,caption:'',height:900,width:100,fit:'contain',gap:0}]});
+            }
+            const candidateDocument=structuredClone(payload.document),index=candidateDocument.pages.findIndex(page=>page.id===activePage);
+            candidateDocument.pages.splice(index+1,0,...pages);
+            if(JSON.stringify(candidateDocument).length>24000000)throw new Error('The PDF inserts exceed the newsletter size limit. Insert fewer pages or use a smaller PDF.');
+            remember();payload.document=candidateDocument;activePage=pages[0].id;selectedId=null;pending=false;change();render();
+            showNotice(`${pages.length} full-page insert(s) added after the selected page. Imported pages are locked; drag their thumbnails to change order.`);
+        }catch(error){showNotice(error.message || 'This PDF could not be imported. Use an unencrypted PDF.');}
+        finally{pending=false;setDisabled();if(pdf)await pdf.destroy().catch(()=>{});}
+    });
+    $('gallery-files').addEventListener('change',async event=>{
+        const files=[...event.target.files];event.target.value='';const {block,page}=selected();
+        if(!editable() || !files.length || block?.kind!=='gallery' || page.locked)return;
+        const existing=block.photos.filter(photo=>photo.src);
+        if(existing.length+files.length>12)return showNotice('A gallery supports up to 12 images.');
+        if(files.some(file=>file.size>5000000 || !['image/png','image/jpeg','image/webp','image/gif'].includes(file.type)))return showNotice('Choose PNG, JPEG, WebP or GIF images smaller than 5 MB each.');
+        pending=true;setDisabled();
+        try {
+            const photos=await Promise.all(files.map(async file=>{
+                const src=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(file);});
+                const caption=document.createElement('p');caption.textContent=file.name;
+                return {src,caption:caption.outerHTML};
+            }));
+            const candidate=structuredClone(payload.document);candidate.pages.flatMap(p=>p.blocks).find(b=>b.id===block.id).photos=[...existing,...photos];
+            if(JSON.stringify(candidate).length>24000000)return showNotice('These images exceed the newsletter size limit. Use smaller image files.');
+            remember();block.photos=[...existing,...photos];galleryPhoto=existing.length;pending=false;change();render();
+        }catch(error){showNotice('The images could not be uploaded. Try again.');}
+        finally{pending=false;setDisabled();}
+    });
     $('photo-file').addEventListener('change', async event => {
         const file = event.target.files[0]; const { block } = selected(); event.target.value = '';
         if (!file || !block || !['image', 'gallery', 'photo_text'].includes(block.kind) || !editable()) return;
