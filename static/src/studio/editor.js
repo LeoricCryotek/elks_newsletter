@@ -257,7 +257,15 @@
         if (options) Object.entries(options).forEach(([value, text]) => {
             const option = document.createElement('option'); option.value = value; option.textContent = text; input.append(option);
         });
-        else if (key === 'month') { input.type = 'month'; }
+        else if (key === 'month') {
+            input.type = 'month';
+            const month=payload.defaultMonth || '';
+            const parts=month.split('-').map(Number);
+            const display=month ? new Intl.DateTimeFormat('en-US',{month:'long',year:'numeric',timeZone:'UTC'}).format(new Date(Date.UTC(parts[0],parts[1]-1,1))) : payload.month;
+            input.title=`Enter YYYY-MM (for example, 2026-11). Leave blank to use ${selected().block.source === 'new_members' ? 'the issue’s New Members Source setting' : display || 'the issue month'}.`;
+            if(month) input.placeholder=month;
+            label.title=input.title;
+        }
         else { input.type = 'number'; if (key === 'lineHeight') input.step = '0.05'; input.min = key === 'fontSize' ? '8' : '0'; input.max = key === 'fontSize' ? '72' : ['height','boxHeight'].includes(key) ? '900' : '100'; }
         if (key === 'lineHeight') { input.min = '1'; input.max = '2.4'; }
         if (key === 'paragraphGap') input.max = '32';
@@ -288,7 +296,7 @@
                      field('Widget position', 'horizontal', {left:'Left',center:'Center',right:'Right'}),
                      field('Vertical alignment', 'vertical', {top:'Top',middle:'Middle',bottom:'Bottom'}), field('Minimum frame height (px)', 'boxHeight'));
         if (['dynamic','widget'].includes(block.kind) && monthSources.includes(block.source)) {
-            panel.append(field(block.source === 'calendar' ? 'Calendar month (blank = issue month)' : 'Month shown (blank = issue settings)', 'month'));
+            panel.append(field(block.source === 'calendar' ? `Calendar month (blank = ${payload.defaultMonth || payload.month || 'issue month'})` : 'Month shown (blank = issue settings)', 'month'));
         }
         if (block.kind === 'dynamic' && ['new_members','in_memoriam'].includes(block.source)) {
             panel.append(actionButton('Choose members…',()=>send('manage-members',{source:block.source,month:block.month || ''})));

@@ -151,6 +151,7 @@ class ElksBulletinIssueStudio(models.Model):
         metadata = (self.studio_document or {}).get('metadata', {})
         return {'document': self.studio_document or normalise_document(initial_document(self.name)),
                 'revision': self.studio_revision, 'paperSize': self.page_size,
+                'defaultMonth': self.issue_date.strftime('%Y-%m') if self.issue_date else '',
                 'mode': self.editor_mode, 'readonly': self.state == 'final',
                 'title': metadata.get('title', self.name), 'lodge': metadata.get('lodge', self.lodge_name or ''),
                 'month': metadata.get('month', self.issue_date.strftime('%B %Y') if self.issue_date else '')}
