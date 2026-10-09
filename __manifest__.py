@@ -22,7 +22,7 @@
 #     plugin (canvas page-turn spacers).
 # WeasyPrint is a SOFT runtime dependency (see models/ir_actions_report.py),
 # deliberately NOT in external_dependencies so install never blocks on it.
-# Python/JS changes need a server restart; XML data needs -u elksbulletin.
+# Python/JS changes need a server restart; XML data needs -u elks_newsletter.
 # =============================================================================
 {
     "name": "Elks Newsletter — Lodge Newsletter Builder",
@@ -83,7 +83,7 @@ Features
   ~11pt body on tight leading) for newspaper-density output.
 * Editing canvas framed as a true paper sheet with side rulers, page-boundary
   guides, and live page-turn preview at forced breaks.
-* Selectable PDF engine (system parameter elksbulletin.pdf_engine): the DEFAULT
+* Selectable PDF engine (system parameter elks_newsletter.pdf_engine): the DEFAULT
   is wkhtmltopdf; set it to "chromium" for headless-Chromium output (true
   browser pagination + full-colour emoji + the CSS @page page-number footer —
   the recommended engine, needs the `playwright` Python package + a chromium
@@ -141,7 +141,7 @@ add others, then Apply — the block then shows exactly that list. "Reset to
 Automatic" returns to the pure date-based fill. Default stays fully automatic
 until you Apply a change (tracked by new_member_manual / in_memoriam_manual
 flags, so a deliberately empty list means "show none", not "revert to auto").
-Adds a New Members picker + wizard (elks.bulletin.new.member.wizard) alongside
+Adds a New Members picker + wizard (elks.newsletter.new.member.wizard) alongside
 the In Memoriam one, and reworks In Memoriam from add-only extras to full
 select/deselect. Render now goes through _effective_new_members /
 _effective_in_memoriam_members.
@@ -150,7 +150,7 @@ _effective_in_memoriam_members.
 The 30.0 field sat in the form's Dynamic Block Settings group, which is hard to
 get to in the full-screen mailing editor. Added an "In Memoriam…" header button
 (always visible) that opens a dialog to pick the extra deceased members, writing
-back to the same field. (New transient model elks.bulletin.in.memoriam.wizard.)
+back to the same field. (New transient model elks.newsletter.in.memoriam.wizard.)
 
 19.0.1.30.0 — In Memoriam: add an "Additional In Memoriam" picker on the
 newsletter (Dynamic Block Settings). The block still auto-fills with members
@@ -178,7 +178,7 @@ take and both still printed (the right-aligned copies overlapped so only the
 left/centre looked doubled). Reversed the approach: Chromium 151 renders the
 report's CSS @page @bottom-* footer fine on its own, so we now DROP the injected
 footer template (and the strip) entirely and let the CSS footer be the single
-source. Removed the now-dead _bulletin_chromium_footer helper.
+source. Removed the now-dead _newsletter_chromium_footer helper.
 
 19.0.1.29.6 — Fix the DOUBLE page-number footer under the Chromium engine.
 Chromium 151 renders CSS @page margin boxes (@bottom-left/center/right), so the
@@ -198,7 +198,7 @@ launches and renders, then restores it. Non-root safe; no-op when unlimited.
 auto-detecting a system binary. A system chromium much newer than Playwright's
 pinned revision (e.g. Debian 151 vs Playwright 1.62) dies on launch with
 SIGTRAP / "Target ... has been closed" because the CDP handshake mismatches.
-Now: leave elksbulletin.chromium_path UNSET to use the matched bundled browser
+Now: leave elks_newsletter.chromium_path UNSET to use the matched bundled browser
 (run `playwright install chromium` as the Odoo service user); set it only to
 force a specific system binary, with the version-match caveat.
 
@@ -206,14 +206,14 @@ force a specific system binary, with the version-match caveat.
 (/usr/bin/chromium, /snap/bin/chromium, ...) directly, because shutil.which()
 misses binaries when systemd runs Odoo with a stripped PATH that omits
 /usr/bin — the cause of "Executable doesn't exist ..." even with chromium
-installed. Setting elksbulletin.chromium_path=/usr/bin/chromium is the
+installed. Setting elks_newsletter.chromium_path=/usr/bin/chromium is the
 guaranteed override.
 
 19.0.1.29.2 — Chromium/Playwright now AUTO-DETECTS a system chrome/chromium
 binary on PATH (chromium, chromium-browser, google-chrome, ...) and uses it as
 Playwright's executable_path. Without this, Playwright looked for its own
 un-downloaded browser and failed ("Executable doesn't exist ..."), silently
-falling back to wkhtmltopdf. elksbulletin.chromium_path still overrides if set,
+falling back to wkhtmltopdf. elks_newsletter.chromium_path still overrides if set,
 but is no longer required when the binary is on PATH.
 
 19.0.1.29.1 — Fixes for the Chromium engine's first live run: (1) the print
@@ -225,7 +225,7 @@ stylesheet + font) still resolve over HTTP from the live site. Preview and
 Chromium printing now work.
 
 19.0.1.29.0 — New PDF engine option: headless CHROMIUM. Set the system parameter
-elksbulletin.pdf_engine=chromium to render the newsletter with a real browser
+elks_newsletter.pdf_engine=chromium to render the newsletter with a real browser
 engine (Blink). It's the only engine that gives BOTH reliable pagination on this
 flex/tall-block layout AND full-colour emoji — Chromium prints emoji straight
 from the platform emoji font, so the PDF matches the editor/browser preview with
@@ -237,7 +237,7 @@ margins come from CSS; and the lodge/page-number/date footer (a WeasyPrint-only
 @bottom-* feature) is reproduced with Chromium's print footer_template. Two
 backends, auto-detected: Playwright (recommended — gives the page-number
 footer) or any system chromium/chrome binary via --headless --print-to-pdf (no
-footer). Point elksbulletin.chromium_path at the binary (e.g. /usr/bin/chromium
+footer). Point elks_newsletter.chromium_path at the binary (e.g. /usr/bin/chromium
 on Debian) and BOTH backends reuse it — Playwright then needs only its small
 Python package, not its ~300MB bundled-browser download. If neither is present
 or the render fails, it degrades gracefully to wkhtmltopdf with a logged
@@ -272,7 +272,7 @@ everything after the offending block, while a browser (WebKit) paginates the exa
 same HTML correctly (proven: a browser print of the preview = 11 full pages).
 wkhtmltopdf is already installed on the server and renders like a browser, so all
 content prints. It also skips the WeasyPrint-only continuation/pin two-pass. Opt
-back into WeasyPrint any time with system parameter elksbulletin.pdf_engine =
+back into WeasyPrint any time with system parameter elks_newsletter.pdf_engine =
 weasyprint. Trade-off under wkhtmltopdf: CSS gradients, CSS grid, the @page
 page-number footer and the bundled monochrome emoji font may render less
 faithfully than WeasyPrint — content completeness was prioritized over polish.
@@ -281,7 +281,7 @@ faithfully than WeasyPrint — content completeness was prioritized over polish.
 box taller than the printable page halts WeasyPrint, dropping everything after
 it. Two independent triggers, both addressed: (1) the continuation/pin two-pass
 (confirmed by the disable_layout_pass kill switch) is now OPT-IN / OFF by default
-— enable with elksbulletin.enable_layout_pass=1 only after it's proven safe; (2)
+— enable with elks_newsletter.enable_layout_pass=1 only after it's proven safe; (2)
 tall content — a dynamic block (e.g. the Leaderboard squeezed into a narrow
 column) or the Calendar — is now allowed to SPLIT across pages instead of being
 kept whole (break-inside on .o_elks_inner / .o_mail_snippet_general / .row / cols
@@ -293,7 +293,7 @@ class, so it renders as a true 8.5in sheet.
 (embedded images were NOT the cause — all small in the failing PDF). Adds: (1) an
 INFO log "layout pass 1 = N page(s)" showing how many pages the PLAIN resolved
 body makes before any markers/fillers — isolates content-vs-layout-pass; (2) a
-kill switch (system parameter elksbulletin.disable_layout_pass=1) to skip the
+kill switch (system parameter elks_newsletter.disable_layout_pass=1) to skip the
 continuation/pin two-pass entirely for A/B testing; (3) a safety clamp so the
 pin-to-bottom filler can never be taller than the remaining page (a bad
 measurement could otherwise inject a giant box that breaks pagination).
@@ -382,7 +382,7 @@ own independent setting.
 19.0.1.12.0 — Fast "Preview (data)" button. Opens the newsletter as a plain HTML
 page with every dynamic block filled from real lodge data in a fraction of a
 second — no PDF, no WeasyPrint — so you can check the data while editing and just
-refresh after changes. Served by a new GET /elksbulletin/preview/<id> controller
+refresh after changes. Served by a new GET /elks_newsletter/preview/<id> controller
 (auth=user, check_access("read")) that renders the SAME QWeb report as HTML via
 _render_qweb_html, so it's a faithful data preview (only true page breaks /
 continuation bars differ, since those need the PDF engine). The existing Preview
@@ -443,7 +443,7 @@ filestore is always writable); the report url_fetcher serves the @font-face
 committed). Emoji runs are also wrapped at print in a span that NAMES that font,
 so WeasyPrint draws the monochrome glyphs instead of falling back to a system
 COLOR emoji font whose bitmap glyphs render blank/tiny. A system-parameter
-(elksbulletin.pdf_engine) can force wkhtmltopdf for A/B diagnosis, and each
+(elks_newsletter.pdf_engine) can force wkhtmltopdf for A/B diagnosis, and each
 print logs which engine rendered it.
 
 19.0.1.5.0 — Masthead title now prints exactly what the editor holds (no longer
@@ -497,7 +497,7 @@ form is widened (web.assets_backend) and the canvas padding matches the print
 In Memoriam is now an inner-content block (drops inside a column) and lists
 multiple names in a compact self-wrapping row instead of a tall stack. PDF
 engine is selectable for diagnosis via the system parameter
-elksbulletin.pdf_engine ("wkhtmltopdf" to force the legacy engine); every
+elks_newsletter.pdf_engine ("wkhtmltopdf" to force the legacy engine); every
 newsletter print logs which engine actually rendered it. Style-panel borders
 are now baked to LITERAL inline CSS at print (the --box-border-* variables are
 resolved to real border-width/border-radius/border-style), so rounded corners
@@ -537,39 +537,39 @@ FRS-driven masthead, Letter/Legal PDF export.
         "event",          # event.event: Events block (Odoo Events app)
     ],
     "data": [
-        "security/elks_bulletin_groups.xml",
+        "security/elks_newsletter_groups.xml",
         "security/ir.model.access.csv",
         "data/bulletin_template_data.xml",
-        "report/elks_bulletin_report.xml",
-        "views/snippets/elks_bulletin_snippets.xml",
-        "views/elks_bulletin_views.xml",
-        "views/elks_bulletin_menus.xml",
+        "report/elks_newsletter_report.xml",
+        "views/snippets/elks_newsletter_snippets.xml",
+        "views/elks_newsletter_views.xml",
+        "views/elks_newsletter_menus.xml",
         "data/emoji_font_install.xml",  # LAST: self-installs the emoji font
     ],
     "assets": {
         # Backend (web client, OUTSIDE the builder iframe): widen the newsletter
         # editor form so the canvas can show true page width, matching print.
         "web.assets_backend": [
-            "elksbulletin/static/src/js/elks_paper_studio.js",
-            "elksbulletin/static/src/js/elks_paper_studio.xml",
-            "elksbulletin/static/src/scss/elks_paper_studio.scss",
-            "elksbulletin/static/src/scss/newsletter_form_backend.scss",
-            "elksbulletin/static/src/scss/elks_masthead_font.scss",
+            "elks_newsletter/static/src/js/elks_paper_studio.js",
+            "elks_newsletter/static/src/js/elks_paper_studio.xml",
+            "elks_newsletter/static/src/scss/elks_paper_studio.scss",
+            "elks_newsletter/static/src/scss/newsletter_form_backend.scss",
+            "elks_newsletter/static/src/scss/elks_masthead_font.scss",
         ],
         # Paper-size editing canvas: frames the newsletter content at true page
-        # width inside the mass_mailing editing iframe. Scoped to .o_elksbulletin
+        # width inside the mass_mailing editing iframe. Scoped to .o_elks_newsletter
         # so only this module's editor is affected.
         "mass_mailing.assets_inside_builder_iframe": [
-            "elksbulletin/static/src/css/newsletter_layout.css",
-            "elksbulletin/static/src/scss/newsletter_paper_canvas.scss",
-            "elksbulletin/static/src/scss/elks_masthead_font.scss",
+            "elks_newsletter/static/src/css/newsletter_layout.css",
+            "elks_newsletter/static/src/scss/newsletter_paper_canvas.scss",
+            "elks_newsletter/static/src/scss/elks_masthead_font.scss",
         ],
         # Style-panel option controls (Width + Officer) for Lodge blocks, the
         # PageBreakPreview plugin, and the "Bulletin" font-dropdown entry.
         "mass_mailing.assets_builder": [
-            "elksbulletin/static/src/js/elks_builder_options.js",
-            "elksbulletin/static/src/js/elks_builder_options.xml",
-            "elksbulletin/static/src/js/elks_editor_font.js",
+            "elks_newsletter/static/src/js/elks_builder_options.js",
+            "elks_newsletter/static/src/js/elks_builder_options.xml",
+            "elks_newsletter/static/src/js/elks_editor_font.js",
         ],
     },
     "installable": True,

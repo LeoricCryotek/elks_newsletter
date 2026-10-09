@@ -16,7 +16,7 @@ from odoo import api, models
 from odoo.exceptions import UserError
 from odoo.tools import file_path as _odoo_file_path
 
-# Emoji font auto-install (see _elks_ensure_emoji_font). Monochrome Noto Emoji
+# Emoji font auto-install (see _newsletter_ensure_emoji_font). Monochrome Noto Emoji
 # (OFL) — one static TTF that renders on every WeasyPrint version.
 EMOJI_FONT_URL = ("https://raw.githubusercontent.com/google/fonts/main/"
                   "ofl/notoemoji/NotoEmoji%5Bwght%5D.ttf")
@@ -24,7 +24,7 @@ EMOJI_FONT_REL = "static/fonts/NotoEmoji-Regular.ttf"
 # The font is stored as an ir.attachment under this name when it can't be
 # written into the module folder (the common case: module dir owned by root,
 # Odoo runs as a non-root user). The report url_fetcher serves it from here.
-EMOJI_FONT_ATTACH = "elksbulletin_NotoEmoji-Regular.ttf"
+EMOJI_FONT_ATTACH = "elks_newsletter_NotoEmoji-Regular.ttf"
 # sfnt / web-font magic numbers used to sanity-check the download is a real font
 # and not an HTML error page.
 _FONT_MAGIC = (b"\x00\x01\x00\x00", b"true", b"ttcf", b"OTTO", b"wOFF", b"wOF2")
@@ -43,12 +43,12 @@ except Exception as _wp_err:  # pragma: no cover - optional dependency
     # took down server startup entirely.
     weasyprint = None
     logging.getLogger(__name__).warning(
-        "elksbulletin: WeasyPrint unavailable (%s); newsletter PDFs will "
+        "elks_newsletter: WeasyPrint unavailable (%s); newsletter PDFs will "
         "fall back to wkhtmltopdf until it is installed.", _wp_err)
 
 BULLETIN_REPORTS = (
-    "elksbulletin.report_bulletin_letter",
-    "elksbulletin.report_bulletin_legal",
+    "elks_newsletter.report_bulletin_letter",
+    "elks_newsletter.report_bulletin_legal",
 )
 
 
@@ -61,9 +61,9 @@ class IrActionsReport(models.Model):
         report = self._get_report(report_ref)
         if report.report_name in BULLETIN_REPORTS:
             engine = (self.env["ir.config_parameter"].sudo().get_param(
-                "elksbulletin.pdf_engine", "chromium") or "chromium")
+                "elks_newsletter.pdf_engine", "chromium") or "chromium")
             engine = engine.strip().lower()
-            if res_ids and self.env['elks.bulletin.issue'].browse(res_ids).filtered(
+            if res_ids and self.env['elks.newsletter.issue'].browse(res_ids).filtered(
                     lambda issue: issue.editor_mode == 'paper'):
                 # Paper Studio needs the exact browser renderer and validation.
                 engine = 'chromium'
@@ -71,33 +71,33 @@ class IrActionsReport(models.Model):
                 # Errors surface (no silent fallback) so layout problems can be
                 # fixed rather than masked.
                 _logger.info(
-                    "elksbulletin: rendering %s with WeasyPrint %s (forced by "
-                    "system parameter elksbulletin.pdf_engine)",
+                    "elks_newsletter: rendering %s with WeasyPrint %s (forced by "
+                    "system parameter elks_newsletter.pdf_engine)",
                     report.report_name, weasyprint.__version__)
-                return self._render_bulletin_weasyprint(report_ref, res_ids, data)
+                return self._render_newsletter_weasyprint(report_ref, res_ids, data)
             if engine == "chromium":
                 # Preserve the browser layout on failures, too: changing
                 # engines behind the editor's back invalidates its page guides.
                 try:
                     _logger.info(
-                        "elksbulletin: rendering %s with headless Chromium "
-                        "(elksbulletin.pdf_engine=chromium)", report.report_name)
-                    return self._render_bulletin_chromium(
+                        "elks_newsletter: rendering %s with headless Chromium "
+                        "(elks_newsletter.pdf_engine=chromium)", report.report_name)
+                    return self._render_newsletter_chromium(
                         report_ref, res_ids, data)
                 except UserError:
                     raise
                 except Exception:
-                    _logger.exception("elksbulletin: Chromium render failed")
+                    _logger.exception("elks_newsletter: Chromium render failed")
                     raise UserError(
                         "The newsletter could not be printed with Chromium. "
                         "Ask your administrator to install Playwright and its "
-                        "Chromium browser, or configure elksbulletin.chromium_path. "
+                        "Chromium browser, or configure elks_newsletter.chromium_path. "
                         "Printing stopped to preserve the paper layout; it did "
                         "not switch to another PDF engine.")
             else:
                 _logger.info(
-                    "elksbulletin: rendering %s with wkhtmltopdf (legacy engine; "
-                    "set elksbulletin.pdf_engine=weasyprint or =chromium to "
+                    "elks_newsletter: rendering %s with wkhtmltopdf (legacy engine; "
+                    "set elks_newsletter.pdf_engine=weasyprint or =chromium to "
                     "change)", report.report_name)
         return super()._render_qweb_pdf(report_ref, res_ids=res_ids, data=data)
 
@@ -111,15 +111,15 @@ class IrActionsReport(models.Model):
     # contract as the core method. Deliberately skips core's
     # _pre_render_qweb_pdf plumbing (attachment_use caching, test-mode HTML
     # fallback) — single-record newsletters don't benefit, tradeoff documented.
-    def _render_bulletin_weasyprint(self, report_ref, res_ids, data):
+    def _render_newsletter_weasyprint(self, report_ref, res_ids, data):
         html, _type = self._render_qweb_html(report_ref, res_ids, data=data)
         if isinstance(html, bytes):
             html = html.decode("utf-8")
         base_url = self.env["ir.config_parameter"].sudo().get_param(
             "web.base.url"
         ) or ""
-        fetcher = self._bulletin_url_fetcher(base_url)
-        html = self._bulletin_insert_continuation_markers(html, base_url, fetcher)
+        fetcher = self._newsletter_url_fetcher(base_url)
+        html = self._newsletter_insert_continuation_markers(html, base_url, fetcher)
         document = weasyprint.HTML(
             string=html,
             base_url=base_url,
@@ -144,17 +144,17 @@ class IrActionsReport(models.Model):
     #      Chromium renders itself (so we do NOT inject a footer template — that
     #      would double it).
     #   2. A system chromium/chrome binary via `--headless --print-to-pdf`.
-    #      Path can be pinned with the system parameter elksbulletin.chromium_path.
+    #      Path can be pinned with the system parameter elks_newsletter.chromium_path.
     # Any failure raises to the dispatcher, which degrades to wkhtmltopdf.
-    def _render_bulletin_chromium(self, report_ref, res_ids, data):
+    def _render_newsletter_chromium(self, report_ref, res_ids, data):
         report = self._get_report(report_ref)
         html, _type = self._render_qweb_html(report_ref, res_ids, data=data)
         if isinstance(html, bytes):
             html = html.decode("utf-8")
         icp = self.env["ir.config_parameter"].sudo()
         base_url = icp.get_param("web.base.url") or ""
-        fetcher = self._bulletin_url_fetcher(base_url)
-        html = self._bulletin_inline_resources(html, base_url, fetcher)
+        fetcher = self._newsletter_url_fetcher(base_url)
+        html = self._newsletter_inline_resources(html, base_url, fetcher)
         # Make Chromium honour our background colours/gradients (the masthead
         # bar, leaderboard shading) even on the CLI path where there's no
         # print_background flag: print-color-adjust:exact forces them to print.
@@ -176,7 +176,7 @@ class IrActionsReport(models.Model):
         doc = None
         if res_ids:
             doc = self.env[report.model].sudo().browse(res_ids[0]).exists()
-        pdf = self._bulletin_chromium_pdf(html, doc)
+        pdf = self._newsletter_chromium_pdf(html, doc)
         if not pdf:
             raise RuntimeError("Chromium produced no PDF output")
         return pdf, "pdf"
@@ -185,7 +185,7 @@ class IrActionsReport(models.Model):
     # Rewrite <img src> and CSS font url()s into self-contained data: URIs using
     # `fetcher` (the ORM resolver). Leaves anything it can't resolve untouched.
     # This is what lets Chromium render without hitting the Odoo HTTP stack.
-    def _bulletin_inline_resources(self, html, base_url, fetcher):
+    def _newsletter_inline_resources(self, html, base_url, fetcher):
         try:
             frag = lxml_html.fromstring(html)
         except Exception:
@@ -229,14 +229,14 @@ class IrActionsReport(models.Model):
     # === AI AGENT ===
     # HTML -> PDF bytes via Chromium. Prefers Playwright (better control + a real
     # page-number footer); falls back to a system chrome binary on the CLI.
-    def _bulletin_chromium_pdf(self, html, doc):
+    def _newsletter_chromium_pdf(self, html, doc):
         legal = bool(doc) and getattr(doc, "page_size", "") == "legal"
         try:
             from playwright.sync_api import sync_playwright
         except Exception:
             if doc and doc.editor_mode == 'paper':
                 raise UserError('Paper Studio requires Playwright and Chromium so page overflow can be checked before printing.')
-            return self._bulletin_chromium_pdf_cli(html, legal)
+            return self._newsletter_chromium_pdf_cli(html, legal)
         # Reuse a system-installed chromium/chrome so the server only needs the
         # small `playwright` Python package — NOT Playwright's ~300MB bundled
         # browser download (which also needs `playwright install`).
@@ -246,10 +246,10 @@ class IrActionsReport(models.Model):
         # much newer SYSTEM chromium (e.g. Debian's 151) makes the CDP pipe
         # handshake fail and the browser dies on launch with SIGTRAP /
         # "Target ... has been closed". Only use a system binary when the admin
-        # explicitly opts in via elksbulletin.chromium_path (and accepts the
+        # explicitly opts in via elks_newsletter.chromium_path (and accepts the
         # version-match caveat).
         exe = self.env["ir.config_parameter"].sudo().get_param(
-            "elksbulletin.chromium_path")
+            "elks_newsletter.chromium_path")
         launch_kwargs = {"args": ["--no-sandbox"]}
         if exe:
             launch_kwargs["executable_path"] = exe
@@ -264,7 +264,7 @@ class IrActionsReport(models.Model):
         # the render (allowed without root) and restore it in finally. Chromium
         # and Playwright's driver are spawned while it's raised, so they inherit
         # the headroom.
-        with self._bulletin_unbounded_address_space():
+        with self._newsletter_unbounded_address_space():
             with sync_playwright() as p:
                 browser = p.chromium.launch(**launch_kwargs)
                 try:
@@ -311,7 +311,7 @@ class IrActionsReport(models.Model):
     # the platform lacks `resource` (non-POSIX). Non-root safe: raising the soft
     # limit up to the existing hard limit needs no privilege.
     @contextmanager
-    def _bulletin_unbounded_address_space(self):
+    def _newsletter_unbounded_address_space(self):
         try:
             import resource
         except Exception:
@@ -329,7 +329,7 @@ class IrActionsReport(models.Model):
                 changed = True
             except Exception:
                 _logger.warning(
-                    "elksbulletin: could not raise RLIMIT_AS for Chromium; "
+                    "elks_newsletter: could not raise RLIMIT_AS for Chromium; "
                     "the browser may abort under the worker memory limit.")
         try:
             yield
@@ -344,13 +344,13 @@ class IrActionsReport(models.Model):
     # CLI fallback: find a chromium/chrome binary and print via
     # --headless --print-to-pdf. No custom footer (Chrome's default is
     # suppressed with --no-pdf-header-footer). @page size/margins come from CSS.
-    def _bulletin_chromium_pdf_cli(self, html, legal):
+    def _newsletter_chromium_pdf_cli(self, html, legal):
         import os
         import shutil
         import subprocess
         import tempfile
         icp = self.env["ir.config_parameter"].sudo()
-        binary = (icp.get_param("elksbulletin.chromium_path")
+        binary = (icp.get_param("elks_newsletter.chromium_path")
                   or shutil.which("chromium")
                   or shutil.which("chromium-browser")
                   or shutil.which("google-chrome")
@@ -358,7 +358,7 @@ class IrActionsReport(models.Model):
                   or shutil.which("chrome"))
         if not binary:
             raise RuntimeError(
-                "no chromium/chrome binary found (set elksbulletin.chromium_path "
+                "no chromium/chrome binary found (set elks_newsletter.chromium_path "
                 "or install chromium)")
         with tempfile.TemporaryDirectory() as d:
             hp = os.path.join(d, "bulletin.html")
@@ -395,7 +395,7 @@ class IrActionsReport(models.Model):
     # box WeasyPrint generates keeps box.element pointing back at the source
     # lxml element (this is how WeasyPrint implements bookmarks/hyperlinks
     # internally), so for each "elks-flow-N" id (assigned to direct children of
-    # .s_elks_story_flow containers by elks.bulletin.issue._render_print_body_inner
+    # .s_elks_story_flow containers by elks.newsletter.issue._render_print_body_inner
     # step 5) we can read which printed page(s) it actually landed on — real
     # layout, not a guess. (2) Wherever two consecutive flow children land on
     # different pages, splice a Continued/Continued-from bar in at that exact
@@ -408,30 +408,30 @@ class IrActionsReport(models.Model):
     # as the rest of this file. Only one extra render pass is done: the markers'
     # own height can nudge later page breaks by a line or two, an accepted
     # tradeoff rather than looping to a fixed point.
-    def _bulletin_insert_continuation_markers(self, html, base_url, fetcher):
+    def _newsletter_insert_continuation_markers(self, html, base_url, fetcher):
         # The continuation + pin-to-bottom two-pass is now OPT-IN and OFF by
         # default: it re-renders and rewrites the whole document, and a bad
         # measurement (a pinned block, or a story boundary) could insert a filler
         # that halts pagination and drops content — a much worse failure than
         # simply not drawing the auto "Continued on page #" bars. Enable it only
         # once it's proven safe on a lodge's real content: system parameter
-        # elksbulletin.enable_layout_pass = 1. (The old
-        # elksbulletin.disable_layout_pass is still honored as a hard off.)
+        # elks_newsletter.enable_layout_pass = 1. (The old
+        # elks_newsletter.disable_layout_pass is still honored as a hard off.)
         cfg = self.env["ir.config_parameter"].sudo()
-        if (not cfg.get_param("elksbulletin.enable_layout_pass")
-                or cfg.get_param("elksbulletin.disable_layout_pass")):
+        if (not cfg.get_param("elks_newsletter.enable_layout_pass")
+                or cfg.get_param("elks_newsletter.disable_layout_pass")):
             return html
         try:
-            return self._bulletin_insert_continuation_markers_inner(
+            return self._newsletter_insert_continuation_markers_inner(
                 html, base_url, fetcher)
         except Exception:
             _logger.warning(
-                "elksbulletin: auto-continuation pass failed; printing "
+                "elks_newsletter: auto-continuation pass failed; printing "
                 "without auto-inserted 'Continued on page #' markers.",
                 exc_info=True)
             return html
 
-    def _bulletin_insert_continuation_markers_inner(self, html, base_url, fetcher):
+    def _newsletter_insert_continuation_markers_inner(self, html, base_url, fetcher):
         frag = lxml_html.fromstring(html)
         flow_xpath = (".//*[contains(concat(' ', normalize-space(@class), ' '),"
                       " ' s_elks_story_flow ')]")
@@ -453,7 +453,7 @@ class IrActionsReport(models.Model):
         # the newsletter clearly has more content, the collapse is in the content
         # itself (e.g. an unbreakable box taller than the page), NOT this pass.
         _logger.info(
-            "elksbulletin: layout pass 1 = %d page(s); %d story flow(s), "
+            "elks_newsletter: layout pass 1 = %d page(s); %d story flow(s), "
             "%d pinned block(s).",
             len(document.pages), len(flow_containers), len(pinned))
 
@@ -556,7 +556,7 @@ class IrActionsReport(models.Model):
     # === AI AGENT ===
     # Resolve Odoo image/content URLs through the ORM so they render regardless
     # of auth. Anything else (incl. data: URIs) uses WeasyPrint's default fetcher.
-    def _bulletin_url_fetcher(self, base_url):
+    def _newsletter_url_fetcher(self, base_url):
         env = self.env
 
         def fetcher(url):
@@ -591,7 +591,7 @@ class IrActionsReport(models.Model):
                                 return {"string": att.raw,
                                         "mime_type": "font/ttf"}
                         _logger.debug(
-                            "elksbulletin url_fetcher: static miss for %s", clean)
+                            "elks_newsletter url_fetcher: static miss for %s", clean)
                 if path.startswith("/web/image") or path.startswith("/web/content"):
                     seg = [p for p in path.split("?")[0].strip("/").split("/")]
                     rest = seg[2:]  # drop 'web','image'|'content'
@@ -622,7 +622,7 @@ class IrActionsReport(models.Model):
                     if raw is not None:
                         return {"string": raw, "mime_type": mime}
             except Exception:  # pragma: no cover - fall back to default
-                _logger.debug("elksbulletin url_fetcher fallback for %s", url)
+                _logger.debug("elks_newsletter url_fetcher fallback for %s", url)
             return weasyprint.default_url_fetcher(url)
 
         return fetcher
@@ -640,16 +640,16 @@ class IrActionsReport(models.Model):
     # dir is typically root-owned while Odoo runs non-root, so writing the file
     # there fails with PermissionError; the filestore is always writable. The
     # report url_fetcher serves the @font-face 'Elks Emoji' request
-    # (/elksbulletin/static/fonts/NotoEmoji-Regular.ttf) from disk if a committed
+    # (/elks_newsletter/static/fonts/NotoEmoji-Regular.ttf) from disk if a committed
     # copy exists, else from this attachment. Idempotent, validates the bytes are
     # a real font (not an HTML error page), 30s-bounded network I/O, and swallows
     # every error with a clear warning (manual fallback: static/fonts/README.md).
     @api.model
-    def _elks_ensure_emoji_font(self):
+    def _newsletter_ensure_emoji_font(self):
         try:
             # Already committed on disk? Then nothing to do.
             try:
-                _odoo_file_path("elksbulletin/" + EMOJI_FONT_REL)
+                _odoo_file_path("elks_newsletter/" + EMOJI_FONT_REL)
                 return True
             except Exception:
                 pass
@@ -658,12 +658,12 @@ class IrActionsReport(models.Model):
             if existing and existing.raw and len(existing.raw) > 50000:
                 return True  # already stored
             req = urllib.request.Request(
-                EMOJI_FONT_URL, headers={"User-Agent": "elksbulletin"})
+                EMOJI_FONT_URL, headers={"User-Agent": "elks_newsletter"})
             with urllib.request.urlopen(req, timeout=30) as resp:
                 data = resp.read()
             if not data or data[:4] not in _FONT_MAGIC:
                 _logger.warning(
-                    "elksbulletin: emoji-font download was not a font (%d bytes);"
+                    "elks_newsletter: emoji-font download was not a font (%d bytes);"
                     " emoji will not print until the font is added manually "
                     "(see static/fonts/README.md).", len(data or b""))
                 return False
@@ -673,12 +673,12 @@ class IrActionsReport(models.Model):
             }
             (existing.write(vals) if existing else Att.create(vals))
             _logger.info(
-                "elksbulletin: emoji font stored as attachment '%s' (%d bytes)",
+                "elks_newsletter: emoji font stored as attachment '%s' (%d bytes)",
                 EMOJI_FONT_ATTACH, len(data))
             return True
         except Exception as err:
             _logger.warning(
-                "elksbulletin: could not auto-install the emoji font (%s). "
+                "elks_newsletter: could not auto-install the emoji font (%s). "
                 "Emoji will print once the font is added (see "
                 "static/fonts/README.md).", err)
             return False

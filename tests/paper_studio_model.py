@@ -25,7 +25,7 @@ class MemoryIssue:
         return True
 
 
-Issue = load_methods('models/elks_bulletin_studio.py', 'ElksBulletinIssueStudio',
+Issue = load_methods('models/elks_newsletter_studio.py', 'ElksBulletinIssueStudio',
                      {'write', 'action_studio_load', 'action_studio_save', '_studio_print_markup', '_studio_resolve_dynamic', 'action_studio_resolve'},
                      {'normalise_document': paper.normalise_document, 'initial_document': paper.initial_document,
                       'UserError': StudioError, '_': lambda value: value, 'Markup': str, 'json': json,
@@ -84,12 +84,12 @@ class StudioModelTests(unittest.TestCase):
 
     def test_masthead_uses_real_template_and_resolves_lodge_images(self):
         issue = self.issue()
-        Legacy = load_methods('models/elks_bulletin_issue.py', 'ElksBulletinIssue',
+        Legacy = load_methods('models/elks_newsletter_issue.py', 'ElksBulletinIssue',
                               {'_render_print_body_inner'}, {'lxml_html': lxml_html, 'etree': etree, 're': re, 'Markup': str})
         issue._render_print_body_inner = Legacy._render_print_body_inner.__get__(issue)
         issue._wrap_emoji_fonts = lambda root: None
         issue._bake_box_border = lambda root: None
-        tree = etree.parse(str(ROOT / 'views/snippets/elks_bulletin_snippets.xml'))
+        tree = etree.parse(str(ROOT / 'views/snippets/elks_newsletter_snippets.xml'))
         class QWeb:
             def _render(self, template, values):
                 node = tree.xpath('//template[@id="s_elks_masthead"]')[0]

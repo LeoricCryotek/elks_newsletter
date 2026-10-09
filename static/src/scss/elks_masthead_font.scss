@@ -6,13 +6,13 @@
  * what fonts happen to be installed on the server or on your computer.
  * AI
  * @font-face is declared for the editor iframe (this file) AND separately in
- * the print report template (report/elks_bulletin_report.xml) because
+ * the print report template (report/elks_newsletter_report.xml) because
  * WeasyPrint renders from its own inline <style>, not the web asset bundles.
- * The report's url_fetcher serves /elksbulletin/static/fonts/* off disk.
+ * The report's url_fetcher serves /elks_newsletter/static/fonts/* off disk.
  * ==========================================================================*/
 @font-face {
     font-family: "Great Vibes";
-    src: url("/elksbulletin/static/fonts/GreatVibes-Regular.ttf") format("truetype");
+    src: url("/elks_newsletter/static/fonts/GreatVibes-Regular.ttf") format("truetype");
     font-weight: normal;
     font-style: normal;
     font-display: swap;

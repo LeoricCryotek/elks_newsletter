@@ -27,15 +27,15 @@ try {
     // Serve bundled resources locally without HTTP, an Odoo session, or internet.
     await page.route('https://newsletter.test/**', async route => {
         const resource = new URL(route.request().url()).pathname;
-        if (!resource.startsWith('/elksbulletin/static/')) return route.abort();
-        const file = path.join(root, resource.slice('/elksbulletin/'.length));
+        if (!resource.startsWith('/elks_newsletter/static/')) return route.abort();
+        const file = path.join(root, resource.slice('/elks_newsletter/'.length));
         await route.fulfill({ body: readFileSync(file), contentType: file.endsWith('.ttf') ? 'font/ttf' : 'text/css' });
     });
     const paragraph = `Big thanks to our Antlers, who stayed and pitched in with the Lodge officers to clean up after a large event. Nobody had to ask twice. That's how volunteerism takes hold — you teach the next generation what it means by giving them the chance to do it.`;
     for (const size of ['letter', 'legal']) {
         const inches = size === 'legal' ? 14 : 11;
         await page.setContent(`<html><head><base href="https://newsletter.test/"><style>${layout}\n${masthead}\n${canvas}</style></head><body>
-            <main id="editable"><div class="o_layout o_elksbulletin">
+            <main id="editable"><div class="o_layout o_elks_newsletter">
             <section class="o_mail_snippet_general pt16 pb16">
             <h1 style="font:900 34px/1 Arial;margin-bottom:10px">Lodge News &amp; Updates</h1>
             <div class="row align-items-center"><div class="col-12 col-lg-5"><div style="background:#5b3b8c;color:white;height:220px;padding:16px">Photo column</div></div>
@@ -71,7 +71,7 @@ try {
         await page.waitForTimeout(500);
         assert.equal(await page.evaluate(() => window.getRuns()), initial, 'page guides must become idle');
         const screen = await page.evaluate(() => {
-            const sheet = document.querySelector('.o_elksbulletin');
+            const sheet = document.querySelector('.o_elks_newsletter');
             const copy = document.querySelector('#copy');
             const second = document.querySelector('h2');
             const style = getComputedStyle(sheet);

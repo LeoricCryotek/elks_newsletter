@@ -115,7 +115,7 @@
             const paper = document.createElement('span'); paper.className = 'thumb-paper';
             paper.style.height = `${(payload.paperSize === 'legal' ? 1344 : 1056) * .13}px`;
             const miniature = $('sheets').querySelector(`[data-page-id="${page.id}"]`).cloneNode(true);
-            miniature.classList.add('o_elksbulletin');
+            miniature.classList.add('o_elks_newsletter');
             miniature.inert = true; miniature.setAttribute('aria-hidden', 'true');
             miniature.querySelectorAll('.paper-richtext').forEach(node => node.removeAttribute('contenteditable'));
             paper.append(miniature);

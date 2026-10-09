@@ -7,7 +7,7 @@
     <!-- ================= Paper formats ================= -->
     <!-- US Letter (built-in size). Bottom margin reserves footer space. -->
     <record id="paperformat_bulletin_letter" model="report.paperformat">
-        <field name="name">Lodge Newsletter — US Letter</field>
+        <field name="name">Elks Newsletter — US Letter</field>
         <field name="default" eval="False"/>
         <field name="format">Letter</field>
         <field name="orientation">Portrait</field>
@@ -23,7 +23,7 @@
 
     <!-- US Legal (built-in size). -->
     <record id="paperformat_bulletin_legal" model="report.paperformat">
-        <field name="name">Lodge Newsletter — US Legal</field>
+        <field name="name">Elks Newsletter — US Legal</field>
         <field name="default" eval="False"/>
         <field name="format">Legal</field>
         <field name="orientation">Portrait</field>
@@ -40,30 +40,30 @@
     <!-- ================= Report actions (Letter / Legal) ================= -->
     <record id="action_report_bulletin_letter" model="ir.actions.report">
         <field name="name">Newsletter (Letter)</field>
-        <field name="model">elks.bulletin.issue</field>
+        <field name="model">elks.newsletter.issue</field>
         <field name="report_type">qweb-pdf</field>
-        <field name="report_name">elksbulletin.report_bulletin_letter</field>
-        <field name="report_file">elksbulletin.report_bulletin_letter</field>
+        <field name="report_name">elks_newsletter.report_bulletin_letter</field>
+        <field name="report_file">elks_newsletter.report_bulletin_letter</field>
         <field name="paperformat_id" ref="paperformat_bulletin_letter"/>
         <field name="print_report_name">(object.name or 'Newsletter')</field>
     </record>
 
     <record id="action_report_bulletin_legal" model="ir.actions.report">
         <field name="name">Newsletter (Legal)</field>
-        <field name="model">elks.bulletin.issue</field>
+        <field name="model">elks.newsletter.issue</field>
         <field name="report_type">qweb-pdf</field>
-        <field name="report_name">elksbulletin.report_bulletin_legal</field>
-        <field name="report_file">elksbulletin.report_bulletin_legal</field>
+        <field name="report_name">elks_newsletter.report_bulletin_legal</field>
+        <field name="report_file">elks_newsletter.report_bulletin_legal</field>
         <field name="paperformat_id" ref="paperformat_bulletin_legal"/>
         <field name="print_report_name">(object.name or 'Newsletter')</field>
     </record>
 
     <!-- ================= Thin wrappers -> shared document ================= -->
     <template id="report_bulletin_letter">
-        <t t-call="elksbulletin.report_bulletin_document"/>
+        <t t-call="elks_newsletter.report_bulletin_document"/>
     </template>
     <template id="report_bulletin_legal">
-        <t t-call="elksbulletin.report_bulletin_document"/>
+        <t t-call="elks_newsletter.report_bulletin_document"/>
     </template>
 
     <!-- ================= Shared document template ================= -->
@@ -83,7 +83,7 @@
                          explicitly. @import must lead its own stylesheet, hence a
                          separate <style>. The CSS + font files are served by the
                          report's url_fetcher straight off disk (see
-                         ir_actions_report._bulletin_url_fetcher /static/ branch),
+                         ir_actions_report._newsletter_url_fetcher /static/ branch),
                          so it works without an authenticated HTTP round-trip.
                          NOTE: Unicode EMOJI in the calendar (seasonal header
                          strip, some banner symbols) need a system emoji font on
@@ -102,16 +102,16 @@
                            tagline. WeasyPrint renders from THIS inline style
                            (not the web asset bundles), so the @font-face is
                            declared here too; the report url_fetcher serves the
-                           .ttf off disk from /elksbulletin/static/fonts/. This
+                           .ttf off disk from /elks_newsletter/static/fonts/. This
                            is what makes the printed masthead match the editor
                            regardless of server-installed system fonts. */
                         @font-face {
                             font-family: 'Great Vibes';
-                            src: url('/elksbulletin/static/fonts/GreatVibes-Regular.ttf') format('truetype');
+                            src: url('/elks_newsletter/static/fonts/GreatVibes-Regular.ttf') format('truetype');
                             font-weight: normal; font-style: normal;
                         }
                         /* Emoji font BUNDLED IN THE MODULE (like Great Vibes),
-                           so emoji print on ANY server that installs elksbulletin
+                           so emoji print on ANY server that installs elks_newsletter
                            — no system font / apt / root needed, works on hosted
                            Odoo too. Drop the .ttf into static/fonts/ (see that
                            folder's README) and it's served off disk by the
@@ -120,7 +120,7 @@
                            WeasyPrint version (unlike color-bitmap emoji fonts). */
                         @font-face {
                             font-family: 'Elks Emoji';
-                            src: url('/elksbulletin/static/fonts/NotoEmoji-Regular.ttf') format('truetype');
+                            src: url('/elks_newsletter/static/fonts/NotoEmoji-Regular.ttf') format('truetype');
                             font-weight: normal; font-style: normal;
                         }
 
@@ -151,7 +151,7 @@
                     </style>
 
                     <!-- Clean editor markup with dynamic lodge data resolved. -->
-                    <div t-att-class="'o_elksbulletin o_elks_print_document' + (' o_elks_legal' if doc.page_size == 'legal' else '')">
+                    <div t-att-class="'o_elks_newsletter o_elks_print_document' + (' o_elks_legal' if doc.page_size == 'legal' else '')">
                         <t t-out="doc._render_print_body()"/>
                     </div>
                 </div>

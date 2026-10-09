@@ -5,7 +5,7 @@ import { useService } from '@web/core/utils/hooks';
 import { useSetupAction } from '@web/search/action_hook';
 
 export class ElksPaperStudio extends Component {
-    static template = 'elksbulletin.PaperStudio';
+    static template = 'elks_newsletter.PaperStudio';
     static props = ['*'];
     setup() {
         this.orm = useService('orm');
@@ -22,7 +22,7 @@ export class ElksPaperStudio extends Component {
             },
         });
         onWillStart(async () => {
-            this.payload = await this.orm.call('elks.bulletin.issue', 'action_studio_load', [[this.issueId]]);
+            this.payload = await this.orm.call('elks.newsletter.issue', 'action_studio_load', [[this.issueId]]);
         });
         this.onMessage = this.onMessage.bind(this);
         onMounted(() => window.addEventListener('message', this.onMessage));
@@ -42,7 +42,7 @@ export class ElksPaperStudio extends Component {
         if (type === 'dirty') { this.dirty = Boolean(event.data.dirty); return; }
         if (type === 'resolve') {
             try {
-                const blocks = await this.orm.call('elks.bulletin.issue', 'action_studio_resolve', [[this.issueId], event.data.document]);
+                const blocks = await this.orm.call('elks.newsletter.issue', 'action_studio_resolve', [[this.issueId], event.data.document]);
                 this.send({ type: 'resolved', requestId, blocks });
             } catch (error) {
                 this.send({ type: 'resolve-error', requestId, message: error.data?.message || error.message });
@@ -54,23 +54,23 @@ export class ElksPaperStudio extends Component {
         let saved = false;
         try {
             if (type === 'reload') {
-                this.payload = await this.orm.call('elks.bulletin.issue', 'action_studio_load', [[this.issueId]]);
+                this.payload = await this.orm.call('elks.newsletter.issue', 'action_studio_load', [[this.issueId]]);
                 this.dirty = false;
                 this.send({ type: 'saved', requestId, payload: this.payload });
                 return;
             }
             if (type === 'back') {
                 this.dirty = false; // The iframe already confirmed abandoning edits.
-                await this.actionService.doAction({ type: 'ir.actions.act_window', res_model: 'elks.bulletin.issue', res_id: this.issueId, views: [[false, 'form']], target: 'current' });
+                await this.actionService.doAction({ type: 'ir.actions.act_window', res_model: 'elks.newsletter.issue', res_id: this.issueId, views: [[false, 'form']], target: 'current' });
                 return;
             }
             if (!this.payload.readonly) {
-                this.payload = await this.orm.call('elks.bulletin.issue', 'action_studio_save',
+                this.payload = await this.orm.call('elks.newsletter.issue', 'action_studio_save',
                     [[this.issueId], event.data.document, event.data.paperSize, event.data.revision]);
                 saved = true;
             }
             if (type === 'preview') {
-                const action = await this.orm.call('elks.bulletin.issue', 'action_preview_pdf', [[this.issueId]]);
+                const action = await this.orm.call('elks.newsletter.issue', 'action_preview_pdf', [[this.issueId]]);
                 this.dirty = false;
                 this.send({ type: 'saved', requestId, payload: this.payload });
                 await this.actionService.doAction(action);
@@ -93,4 +93,4 @@ export class ElksPaperStudio extends Component {
         }
     }
 }
-registry.category('actions').add('elksbulletin.paper_studio', ElksPaperStudio);
+registry.category('actions').add('elks_newsletter.paper_studio', ElksPaperStudio);

@@ -13,13 +13,13 @@
      BuilderSelect / BuilderSelectItem), which are globally available in the
      builder — no imports in the XML. Width uses classAction (o_elks_w_*, styled
      in the report + editor CSS); Officer uses classAction (o_elks_officer_<pos>,
-     read at print by elks.bulletin.issue._render_print_body). Classes, not
+     read at print by elks.newsletter.issue._render_print_body). Classes, not
      data-attributes, so they survive the mass_mailing email inliner. Loaded via
      the mass_mailing.assets_builder bundle (manifest).
      ===================================================================== -->
 <templates xml:space="preserve">
 
-    <t t-name="elksbulletin.SizeOption">
+    <t t-name="elks_newsletter.SizeOption">
         <BuilderRow label.translate="Width">
             <BuilderSelect>
                 <BuilderSelectItem classAction="'o_elks_w_full'">Full width</BuilderSelectItem>
@@ -30,7 +30,7 @@
         </BuilderRow>
     </t>
 
-    <t t-name="elksbulletin.MessageOption">
+    <t t-name="elks_newsletter.MessageOption">
         <BuilderRow label.translate="Officer">
             <BuilderSelect>
                 <BuilderSelectItem classAction="'o_elks_officer_exalted_ruler'">Exalted Ruler</BuilderSelectItem>
@@ -46,7 +46,7 @@
     <!-- Spacer: a preset height picker plus a custom px value. Both write the
          section's inline `height` (styleAction), so the picker highlights the
          active preset and the number box allows any value in between. -->
-    <t t-name="elksbulletin.SpacerOption">
+    <t t-name="elks_newsletter.SpacerOption">
         <BuilderRow label.translate="Height">
             <BuilderSelect>
                 <BuilderSelectItem styleAction="'height'" styleActionValue="'48px'">Small</BuilderSelectItem>
@@ -62,7 +62,7 @@
 
     <!-- Pin to page bottom: a class toggle read by the report's two-pass layout,
          which pushes the block to the bottom of the page it lands on. -->
-    <t t-name="elksbulletin.PinBottomOption">
+    <t t-name="elks_newsletter.PinBottomOption">
         <BuilderRow label.translate="Pin to page bottom">
             <BuilderCheckbox classAction="'o_elks_pin_bottom'"/>
         </BuilderRow>
@@ -70,8 +70,8 @@
 
     <!-- Volunteer Leaderboard: which month to feature (relative to the issue,
          or an exact YYYY-MM override) and side-by-side vs stacked boards. All
-         read at Print/Preview by elks.bulletin.issue._html_leaderboard. -->
-    <t t-name="elksbulletin.LeaderboardOption">
+         read at Print/Preview by elks.newsletter.issue._html_leaderboard. -->
+    <t t-name="elks_newsletter.LeaderboardOption">
         <BuilderRow label.translate="Month shown">
             <BuilderSelect>
                 <BuilderSelectItem classAction="''">Issue month</BuilderSelectItem>
@@ -99,8 +99,8 @@
 
     <!-- Lodge Calendar: which month the calendar grid shows. Relative to the
          issue, or an exact YYYY-MM. Read at Print/Preview by
-         elks.bulletin.issue._html_calendar. -->
-    <t t-name="elksbulletin.CalendarOption">
+         elks.newsletter.issue._html_calendar. -->
+    <t t-name="elks_newsletter.CalendarOption">
         <BuilderRow label.translate="Month shown">
             <BuilderSelect>
                 <BuilderSelectItem classAction="''">Issue month</BuilderSelectItem>
@@ -117,8 +117,8 @@
     <!-- New Members: which month's initiations to feature (relative to the
          issue, an exact YYYY-MM, or a custom From/To range). Overrides the
          issue's "New Members Source" field when set. Read at Print/Preview by
-         elks.bulletin.issue._new_member_window. -->
-    <t t-name="elksbulletin.NewMembersOption">
+         elks.newsletter.issue._new_member_window. -->
+    <t t-name="elks_newsletter.NewMembersOption">
         <BuilderRow label.translate="Month shown"
                     tooltip.translate="Overrides the 'New Members Source' field on the issue. Leave on 'Issue default' to use that field.">
             <BuilderSelect>

@@ -6,13 +6,13 @@
 // default an Odoo form "sheet" caps at ~1140px and the mass_mailing builder
 // splits that between the canvas and its side panel, which squeezed the canvas
 // noticeably narrower than the print — making editing hard. Scoped to this
-// form only (the o_elksbulletin_form class on the <form>); every other form is
+// form only (the o_elks_newsletter_form class on the <form>); every other form is
 // untouched.
 //
 // === AI AGENT ===
 // Loaded in web.assets_backend (runs in the Odoo web client, OUTSIDE the
 // builder iframe — the paper-canvas SCSS lives in the iframe bundle instead).
-// The class set in views/elks_bulletin_views.xml lands on the form renderer
+// The class set in views/elks_newsletter_views.xml lands on the form renderer
 // root, so we can lift the sheet's max-width and let the mass_mailing_html
 // field (canvas + panel) use the full window width. The canvas itself is sized
 // to 8.5in by newsletter_paper_canvas.scss inside the iframe; widening the host
@@ -20,7 +20,7 @@
 // keeps the canvas usable even on smaller windows (horizontal scroll rather
 // than a squeezed-narrow canvas). !important beats the core sheet rules.
 // =============================================================================
-.o_elksbulletin_form {
+.o_elks_newsletter_form {
     // Let the sheet fill the available width instead of the ~1140px cap.
     .o_form_sheet {
         max-width: none !important;
@@ -40,6 +40,6 @@
 
 // On narrow windows, allow the sheet body to scroll horizontally so the
 // min-width canvas is reachable instead of clipped.
-.o_elksbulletin_form .o_form_sheet_bg {
+.o_elks_newsletter_form .o_form_sheet_bg {
     overflow-x: auto;
 }

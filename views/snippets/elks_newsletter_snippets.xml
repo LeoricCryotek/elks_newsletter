@@ -30,7 +30,7 @@
      what makes html_builder treat a block as a page-root structural drop.
      Shared conventions: o_elks_inner (print: unsplittable, tight margins),
      o_elks_bar (condensed purple header), data-elks-block / data-elks-field
-     markers resolved at print by elks.bulletin.issue._render_print_body,
+     markers resolved at print by elks.newsletter.issue._render_print_body,
      s_elks_story_flow columns may split across pages and feed the
      auto-continuation pass. Styling is INLINE so it survives the mass_mailing
      email-inliner into body_html (used for print); classes and data-*
@@ -43,7 +43,7 @@
 <odoo>
 
     <!-- ============ (1) Register blocks into the panel ============ -->
-    <template id="elksbulletin_email_designer_snippets"
+    <template id="elks_newsletter_email_designer_snippets"
               inherit_id="mass_mailing.email_designer_snippets">
         <xpath expr="//snippets[@id='snippet_groups']" position="inside">
             <t snippet-group="lodge" t-snippet="mass_mailing.s_snippet_group"
@@ -52,52 +52,52 @@
         </xpath>
         <!-- Structural / layout blocks: full-width sections -->
         <xpath expr="//snippets[@id='snippet_structure']" position="inside">
-            <t t-snippet="elksbulletin.s_elks_masthead" string="Masthead" group="lodge"
-               t-thumbnail="/elksbulletin/static/src/img/snippets_thumbs/ico_message.svg"/>
-            <t t-snippet="elksbulletin.s_elks_section_bar" string="Section Bar" group="lodge"/>
-            <t t-snippet="elksbulletin.s_elks_message" string="Message Block" group="lodge"
-               t-thumbnail="/elksbulletin/static/src/img/snippets_thumbs/ico_message.svg"/>
-            <t t-snippet="elksbulletin.s_elks_officers" string="Lodge Officers" group="lodge"
-               t-thumbnail="/elksbulletin/static/src/img/snippets_thumbs/ico_officers.svg"/>
-            <t t-snippet="elksbulletin.s_elks_leaderboard_full" string="Volunteer Leaderboard (Full Width)" group="lodge"
-               t-thumbnail="/elksbulletin/static/src/img/snippets_thumbs/ico_charity.svg"/>
-            <t t-snippet="elksbulletin.s_elks_two_thirds" string="Two-Thirds + One-Third" group="lodge"/>
-            <t t-snippet="elksbulletin.s_elks_three_columns" string="Three Columns" group="lodge"/>
-            <t t-snippet="elksbulletin.s_elks_mailing" string="Mailing Panel" group="lodge"
-               t-thumbnail="/elksbulletin/static/src/img/snippets_thumbs/ico_mailing.svg"/>
-            <t t-snippet="elksbulletin.s_elks_page_break" string="Page Break — Full Width" group="lodge"
-               t-thumbnail="/elksbulletin/static/src/img/snippets_thumbs/ico_pagebreak.svg"/>
-            <t t-snippet="elksbulletin.s_elks_page_break_inline" string="Page Break — Inline" group="lodge"
-               t-thumbnail="/elksbulletin/static/src/img/snippets_thumbs/ico_pagebreak.svg"/>
-            <t t-snippet="elksbulletin.s_elks_spacer" string="Spacer" group="lodge"
-               t-thumbnail="/elksbulletin/static/src/img/snippets_thumbs/ico_pagebreak.svg"/>
+            <t t-snippet="elks_newsletter.s_elks_masthead" string="Masthead" group="lodge"
+               t-thumbnail="/elks_newsletter/static/src/img/snippets_thumbs/ico_message.svg"/>
+            <t t-snippet="elks_newsletter.s_elks_section_bar" string="Section Bar" group="lodge"/>
+            <t t-snippet="elks_newsletter.s_elks_message" string="Message Block" group="lodge"
+               t-thumbnail="/elks_newsletter/static/src/img/snippets_thumbs/ico_message.svg"/>
+            <t t-snippet="elks_newsletter.s_elks_officers" string="Lodge Officers" group="lodge"
+               t-thumbnail="/elks_newsletter/static/src/img/snippets_thumbs/ico_officers.svg"/>
+            <t t-snippet="elks_newsletter.s_elks_leaderboard_full" string="Volunteer Leaderboard (Full Width)" group="lodge"
+               t-thumbnail="/elks_newsletter/static/src/img/snippets_thumbs/ico_charity.svg"/>
+            <t t-snippet="elks_newsletter.s_elks_two_thirds" string="Two-Thirds + One-Third" group="lodge"/>
+            <t t-snippet="elks_newsletter.s_elks_three_columns" string="Three Columns" group="lodge"/>
+            <t t-snippet="elks_newsletter.s_elks_mailing" string="Mailing Panel" group="lodge"
+               t-thumbnail="/elks_newsletter/static/src/img/snippets_thumbs/ico_mailing.svg"/>
+            <t t-snippet="elks_newsletter.s_elks_page_break" string="Page Break — Full Width" group="lodge"
+               t-thumbnail="/elks_newsletter/static/src/img/snippets_thumbs/ico_pagebreak.svg"/>
+            <t t-snippet="elks_newsletter.s_elks_page_break_inline" string="Page Break — Inline" group="lodge"
+               t-thumbnail="/elks_newsletter/static/src/img/snippets_thumbs/ico_pagebreak.svg"/>
+            <t t-snippet="elks_newsletter.s_elks_spacer" string="Spacer" group="lodge"
+               t-thumbnail="/elks_newsletter/static/src/img/snippets_thumbs/ico_pagebreak.svg"/>
         </xpath>
         <!-- Dynamic data blocks live in INNER CONTENT so they can be dropped
              into a column (1/3, 2/3, 3/3) of the layout blocks above and sized
              to fit. Their content fills whatever width they're placed in. -->
         <xpath expr="//snippets[@id='snippet_content']" position="inside">
-            <t t-snippet="elksbulletin.s_elks_new_members" string="New Members" group="lodge"
-               t-thumbnail="/elksbulletin/static/src/img/snippets_thumbs/ico_members.svg"/>
-            <t t-snippet="elksbulletin.s_elks_photo_grid" string="Member Photo Grid" group="lodge"
-               t-thumbnail="/elksbulletin/static/src/img/snippets_thumbs/ico_members.svg"/>
-            <t t-snippet="elksbulletin.s_elks_project_dollars" string="Project Dollars" group="lodge"
-               t-thumbnail="/elksbulletin/static/src/img/snippets_thumbs/ico_money.svg"/>
-            <t t-snippet="elksbulletin.s_elks_delinquents" string="Dues Report" group="lodge"
-               t-thumbnail="/elksbulletin/static/src/img/snippets_thumbs/ico_dues.svg"/>
-            <t t-snippet="elksbulletin.s_elks_charity" string="Charity Report" group="lodge"
-               t-thumbnail="/elksbulletin/static/src/img/snippets_thumbs/ico_charity.svg"/>
-            <t t-snippet="elksbulletin.s_elks_in_memoriam" string="In Memoriam" group="lodge"
-               t-thumbnail="/elksbulletin/static/src/img/snippets_thumbs/ico_members.svg"/>
-            <t t-snippet="elksbulletin.s_elks_calendar" string="Lodge Calendar" group="lodge"
-               t-thumbnail="/elksbulletin/static/src/img/snippets_thumbs/ico_calendar.svg"/>
-            <t t-snippet="elksbulletin.s_elks_leaderboard" string="Volunteer Leaderboard" group="lodge"
-               t-thumbnail="/elksbulletin/static/src/img/snippets_thumbs/ico_charity.svg"/>
-            <t t-snippet="elksbulletin.s_elks_upcoming_events" string="Upcoming Events" group="lodge"
-               t-thumbnail="/elksbulletin/static/src/img/snippets_thumbs/ico_events.svg"/>
-            <t t-snippet="elksbulletin.s_elks_events" string="Events" group="lodge"
-               t-thumbnail="/elksbulletin/static/src/img/snippets_thumbs/ico_events.svg"/>
-            <t t-snippet="elksbulletin.s_elks_continued" string="Continued On Page" group="lodge"
-               t-thumbnail="/elksbulletin/static/src/img/snippets_thumbs/ico_pagebreak.svg"/>
+            <t t-snippet="elks_newsletter.s_elks_new_members" string="New Members" group="lodge"
+               t-thumbnail="/elks_newsletter/static/src/img/snippets_thumbs/ico_members.svg"/>
+            <t t-snippet="elks_newsletter.s_elks_photo_grid" string="Member Photo Grid" group="lodge"
+               t-thumbnail="/elks_newsletter/static/src/img/snippets_thumbs/ico_members.svg"/>
+            <t t-snippet="elks_newsletter.s_elks_project_dollars" string="Project Dollars" group="lodge"
+               t-thumbnail="/elks_newsletter/static/src/img/snippets_thumbs/ico_money.svg"/>
+            <t t-snippet="elks_newsletter.s_elks_delinquents" string="Dues Report" group="lodge"
+               t-thumbnail="/elks_newsletter/static/src/img/snippets_thumbs/ico_dues.svg"/>
+            <t t-snippet="elks_newsletter.s_elks_charity" string="Charity Report" group="lodge"
+               t-thumbnail="/elks_newsletter/static/src/img/snippets_thumbs/ico_charity.svg"/>
+            <t t-snippet="elks_newsletter.s_elks_in_memoriam" string="In Memoriam" group="lodge"
+               t-thumbnail="/elks_newsletter/static/src/img/snippets_thumbs/ico_members.svg"/>
+            <t t-snippet="elks_newsletter.s_elks_calendar" string="Lodge Calendar" group="lodge"
+               t-thumbnail="/elks_newsletter/static/src/img/snippets_thumbs/ico_calendar.svg"/>
+            <t t-snippet="elks_newsletter.s_elks_leaderboard" string="Volunteer Leaderboard" group="lodge"
+               t-thumbnail="/elks_newsletter/static/src/img/snippets_thumbs/ico_charity.svg"/>
+            <t t-snippet="elks_newsletter.s_elks_upcoming_events" string="Upcoming Events" group="lodge"
+               t-thumbnail="/elks_newsletter/static/src/img/snippets_thumbs/ico_events.svg"/>
+            <t t-snippet="elks_newsletter.s_elks_events" string="Events" group="lodge"
+               t-thumbnail="/elks_newsletter/static/src/img/snippets_thumbs/ico_events.svg"/>
+            <t t-snippet="elks_newsletter.s_elks_continued" string="Continued On Page" group="lodge"
+               t-thumbnail="/elks_newsletter/static/src/img/snippets_thumbs/ico_pagebreak.svg"/>
         </xpath>
     </template>
 
@@ -108,7 +108,7 @@
          lodge name (script) + NEWSLETTER (center) | lodge building photo (right);
          bottom = "Elks Care - Elks Share". Every dynamic bit carries a
          data-elks-field marker filled at print/preview from FRS lodge settings
-         (elks.bulletin.issue._render_print_body): issue_month_year, lodge_website,
+         (elks.newsletter.issue._render_print_body): issue_month_year, lodge_website,
          issue_ref, lodge_name, logo_lodge_bw (falls back to colour logo),
          lodge_building_entry. Images default to Odoo's placeholder so the editor
          shows a grey box; the resolver swaps in the real image, or removes the
@@ -190,7 +190,7 @@
          instead of being a full-width section. DYNAMIC: the names list
          (data-elks-block="in_memoriam") auto-fills at print/preview with members
          flagged deceased whose Date of Death is in the CALENDAR MONTH BEFORE the
-         issue date (see elks.bulletin.issue._html_in_memoriam). The gold frame,
+         issue date (see elks.newsletter.issue._html_in_memoriam). The gold frame,
          header and the fraternal quote stay static. The decorative gold border +
          rounded corners are baked inline on the frame (print via WeasyPrint's
          border-radius). o_elks_inner keeps it whole across page turns. -->
@@ -270,7 +270,7 @@
          it land as its own full-width row instead of nesting into a story's
          flow, which defeated the point of a manual continuation marker. Default
          text is editable in place. For most cases you won't need this anymore:
-         the auto-continuation pass (ir_actions_report._bulletin_insert_continuation_markers)
+         the auto-continuation pass (ir_actions_report._newsletter_insert_continuation_markers)
          inserts one of these automatically wherever a .s_elks_story_flow column
          actually breaks across pages. Keep this for one-off manual placement
          outside a story flow. -->
@@ -317,7 +317,7 @@
     <!-- ============ Dynamic blocks ============ -->
     <!-- Each carries a data-elks-block marker. In the editor you see the
          placeholder text; the real data is injected at print/preview by
-         elks.bulletin.issue._render_print_body(). -->
+         elks.newsletter.issue._render_print_body(). -->
 
     <!-- Dynamic blocks are TRUE INNER CONTENT (bare div + o_snippet_drop_in_only,
          same pattern as core's s_inline_text): droppable INSIDE a column of the

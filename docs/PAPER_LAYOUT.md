@@ -21,14 +21,14 @@ have also been removed to prevent automatic print scaling.
 ## Install on the Odoo server
 
 1. Deploy the updated module, including `static/fonts` and `static/src/css`.
-2. Upgrade the module using its existing technical name, `elksbulletin`, and
+2. Upgrade the module using its existing technical name, `elks_newsletter`, and
    restart all Odoo workers. The XML views, report paperformats, Python code,
    and editor assets all changed.
 3. In Settings → Technical → Parameters → System Parameters, use
-   `elksbulletin.pdf_engine = chromium`. An unset parameter now defaults to
+   `elks_newsletter.pdf_engine = chromium`. An unset parameter now defaults to
    Chromium, but previously saved values are respected.
 4. Provide Playwright and its Chromium browser in the Python environment used
-   by Odoo, or keep an existing working `elksbulletin.chromium_path` setting.
+   by Odoo, or keep an existing working `elks_newsletter.chromium_path` setting.
    Chromium errors now stop printing with a clear message. They do not quietly
    switch to wkhtmltopdf and change the layout.
 5. Refresh the browser assets, open an existing issue, switch Paper Size between

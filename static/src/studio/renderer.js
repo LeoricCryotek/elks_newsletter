@@ -82,7 +82,7 @@
     }
     function render(root, payload) {
         root.replaceChildren();
-        root.classList.add('elks-paper-root', 'o_elksbulletin');
+        root.classList.add('elks-paper-root', 'o_elks_newsletter');
         root.dataset.paperSize = payload.paperSize;
         payload.document.pages.forEach((page, i) => {
             const sheet = element('article', 'elks-paper-sheet');

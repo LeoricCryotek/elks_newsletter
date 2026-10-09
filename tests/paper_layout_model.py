@@ -25,7 +25,7 @@ def load_methods(file, model, methods, namespace, base=object):
     return namespace[model]
 
 
-Issue = load_methods('models/elks_bulletin_issue.py', 'ElksBulletinIssue',
+Issue = load_methods('models/elks_newsletter_issue.py', 'ElksBulletinIssue',
                      {'_onchange_page_size_canvas'}, {'lxml_html': lxml_html})
 
 
@@ -40,14 +40,14 @@ class LegacyReport:
 
 Report = load_methods('models/ir_actions_report.py', 'IrActionsReport',
                       {'_render_qweb_pdf'}, {'weasyprint': None,
-                      'BULLETIN_REPORTS': ('elksbulletin.report_bulletin_letter', 'elksbulletin.report_bulletin_legal'),
+                      'BULLETIN_REPORTS': ('elks_newsletter.report_bulletin_letter', 'elks_newsletter.report_bulletin_legal'),
                       'UserError': PrintError, '_logger': logging.getLogger('paper-layout-test')}, LegacyReport)
 
 
 class PaperLayoutTests(unittest.TestCase):
     def test_switching_paper_size_preserves_content_and_other_classes(self):
         issue = Issue()
-        issue.body_arch = '<div class="o_layout o_elksbulletin custom"><p style="font-size:24px">Keep this text</p><img src="/web/image/42"/></div>'
+        issue.body_arch = '<div class="o_layout o_elks_newsletter custom"><p style="font-size:24px">Keep this text</p><img src="/web/image/42"/></div>'
         issue.page_size = 'legal'
         issue._onchange_page_size_canvas()
         root = lxml_html.fromstring(issue.body_arch)
@@ -61,30 +61,30 @@ class PaperLayoutTests(unittest.TestCase):
         self.assertIn('custom', root.get('class').split())
         self.assertEqual(root.text_content(), 'Keep this text')
 
-    def report(self, setting=None, report_name='elksbulletin.report_bulletin_letter'):
+    def report(self, setting=None, report_name='elks_newsletter.report_bulletin_letter'):
         report = Report()
         config = SimpleNamespace(sudo=lambda: config, get_param=lambda key, default=None: setting if setting is not None else default)
-        report.env = {'ir.config_parameter': config, 'elks.bulletin.issue': SimpleNamespace(browse=lambda ids: SimpleNamespace(filtered=lambda fn: []))}
+        report.env = {'ir.config_parameter': config, 'elks.newsletter.issue': SimpleNamespace(browse=lambda ids: SimpleNamespace(filtered=lambda fn: []))}
         report._get_report = lambda ref: SimpleNamespace(report_name=report_name)
-        report._render_bulletin_chromium = lambda *args: (b'chromium', 'pdf')
+        report._render_newsletter_chromium = lambda *args: (b'chromium', 'pdf')
         return report
 
     def test_both_paper_sizes_default_to_chromium(self):
-        for name in ['elksbulletin.report_bulletin_letter', 'elksbulletin.report_bulletin_legal']:
+        for name in ['elks_newsletter.report_bulletin_letter', 'elks_newsletter.report_bulletin_legal']:
             self.assertEqual(self.report(report_name=name)._render_qweb_pdf(name, [42]), (b'chromium', 'pdf'))
 
     def test_browser_failure_cannot_silently_change_layout(self):
         report = self.report()
         def fail(*args):
             raise RuntimeError('browser unavailable')
-        report._render_bulletin_chromium = fail
+        report._render_newsletter_chromium = fail
         with self.assertLogs('paper-layout-test', level='ERROR'):
             with self.assertRaises(PrintError):
                 report._render_qweb_pdf('newsletter', [42])
 
     def test_paper_studio_uses_chromium_with_an_explicit_legacy_setting(self):
         report = self.report(setting='wkhtmltopdf')
-        report.env['elks.bulletin.issue'] = SimpleNamespace(
+        report.env['elks.newsletter.issue'] = SimpleNamespace(
             browse=lambda ids: SimpleNamespace(filtered=lambda fn: [SimpleNamespace(editor_mode='paper')]))
         self.assertEqual(report._render_qweb_pdf('newsletter', [42]), (b'chromium', 'pdf'))
 

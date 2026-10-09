@@ -7,7 +7,7 @@
 # settings. Creating a new issue starts from the default template.
 #
 # === AI AGENT ===
-# elks.bulletin.issue (mail.thread). body_html = the editor canvas (unsanitized).
+# elks.newsletter.issue (mail.thread). body_html = the editor canvas (unsanitized).
 # Lodge data is pulled from elksfrs' singleton elks.lodge.settings via related
 # fields (lodge_settings_id -> logo/charter/name/address). Numbering:
 #   volume = relativedelta(issue_date, charter).years or 1 ; number = month.
@@ -81,8 +81,8 @@ OFFICER_ORDER = [
 
 
 class ElksBulletinIssue(models.Model):
-    _name = "elks.bulletin.issue"
-    _description = "Lodge Newsletter Issue"
+    _name = "elks.newsletter.issue"
+    _description = "Elks Newsletter Issue"
     _inherit = ["mail.thread"]
     _order = "issue_date desc, id desc"
 
@@ -98,7 +98,7 @@ class ElksBulletinIssue(models.Model):
         default="letter", required=True,
         help="Document/print size. The canvas and PDF are sized to this.")
     template_id = fields.Many2one(
-        "elks.bulletin.template", string="Template",
+        "elks.newsletter.template", string="Template",
         default=lambda self: self._default_template())
     state = fields.Selection(
         [("draft", "Draft"), ("final", "Final")],
@@ -161,7 +161,7 @@ class ElksBulletinIssue(models.Model):
              "new_member_partner_ids instead of the automatic date fill. "
              "Managed by the 'New Members…' dialog.")
     new_member_partner_ids = fields.Many2many(
-        "res.partner", "elks_bulletin_new_member_rel",
+        "res.partner", "elks_newsletter_new_member_rel",
         "issue_id", "partner_id", string="New Members (curated)", copy=False,
         domain=[("x_is_member", "=", True)],
         help="The curated New Members list (used when New Members Curated is on).")
@@ -171,7 +171,7 @@ class ElksBulletinIssue(models.Model):
              "in_memoriam_extra_partner_ids instead of the automatic date fill. "
              "Managed by the 'In Memoriam…' dialog.")
     in_memoriam_extra_partner_ids = fields.Many2many(
-        "res.partner", "elks_bulletin_in_memoriam_rel",
+        "res.partner", "elks_newsletter_in_memoriam_rel",
         "issue_id", "partner_id", string="In Memoriam (curated)", copy=False,
         domain=[("x_drop_reason", "=", "deceased")],
         context={"active_test": False},
@@ -247,7 +247,7 @@ class ElksBulletinIssue(models.Model):
     # === AI AGENT ===
     # Prefers is_default; falls back to any template. Returns empty if none seeded.
     def _default_template(self):
-        Template = self.env["elks.bulletin.template"]
+        Template = self.env["elks.newsletter.template"]
         return (Template.search([("is_default", "=", True)], limit=1)
                 or Template.search([], limit=1))
 
@@ -301,7 +301,7 @@ class ElksBulletinIssue(models.Model):
         for vals in vals_list:
             if vals.get("body_arch"):
                 continue
-            tmpl = self.env["elks.bulletin.template"].browse(
+            tmpl = self.env["elks.newsletter.template"].browse(
                 vals.get("template_id")) if vals.get("template_id") \
                 else self._default_template()
             if tmpl and tmpl.body_arch:
@@ -433,14 +433,14 @@ class ElksBulletinIssue(models.Model):
     # manual, else the auto fill) and open it as a dialog (target=new).
     def action_select_new_members(self):
         self.ensure_one()
-        wiz = self.env["elks.bulletin.new.member.wizard"].create({
+        wiz = self.env["elks.newsletter.new.member.wizard"].create({
             "issue_id": self.id,
             "partner_ids": [(6, 0, self._effective_new_members().ids)],
         })
         return {
             "type": "ir.actions.act_window",
             "name": "New Members — Choose Who Appears",
-            "res_model": "elks.bulletin.new.member.wizard",
+            "res_model": "elks.newsletter.new.member.wizard",
             "res_id": wiz.id,
             "view_mode": "form",
             "target": "new",
@@ -448,14 +448,14 @@ class ElksBulletinIssue(models.Model):
 
     def action_select_in_memoriam(self):
         self.ensure_one()
-        wiz = self.env["elks.bulletin.in.memoriam.wizard"].create({
+        wiz = self.env["elks.newsletter.in.memoriam.wizard"].create({
             "issue_id": self.id,
             "partner_ids": [(6, 0, self._effective_in_memoriam_members().ids)],
         })
         return {
             "type": "ir.actions.act_window",
             "name": "In Memoriam — Choose Who Appears",
-            "res_model": "elks.bulletin.in.memoriam.wizard",
+            "res_model": "elks.newsletter.in.memoriam.wizard",
             "res_id": wiz.id,
             "view_mode": "form",
             "target": "new",
@@ -470,9 +470,9 @@ class ElksBulletinIssue(models.Model):
     # correctly. ensure_one() -> single-issue export.
     def action_print_pdf(self):
         self.ensure_one()
-        xmlid = ("elksbulletin.action_report_bulletin_legal"
+        xmlid = ("elks_newsletter.action_report_bulletin_legal"
                  if self.page_size == "legal"
-                 else "elksbulletin.action_report_bulletin_letter")
+                 else "elks_newsletter.action_report_bulletin_letter")
         return self.env.ref(xmlid).report_action(self)
 
     # === HUMAN ===
@@ -483,13 +483,13 @@ class ElksBulletinIssue(models.Model):
     # stores it as an attachment, and returns an act_url with download=false so
     # the browser shows the PDF inline rather than downloading it. Prior preview
     # attachments for this issue are removed first so they don't accumulate.
-    PREVIEW_ATTACHMENT_TAG = "elksbulletin_preview"
+    PREVIEW_ATTACHMENT_TAG = "elks_newsletter_preview"
 
     def action_preview_pdf(self):
         self.ensure_one()
-        xmlid = ("elksbulletin.action_report_bulletin_legal"
+        xmlid = ("elks_newsletter.action_report_bulletin_legal"
                  if self.page_size == "legal"
-                 else "elksbulletin.action_report_bulletin_letter")
+                 else "elks_newsletter.action_report_bulletin_letter")
         report = self.env.ref(xmlid)
         pdf_content, _type = report._render_qweb_pdf(
             report.report_name, self.ids)
@@ -520,7 +520,7 @@ class ElksBulletinIssue(models.Model):
     # every dynamic block filled in from real lodge data, so you can check the
     # data while editing without waiting on a PDF. Refresh the tab after edits.
     # === AI AGENT ===
-    # Just points a new browser tab at the /elksbulletin/preview/<id> controller
+    # Just points a new browser tab at the /elks_newsletter/preview/<id> controller
     # (controllers/main.py), which renders the same QWeb report as HTML via
     # _render_qweb_html. No WeasyPrint, no attachment — near-instant. The PDF
     # buttons above are unchanged; this is an additional, quicker data view.
@@ -528,7 +528,7 @@ class ElksBulletinIssue(models.Model):
         self.ensure_one()
         return {
             "type": "ir.actions.act_url",
-            "url": "/elksbulletin/preview/%d" % self.id,
+            "url": "/elks_newsletter/preview/%d" % self.id,
             "target": "new",
         }
 
@@ -572,7 +572,7 @@ class ElksBulletinIssue(models.Model):
         if self.body_arch:
             frag = lxml_html.fragment_fromstring(self.body_arch, create_parent="div")
             for wrapper in frag.xpath(
-                    ".//*[contains(concat(' ', normalize-space(@class), ' '), ' o_elksbulletin ')]"):
+                    ".//*[contains(concat(' ', normalize-space(@class), ' '), ' o_elks_newsletter ')]"):
                 classes = [c for c in wrapper.get("class", "").split()
                            if c != "o_elks_legal"]
                 if self.page_size == "legal":
@@ -633,7 +633,7 @@ class ElksBulletinIssue(models.Model):
             return self._render_print_body_inner(html)
         except Exception:
             _logger.warning(
-                "elksbulletin: print body render failed; using raw body.",
+                "elks_newsletter: print body render failed; using raw body.",
                 exc_info=True)
             return Markup(html)
 
@@ -898,7 +898,7 @@ class ElksBulletinIssue(models.Model):
         # 5) Mark "story" flow text (Message Block / Two-Thirds+One-Third /
         #    Three Columns body columns, tagged .s_elks_story_flow in the
         #    snippets) with stable per-child ids. The report's second WeasyPrint
-        #    pass (ir_actions_report._bulletin_insert_continuation_markers) uses
+        #    pass (ir_actions_report._newsletter_insert_continuation_markers) uses
         #    these ids to find exactly which child landed on which printed page,
         #    so it can auto-insert "Continued on page #" / "(Continued from
         #    page #)" bars at the real break point instead of a guess.
@@ -946,7 +946,7 @@ class ElksBulletinIssue(models.Model):
         #     the emoji code points can crash the legacy engine (SIGFPE); they
         #     were only decorative icons in the calendar/leaderboard.
         engine = (self.env["ir.config_parameter"].sudo().get_param(
-            "elksbulletin.pdf_engine", "wkhtmltopdf") or "wkhtmltopdf")
+            "elks_newsletter.pdf_engine", "wkhtmltopdf") or "wkhtmltopdf")
         engine = engine.strip().lower()
         strip = engine not in ("weasyprint", "chromium")
         emoji_style = _EMOJI_STYLE_COLOR if engine == "chromium" else _EMOJI_STYLE
@@ -991,7 +991,7 @@ class ElksBulletinIssue(models.Model):
                     ref.addnext(span)
                     ref = span
                     count += 1
-        _logger.info("elksbulletin: %s %d emoji run(s) (%s)",
+        _logger.info("elks_newsletter: %s %d emoji run(s) (%s)",
                      "stripped" if strip else "wrapped", count, engine)
 
     # === HUMAN ===
@@ -1571,7 +1571,7 @@ class ElksBulletinIssue(models.Model):
                 return body
         except Exception:
             _logger.warning(
-                "elksbulletin: publisher calendar render failed; "
+                "elks_newsletter: publisher calendar render failed; "
                 "using simple grid.", exc_info=True)
         return self._html_calendar_simple(d)
 

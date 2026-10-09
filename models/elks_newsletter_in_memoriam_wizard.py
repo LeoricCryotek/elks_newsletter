@@ -20,14 +20,14 @@ from odoo import fields, models
 
 
 class ElksBulletinNewMemberWizard(models.TransientModel):
-    _name = "elks.bulletin.new.member.wizard"
+    _name = "elks.newsletter.new.member.wizard"
     _description = "Choose New Members to Show"
 
     issue_id = fields.Many2one(
-        "elks.bulletin.issue", string="Newsletter",
+        "elks.newsletter.issue", string="Newsletter",
         required=True, ondelete="cascade")
     partner_ids = fields.Many2many(
-        "res.partner", "elks_bulletin_nm_wiz_rel", "wiz_id", "partner_id",
+        "res.partner", "elks_newsletter_nm_wiz_rel", "wiz_id", "partner_id",
         string="Members to show",
         domain=[("x_is_member", "=", True)],
         help="Exactly the members the New Members block will show. Seeded with "
@@ -56,14 +56,14 @@ class ElksBulletinNewMemberWizard(models.TransientModel):
 
 
 class ElksBulletinInMemoriamWizard(models.TransientModel):
-    _name = "elks.bulletin.in.memoriam.wizard"
+    _name = "elks.newsletter.in.memoriam.wizard"
     _description = "Choose In Memoriam Members to Show"
 
     issue_id = fields.Many2one(
-        "elks.bulletin.issue", string="Newsletter",
+        "elks.newsletter.issue", string="Newsletter",
         required=True, ondelete="cascade")
     partner_ids = fields.Many2many(
-        "res.partner", "elks_bulletin_im_wiz_rel", "wiz_id", "partner_id",
+        "res.partner", "elks_newsletter_im_wiz_rel", "wiz_id", "partner_id",
         string="Members to show",
         domain=[("x_drop_reason", "=", "deceased")],
         context={"active_test": False},

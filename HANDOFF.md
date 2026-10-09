@@ -1,11 +1,11 @@
-# elksbulletin — project handoff (paste this into a new thread)
+# elks_newsletter — project handoff (paste this into a new thread)
 
 **What this is:** an Odoo 19 module that builds a **print-ready lodge newsletter**
 (Grand Lodge house style) using a **drag-and-drop block editor**, then outputs a
 page-sized PDF (US Letter / Legal) via WeasyPrint. It does NOT send email.
 
-**Repo:** `github.com/LeoricCryotek/elksbulletin`
-**Local working copy:** `~/Documents/GitHub/elksbulletin`
+**Repo:** `github.com/LeoricCryotek/elks_newsletter`
+**Local working copy:** `~/Documents/GitHub/elks_newsletter`
 **Local Odoo 19 source (read-only ref):** `~/Documents/odoo/odoo19`
 **Companion modules live in:** `~/Documents/Cluade_odoo/clms` (elksfrs, elkscontacts, …)
 
@@ -14,7 +14,7 @@ page-sized PDF (US Letter / Legal) via WeasyPrint. It does NOT send email.
 ## Live deployment (Lewiston Elks #896)
 
 - **Server:** `root@vultr`, module at
-  `/var/odoo/lewistonelks896.com/extra-addons/elksbulletin`
+  `/var/odoo/lewistonelks896.com/extra-addons/elks_newsletter`
 - **Service (systemd):** `odona-lewistonelks896.com`
 - **Runtime:** Python 3.13, WeasyPrint 69.0
 - **Redeploy sequence** (from the module dir on the server):
@@ -62,7 +62,7 @@ page-sized PDF (US Letter / Legal) via WeasyPrint. It does NOT send email.
 ## Current state (built + compiles clean)
 
 **Models**
-- `models/elks_bulletin_issue.py` — `elks.bulletin.issue` (mail.thread). Fields:
+- `models/elks_newsletter_issue.py` — `elks.newsletter.issue` (mail.thread). Fields:
   name, issue_date, page_size, template_id, state, body trio, new-member block
   settings, FRS related fields, computed volume/issue_number/issue_ref/
   charter_missing/city_state. Actions: print/preview PDF, mark final/reset.
@@ -74,12 +74,12 @@ page-sized PDF (US Letter / Legal) via WeasyPrint. It does NOT send email.
   bulletin reports with **WeasyPrint** (real paged media: `@page`, page numbers,
   `break-inside: avoid`, per-block width, continuation bars). Custom
   `url_fetcher` serves bundled static assets + editor images. Emoji-font
-  auto-installer (`_elks_ensure_emoji_font`). Falls back to wkhtmltopdf only if
-  WeasyPrint isn't importable; a system param `elksbulletin.pdf_engine` can force
+  auto-installer (`_newsletter_ensure_emoji_font`). Falls back to wkhtmltopdf only if
+  WeasyPrint isn't importable; a system param `elks_newsletter.pdf_engine` can force
   wkhtmltopdf for A/B diagnosis, and every render logs which engine ran.
-- `models/elks_bulletin_template.py` — `elks.bulletin.template` (name,
+- `models/elks_newsletter_template.py` — `elks.newsletter.template` (name,
   is_default, body trio). New issues copy the default template's body.
-- `controllers/main.py` — GET `/elksbulletin/preview/<id>` (auth=user): renders
+- `controllers/main.py` — GET `/elks_newsletter/preview/<id>` (auth=user): renders
   the report as HTML via `_render_qweb_html` for the fast "Preview (data)" button
   (no PDF). `check_access("read")` gates it.
 
@@ -108,7 +108,7 @@ blocks / Page Break / Continued.
 - **Layout controls (19.0.1.8.0):** the **Spacer** block (structure list) opens
   an adjustable vertical gap; **Pin to page bottom** drops a full-width block to
   the bottom of its page. Pin is done at PRINT by
-  `ir_actions_report._bulletin_insert_continuation_markers_inner`, which reuses
+  `ir_actions_report._newsletter_insert_continuation_markers_inner`, which reuses
   the continuation two-pass render: it reads each pinned block's box geometry
   (`position_y + border_height() + margin_bottom`) and inserts an
   `.s_elks_pin_filler` div of the exact remaining height above it. The editing
@@ -125,7 +125,7 @@ blocks / Page Break / Continued.
 
 **Views / security / data**
 - `views/*` — issue + template forms, lists, menus (scoped to the groups below).
-- `security/elks_bulletin_groups.xml` — Odoo 19 `res.groups.privilege` +
+- `security/elks_newsletter_groups.xml` — Odoo 19 `res.groups.privilege` +
   **Editor** and **Publisher** groups; `ir.model.access.csv` (Editor: no
   unlink; Publisher: full). Admin seeded into Publisher.
 - `data/bulletin_template_data.xml` — branded starter template.
@@ -138,14 +138,14 @@ blocks / Page Break / Continued.
 Emoji must print as **monochrome** glyphs. WeasyPrint's automatic fallback tends
 to grab a system COLOR emoji font (`Noto-Color-Emoji`, CBDT bitmap) whose glyphs
 render blank/tiny in the PDF. The fix has two halves, both in place:
-1. **Bundle + serve a monochrome font.** `_elks_ensure_emoji_font` downloads Noto
+1. **Bundle + serve a monochrome font.** `_newsletter_ensure_emoji_font` downloads Noto
    Emoji and stores it as an ir.attachment (the module dir is root-owned, so a
    file write there fails); the `url_fetcher` serves the `@font-face 'Elks Emoji'`
    request from that attachment.
 2. **Pin emoji to that font.** `_wrap_emoji_fonts` wraps every emoji run at print
    in `<span style="font-family:'Elks Emoji'…">` so WeasyPrint uses the
    monochrome glyphs instead of falling back to the color font. It logs
-   `elksbulletin: wrapped N emoji run(s)` on every print — **if that line is
+   `elks_newsletter: wrapped N emoji run(s)` on every print — **if that line is
    absent from the log, the running workers don't have this Python** (needs the
    `systemctl restart` above). Verify the embedded font with
    `pdffonts issue.pdf` — you want the monochrome NotoEmoji, NOT Noto-Color-Emoji.
@@ -158,7 +158,7 @@ If a build renders color emoji fine, drop a color font in as
 # WeasyPrint must be in the SAME python that runs Odoo:
 #   brew install pango ; <odoo-python> -m pip install weasyprint
 cd ~/Documents/odoo/odoo19
-python3 odoo-bin -c odoo/odoo.conf -u elksbulletin   # -u from CLI restarts
+python3 odoo-bin -c odoo/odoo.conf -u elks_newsletter   # -u from CLI restarts
 ```
 Edit in **Chrome** (the mass_mailing block-preview iframe hangs in Firefox).
 

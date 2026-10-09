@@ -7,7 +7,7 @@ page renderer for editing and PDF export.
 ## Install
 
 Deploy the complete module, including static assets and bundled fonts. Upgrade
-**elksbulletin** (the technical module name), restart all Odoo workers, and refresh
+**elks_newsletter** (the technical module name), restart all Odoo workers, and refresh
 browser assets. The server needs the Python Playwright package and its Chromium
 browser installed for the Odoo service account. Paper Studio requires this engine
 so it can validate the rendered pages before export.

@@ -6,17 +6,17 @@
 # start from the branded masthead + blocks instead of a blank page.
 #
 # === AI AGENT ===
-# elks.bulletin.template: name + is_default flag + body_html (the snippet
+# elks.newsletter.template: name + is_default flag + body_html (the snippet
 # canvas markup). body_html is unsanitized so editor snippet markup survives.
 # One record is seeded in data/bulletin_template_data.xml. is_default picks the
-# template used by new issues (see elks.bulletin.issue._default_template).
+# template used by new issues (see elks.newsletter.issue._default_template).
 # =============================================================================
 from odoo import fields, models
 
 
 class ElksBulletinTemplate(models.Model):
-    _name = "elks.bulletin.template"
-    _description = "Lodge Newsletter Template"
+    _name = "elks.newsletter.template"
+    _description = "Elks Newsletter Template"
     _order = "is_default desc, name"
 
     name = fields.Char(required=True)

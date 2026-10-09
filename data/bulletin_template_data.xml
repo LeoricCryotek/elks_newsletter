@@ -8,18 +8,18 @@
      lead copy and print — everything else fills in from lodge data.
      === AI AGENT ===
      Seeds one is_default template. body_arch is the stored snippet markup wrapped
-     in .o_layout.o_elksbulletin; dynamic blocks carry data-elks-block markers, the
+     in .o_layout.o_elks_newsletter; dynamic blocks carry data-elks-block markers, the
      masthead carries data-elks-field markers — both resolved at print by
-     elks.bulletin.issue._render_print_body(). noupdate is off so upgrades refresh
+     elks.newsletter.issue._render_print_body(). noupdate is off so upgrades refresh
      the shipped starter; flip to noupdate="1" once it's final so it won't clobber
      a lodge's edited default.
      ===================================================================== -->
 <odoo>
-    <record id="tmpl_lodge_newsletter" model="elks.bulletin.template">
+    <record id="tmpl_lodge_newsletter" model="elks.newsletter.template">
         <field name="name">Lodge Newsletter</field>
         <field name="is_default" eval="True"/>
         <field name="body_arch" type="html">
-            <div class="o_layout o_elksbulletin oe_unremovable">
+            <div class="o_layout o_elks_newsletter oe_unremovable">
                 <div class="container">
 
                     <section class="s_elks_masthead o_mail_snippet_general" data-name="Masthead">

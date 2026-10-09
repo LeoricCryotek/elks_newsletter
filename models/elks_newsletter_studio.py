@@ -13,7 +13,7 @@ ASSETS = Path(__file__).resolve().parent.parent / 'static/src/studio'
 
 
 class ElksBulletinIssueStudio(models.Model):
-    _inherit = 'elks.bulletin.issue'
+    _inherit = 'elks.newsletter.issue'
 
     editor_mode = fields.Selection([('legacy', 'Original editor'), ('paper', 'Paper Studio')],
                                    default='legacy', required=True, string='PDF Layout')
@@ -62,7 +62,7 @@ class ElksBulletinIssueStudio(models.Model):
 
     def _studio_lock(self):
         self.ensure_one()
-        self.env.cr.execute('SELECT id FROM elks_bulletin_issue WHERE id = %s FOR UPDATE', [self.id])
+        self.env.cr.execute('SELECT id FROM elks_newsletter_issue WHERE id = %s FOR UPDATE', [self.id])
         self.invalidate_recordset(['studio_revision', 'studio_document', 'editor_mode', 'page_size', 'state'])
 
     def _studio_resolve_dynamic(self, source):
@@ -76,7 +76,7 @@ class ElksBulletinIssueStudio(models.Model):
         template = templates.get(source)
         if not template:
             raise UserError(_('This bulletin widget is not supported.'))
-        markup = self.env['ir.qweb']._render('elksbulletin.s_elks_' + template, {})
+        markup = self.env['ir.qweb']._render('elks_newsletter.s_elks_' + template, {})
         markup = str(markup)
         if source == 'message' and officer:
             markup = markup.replace('o_elks_officer_exalted_ruler', 'o_elks_officer_' + officer)
@@ -113,7 +113,7 @@ class ElksBulletinIssueStudio(models.Model):
     def action_open_paper_studio(self):
         self.ensure_one()
         self.check_access('read')
-        return {'type': 'ir.actions.client', 'tag': 'elksbulletin.paper_studio',
+        return {'type': 'ir.actions.client', 'tag': 'elks_newsletter.paper_studio',
                 'name': _('Paper Studio'), 'params': {'issue_id': self.id}}
 
     @api.model

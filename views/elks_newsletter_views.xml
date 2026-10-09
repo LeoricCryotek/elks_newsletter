@@ -13,11 +13,11 @@
 <odoo>
 
     <!-- ============== Newsletter Issue: form ============== -->
-    <record id="view_elks_bulletin_issue_form" model="ir.ui.view">
-        <field name="name">elks.bulletin.issue.form</field>
-        <field name="model">elks.bulletin.issue</field>
+    <record id="view_elks_newsletter_issue_form" model="ir.ui.view">
+        <field name="name">elks.newsletter.issue.form</field>
+        <field name="model">elks.newsletter.issue</field>
         <field name="arch" type="xml">
-            <form string="Newsletter" class="o_elksbulletin_form">
+            <form string="Newsletter" class="o_elks_newsletter_form">
                 <header>
                     <button name="action_open_paper_studio" type="object" string="Paper Studio" class="btn-primary" icon="fa-file-text-o"/>
                     <button name="action_preview_html" type="object"
@@ -41,11 +41,11 @@
                     <button name="action_mark_final" type="object"
                             string="Mark Final"
                             invisible="state == 'final'"
-                            groups="elksbulletin.group_elksbulletin_manager"/>
+                            groups="elks_newsletter.group_elks_newsletter_manager"/>
                     <button name="action_reset_draft" type="object"
                             string="Reset to Draft"
                             invisible="state == 'draft'"
-                            groups="elksbulletin.group_elksbulletin_manager"/>
+                            groups="elks_newsletter.group_elks_newsletter_manager"/>
                     <field name="state" widget="statusbar"
                            statusbar_visible="draft,final"/>
                 </header>
@@ -119,9 +119,9 @@
     </record>
 
     <!-- ====== New Members picker (dialog opened from the editor) ====== -->
-    <record id="view_elks_bulletin_new_member_wizard_form" model="ir.ui.view">
-        <field name="name">elks.bulletin.new.member.wizard.form</field>
-        <field name="model">elks.bulletin.new.member.wizard</field>
+    <record id="view_elks_newsletter_new_member_wizard_form" model="ir.ui.view">
+        <field name="name">elks.newsletter.new.member.wizard.form</field>
+        <field name="model">elks.newsletter.new.member.wizard</field>
         <field name="arch" type="xml">
             <form string="New Members — Choose Who Appears">
                 <field name="issue_id" invisible="1"/>
@@ -152,9 +152,9 @@
     </record>
 
     <!-- ====== In Memoriam picker (dialog opened from the editor) ====== -->
-    <record id="view_elks_bulletin_in_memoriam_wizard_form" model="ir.ui.view">
-        <field name="name">elks.bulletin.in.memoriam.wizard.form</field>
-        <field name="model">elks.bulletin.in.memoriam.wizard</field>
+    <record id="view_elks_newsletter_in_memoriam_wizard_form" model="ir.ui.view">
+        <field name="name">elks.newsletter.in.memoriam.wizard.form</field>
+        <field name="model">elks.newsletter.in.memoriam.wizard</field>
         <field name="arch" type="xml">
             <form string="In Memoriam — Choose Who Appears">
                 <field name="issue_id" invisible="1"/>
@@ -183,9 +183,9 @@
     </record>
 
     <!-- ============== Newsletter Issue: list ============== -->
-    <record id="view_elks_bulletin_issue_list" model="ir.ui.view">
-        <field name="name">elks.bulletin.issue.list</field>
-        <field name="model">elks.bulletin.issue</field>
+    <record id="view_elks_newsletter_issue_list" model="ir.ui.view">
+        <field name="name">elks.newsletter.issue.list</field>
+        <field name="model">elks.newsletter.issue</field>
         <field name="arch" type="xml">
             <list string="Newsletters">
                 <header>
@@ -201,9 +201,9 @@
         </field>
     </record>
 
-    <record id="action_elks_bulletin_issue" model="ir.actions.act_window">
+    <record id="action_elks_newsletter_issue" model="ir.actions.act_window">
         <field name="name">Newsletters</field>
-        <field name="res_model">elks.bulletin.issue</field>
+        <field name="res_model">elks.newsletter.issue</field>
         <field name="view_mode">list,form</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">Create your first newsletter</p>
@@ -212,9 +212,9 @@
     </record>
 
     <!-- ============== Template: form + list ============== -->
-    <record id="view_elks_bulletin_template_form" model="ir.ui.view">
-        <field name="name">elks.bulletin.template.form</field>
-        <field name="model">elks.bulletin.template</field>
+    <record id="view_elks_newsletter_template_form" model="ir.ui.view">
+        <field name="name">elks.newsletter.template.form</field>
+        <field name="model">elks.newsletter.template</field>
         <field name="arch" type="xml">
             <form string="Newsletter Template">
                 <sheet>
@@ -234,9 +234,9 @@
         </field>
     </record>
 
-    <record id="view_elks_bulletin_template_list" model="ir.ui.view">
-        <field name="name">elks.bulletin.template.list</field>
-        <field name="model">elks.bulletin.template</field>
+    <record id="view_elks_newsletter_template_list" model="ir.ui.view">
+        <field name="name">elks.newsletter.template.list</field>
+        <field name="model">elks.newsletter.template</field>
         <field name="arch" type="xml">
             <list string="Templates">
                 <field name="name"/>
@@ -245,9 +245,9 @@
         </field>
     </record>
 
-    <record id="action_elks_bulletin_template" model="ir.actions.act_window">
+    <record id="action_elks_newsletter_template" model="ir.actions.act_window">
         <field name="name">Templates</field>
-        <field name="res_model">elks.bulletin.template</field>
+        <field name="res_model">elks.newsletter.template</field>
         <field name="view_mode">list,form</field>
     </record>
 

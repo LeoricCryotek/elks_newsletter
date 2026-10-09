@@ -16,7 +16,7 @@
 //   • Month shown (Style panel) — on the Leaderboard and the Lodge Calendar,
 //     pick which month the block references (relative to the issue, or exact
 //     YYYY-MM), so you can prepare an issue early. Read at print via
-//     elks.bulletin.issue._block_ref_date.
+//     elks.newsletter.issue._block_ref_date.
 //   • Page-turn preview — content after a Page Break is pushed down to the
 //     next red page-boundary line on the canvas, so the editor shows the page
 //     turn the way the PDF will print it.
@@ -30,7 +30,7 @@
 // structural sections — legacy documents with old sized sections keep
 // rendering, they just don't get the panel. Officer uses classAction
 // o_elks_officer_<pos>; a class (not data-attribute) because classes reliably
-// survive the email inliner, and elks.bulletin.issue._render_print_body reads
+// survive the email inliner, and elks.newsletter.issue._render_print_body reads
 // it to fill the title + byline. The PageBreakPreview plugin is documented at
 // its definition below. Loaded in mass_mailing.assets_builder. Needs a server
 // restart (JS asset) to take effect.
@@ -49,13 +49,13 @@ const SIZE_SELECTOR = [
 ].join(", ");
 
 export class ElksSizeOption extends BaseOptionComponent {
-    static template = "elksbulletin.SizeOption";
+    static template = "elks_newsletter.SizeOption";
     static selector = SIZE_SELECTOR;
     static groups = ["base.group_user"];
 }
 
 export class ElksMessageOption extends BaseOptionComponent {
-    static template = "elksbulletin.MessageOption";
+    static template = "elks_newsletter.MessageOption";
     static selector = ".s_elks_message";
     static groups = ["base.group_user"];
 }
@@ -65,19 +65,19 @@ export class ElksMessageOption extends BaseOptionComponent {
 // (BuilderNumberInput/SelectItem styleAction="height"), so the same value drives
 // the editor canvas AND the printed PDF — no class round-tripping needed.
 export class ElksSpacerOption extends BaseOptionComponent {
-    static template = "elksbulletin.SpacerOption";
+    static template = "elks_newsletter.SpacerOption";
     static selector = ".s_elks_spacer";
     static groups = ["base.group_user"];
 }
 
 // Pin to page bottom (Style panel): a simple class toggle on a full-width
 // section. The class does nothing on its own in print — at render the report's
-// two-pass layout (ir_actions_report._bulletin_insert_continuation_markers_inner)
+// two-pass layout (ir_actions_report._newsletter_insert_continuation_markers_inner)
 // measures where the block lands and inserts a filler above it so its bottom
 // edge sits on the page's bottom margin. Excluded from utility blocks (Page
 // Break, Spacer) where pinning is meaningless.
 export class ElksPinBottomOption extends BaseOptionComponent {
-    static template = "elksbulletin.PinBottomOption";
+    static template = "elks_newsletter.PinBottomOption";
     static selector =
         "section.o_mail_snippet_general:not(.s_elks_page_break):not(.s_elks_spacer)";
     static groups = ["base.group_user"];
@@ -90,7 +90,7 @@ export class ElksPinBottomOption extends BaseOptionComponent {
 // wins when set. Matches both the drop-in-a-column and full-width versions
 // (both carry .s_elks_leaderboard).
 export class ElksLeaderboardOption extends BaseOptionComponent {
-    static template = "elksbulletin.LeaderboardOption";
+    static template = "elks_newsletter.LeaderboardOption";
     static selector = ".s_elks_leaderboard";
     static groups = ["base.group_user"];
 }
@@ -100,7 +100,7 @@ export class ElksLeaderboardOption extends BaseOptionComponent {
 // own class prefix (o_elks_cal_m_*) and data attribute (data-elks-cal-month) so
 // it's independent. Read at print by _html_calendar via _block_ref_date.
 export class ElksCalendarOption extends BaseOptionComponent {
-    static template = "elksbulletin.CalendarOption";
+    static template = "elks_newsletter.CalendarOption";
     static selector = ".s_elks_calendar";
     static groups = ["base.group_user"];
 }
@@ -110,13 +110,13 @@ export class ElksCalendarOption extends BaseOptionComponent {
 // attributes (data-elks-nm-month / -from / -to). When set here it overrides the
 // issue's "New Members Source" field; read at print by _new_member_window.
 export class ElksNewMembersOption extends BaseOptionComponent {
-    static template = "elksbulletin.NewMembersOption";
+    static template = "elks_newsletter.NewMembersOption";
     static selector = ".s_elks_new_members";
     static groups = ["base.group_user"];
 }
 
 class ElksBulletinOptionsPlugin extends Plugin {
-    static id = "elksbulletin.Options";
+    static id = "elks_newsletter.Options";
     resources = {
         builder_options: [
             ElksSizeOption, ElksMessageOption,
@@ -146,7 +146,7 @@ class ElksBulletinOptionsPlugin extends Plugin {
 // giant margin-bottom into the printed PDF. Instead, spacer margins live in a
 // <style> element injected into the IFRAME HEAD (never serialized into the
 // field value), and rules target each break via a structural
-// ".o_elksbulletin > :nth-child(k) > ..." path computed on the fly.
+// ".o_elks_newsletter > :nth-child(k) > ..." path computed on the fly.
 // Breaks are processed in document order, applying each rule before measuring
 // the next, because an earlier spacer shifts everything after it.
 // Recompute is debounced on editable mutations + iframe resize; writes go only
@@ -155,7 +155,7 @@ class ElksBulletinOptionsPlugin extends Plugin {
 // unaffected either way; the PDF pipeline never sees any of this).
 // =============================================================================
 class ElksPageBreakPreviewPlugin extends Plugin {
-    static id = "elksbulletin.PageBreakPreview";
+    static id = "elks_newsletter.PageBreakPreview";
 
     setup() {
         this._styleEl = this.document.createElement("style");
@@ -199,7 +199,7 @@ class ElksPageBreakPreviewPlugin extends Plugin {
     }
 
     _recomputeInner() {
-        const wrapper = this.editable.querySelector(".o_elksbulletin");
+        const wrapper = this.editable.querySelector(".o_elks_newsletter");
         if (!wrapper) {
             this._styleEl.textContent = "";
             return; // not a Lodge Newsletter (e.g. regular Email Marketing)
@@ -212,7 +212,7 @@ class ElksPageBreakPreviewPlugin extends Plugin {
             : wrapper.classList.contains("o_elks_legal");
         const sheetH = legal ? 14 : 11;
         const pageH = (sheetH - 1) * 96;
-        const sizeRule = `.o_elksbulletin{--elks-page-h:${sheetH - 1}in !important;min-height:${sheetH}in !important;}`;
+        const sizeRule = `.o_elks_newsletter{--elks-page-h:${sheetH - 1}in !important;min-height:${sheetH}in !important;}`;
         this._styleEl.textContent = sizeRule;
         // CSS defines one inch as 96 CSS pixels. No editable DOM probe: its
         // insertion/removal made the observer reschedule itself forever.
@@ -244,7 +244,7 @@ class ElksPageBreakPreviewPlugin extends Plugin {
         this._styleEl.textContent = rules.join("\n");
     }
 
-    // Structural selector from .o_elksbulletin down to el, using only
+    // Structural selector from .o_elks_newsletter down to el, using only
     // > :nth-child(k) steps — no ids/attributes written to the content.
     _cssPath(el, wrapper) {
         const steps = [];
@@ -258,7 +258,7 @@ class ElksPageBreakPreviewPlugin extends Plugin {
             steps.unshift(`> :nth-child(${k})`);
             node = parent;
         }
-        return node === wrapper ? `.o_elksbulletin ${steps.join(" ")}` : null;
+        return node === wrapper ? `.o_elks_newsletter ${steps.join(" ")}` : null;
     }
 }
 

@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templates xml:space="preserve">
-    <t t-name="elksbulletin.PaperStudio">
+    <t t-name="elks_newsletter.PaperStudio">
         <div class="o_elks_paper_studio">
             <iframe t-ref="frame" title="Newsletter Paper Studio"
-                    src="/elksbulletin/static/src/studio/editor.html"
+                    src="/elks_newsletter/static/src/studio/editor.html"
                     t-on-load="onFrameLoad"/>
         </div>
     </t>

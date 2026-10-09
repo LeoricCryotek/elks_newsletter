@@ -5,12 +5,12 @@
 // view after the dynamic lodge blocks are resolved.
 
 // Gray "desk" behind the page so the white sheet stands out (Chrome supports :has)
-body:has(.o_elksbulletin) {
+body:has(.o_elks_newsletter) {
     background: #cfcbd6 !important;
 }
 
 // The page itself
-.o_elksbulletin {
+.o_elks_newsletter {
     position: relative !important;
     width: 8.5in !important;
     max-width: 8.5in !important;
@@ -31,7 +31,7 @@ body:has(.o_elksbulletin) {
 
 // Legal page size: taller printable area. Applied when the page is Legal
 // (the onchange updates the wrapper; the plugin also reads the issue field).
-.o_elksbulletin.o_elks_legal {
+.o_elks_newsletter.o_elks_legal {
     --elks-page-h: 13in;   // 14in - 0.42in - 0.58in
     min-height: 14in;
 }
@@ -46,7 +46,7 @@ body:has(.o_elksbulletin) {
 // Natural pagination can keep headings with paragraphs and moves unbreakable
 // images to the next page; dynamic blocks also grow when filled. Preview PDF
 // remains the exact paginated view. These guides align the manual page breaks.
-.o_elksbulletin::after {
+.o_elks_newsletter::after {
     content: "";
     position: absolute;
     top: 40px;
@@ -109,13 +109,13 @@ body:has(.o_elksbulletin) {
 // "Spacer" caption make it visible and selectable while editing; the section's
 // inline height (set from the Style panel) is what actually reserves space, so
 // the gap you see is the gap that prints.
-.o_elksbulletin .s_elks_spacer {
+.o_elks_newsletter .s_elks_spacer {
     position: relative;
     min-height: 16px;
     outline: 1px dashed rgba(91, 59, 140, 0.45);
     outline-offset: -1px;
 }
-.o_elksbulletin .s_elks_spacer .s_elks_spacer_label {
+.o_elks_newsletter .s_elks_spacer .s_elks_spacer_label {
     position: absolute;
     inset: 0;
     display: flex;
@@ -130,10 +130,10 @@ body:has(.o_elksbulletin) {
 // Pin to page bottom: badge the block so it's obvious which one will be dropped
 // to the page bottom at print. The actual push happens at render time (the
 // report's two-pass layout inserts a filler above it) — this is just a label.
-.o_elksbulletin .o_elks_pin_bottom {
+.o_elks_newsletter .o_elks_pin_bottom {
     position: relative;
 }
-.o_elksbulletin .o_elks_pin_bottom::after {
+.o_elks_newsletter .o_elks_pin_bottom::after {
     content: "\2913  pinned to page bottom";
     position: absolute;
     top: 2px;
@@ -149,13 +149,13 @@ body:has(.o_elksbulletin) {
 
 // A break marker takes no printable space. The label is an overlay so the
 // plugin can measure the same break location used by the PDF.
-.o_elksbulletin .s_elks_page_break,
-.o_elksbulletin .s_elks_page_break_inline {
+.o_elks_newsletter .s_elks_page_break,
+.o_elks_newsletter .s_elks_page_break_inline {
     position: relative;
     height: 0 !important; min-height: 0 !important;
     padding: 0 !important; border: 0 !important;
 }
-.o_elksbulletin .s_elks_page_break_line {
+.o_elks_newsletter .s_elks_page_break_line {
     position: absolute; width: 100%; top: -12px;
     pointer-events: none;
 }

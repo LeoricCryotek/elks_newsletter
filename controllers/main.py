@@ -10,9 +10,9 @@
 # page breaks / continuation bars differ, since those need the PDF engine).
 #
 # === AI AGENT ===
-# GET /elksbulletin/preview/<id>, auth="user". Reuses the QWeb report template
+# GET /elks_newsletter/preview/<id>, auth="user". Reuses the QWeb report template
 # via report._render_qweb_html (the same template the PDF path renders, which
-# calls elks.bulletin.issue._render_print_body) and returns it as text/html so
+# calls elks.newsletter.issue._render_print_body) and returns it as text/html so
 # the browser renders it inline (a /web/content attachment would be served as a
 # download for .html). Access is enforced with record.check_access("read") so a
 # user can only preview issues they may read. NOTE: the emoji @font-face points
@@ -27,7 +27,7 @@ from odoo.http import request
 class ElksBulletinPreview(http.Controller):
 
     @http.route(
-        "/elksbulletin/preview/<int:issue_id>",
+        "/elks_newsletter/preview/<int:issue_id>",
         type="http",
         auth="user",
         website=False,
@@ -35,15 +35,15 @@ class ElksBulletinPreview(http.Controller):
         methods=["GET"],
     )
     def preview_html(self, issue_id, **kw):
-        issue = request.env["elks.bulletin.issue"].browse(issue_id).exists()
+        issue = request.env["elks.newsletter.issue"].browse(issue_id).exists()
         if not issue:
             return request.not_found()
         # Only render issues the current user is allowed to read.
         issue.check_access("read")
 
-        xmlid = ("elksbulletin.action_report_bulletin_legal"
+        xmlid = ("elks_newsletter.action_report_bulletin_legal"
                  if issue.page_size == "legal"
-                 else "elksbulletin.action_report_bulletin_letter")
+                 else "elks_newsletter.action_report_bulletin_letter")
         report = request.env.ref(xmlid)
         html, _type = report.sudo()._render_qweb_html(
             report.report_name, issue.ids)

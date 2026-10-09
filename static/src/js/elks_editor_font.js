@@ -25,7 +25,7 @@
 // mutating them once at module load is enough; guarded against double-add.
 // IMPORTANT — a font-family choice only writes `font-family`; it cannot carry
 // line-height. The "5 px between lines" is the page default in CSS
-// (`.o_elksbulletin` -> line-height: calc(1em + 5px)) in both the editor canvas
+// (`.o_elks_newsletter` -> line-height: calc(1em + 5px)) in both the editor canvas
 // SCSS and the report template — which is also why newsletters are tight by
 // default without selecting anything. Loaded in mass_mailing.assets_builder;
 // needs a server restart to take effect (JS asset).

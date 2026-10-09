@@ -1,466 +1,466 @@
 /* Open-license substitutes for the common desktop faces. Loading these
    on both sides removes dependence on macOS/Windows/Linux installed fonts. */
-@font-face { font-family: 'Georgia'; src: url('/elksbulletin/static/fonts/Gelasio.ttf') format('truetype'); font-weight: 400 700; font-style: normal; font-display: block; }
-@font-face { font-family: 'Georgia'; src: url('/elksbulletin/static/fonts/Gelasio-Italic.ttf') format('truetype'); font-weight: 400 700; font-style: italic; font-display: block; }
-@font-face { font-family: 'Times New Roman'; src: url('/elksbulletin/static/fonts/Gelasio.ttf') format('truetype'); font-weight: 400 700; font-style: normal; font-display: block; }
-@font-face { font-family: 'Times New Roman'; src: url('/elksbulletin/static/fonts/Gelasio-Italic.ttf') format('truetype'); font-weight: 400 700; font-style: italic; font-display: block; }
-@font-face { font-family: 'Arial'; src: url('/elksbulletin/static/fonts/Arimo.ttf') format('truetype'); font-weight: 400 700; font-style: normal; font-display: block; }
-@font-face { font-family: 'Arial'; src: url('/elksbulletin/static/fonts/Arimo-Italic.ttf') format('truetype'); font-weight: 400 700; font-style: italic; font-display: block; }
+@font-face { font-family: 'Georgia'; src: url('/elks_newsletter/static/fonts/Gelasio.ttf') format('truetype'); font-weight: 400 700; font-style: normal; font-display: block; }
+@font-face { font-family: 'Georgia'; src: url('/elks_newsletter/static/fonts/Gelasio-Italic.ttf') format('truetype'); font-weight: 400 700; font-style: italic; font-display: block; }
+@font-face { font-family: 'Times New Roman'; src: url('/elks_newsletter/static/fonts/Gelasio.ttf') format('truetype'); font-weight: 400 700; font-style: normal; font-display: block; }
+@font-face { font-family: 'Times New Roman'; src: url('/elks_newsletter/static/fonts/Gelasio-Italic.ttf') format('truetype'); font-weight: 400 700; font-style: italic; font-display: block; }
+@font-face { font-family: 'Arial'; src: url('/elks_newsletter/static/fonts/Arimo.ttf') format('truetype'); font-weight: 400 700; font-style: normal; font-display: block; }
+@font-face { font-family: 'Arial'; src: url('/elks_newsletter/static/fonts/Arimo-Italic.ttf') format('truetype'); font-weight: 400 700; font-style: italic; font-display: block; }
 
 /* Shared by the editing iframe, HTML preview and PDF. Keep authored inline
    typography and spacing: changing only the print layout defeats paper editing. */
-.o_elksbulletin {
+.o_elks_newsletter {
     font-family: Georgia, 'Times New Roman', serif;
     font-size: 16px;
     line-height: 1.5;
     color: #111;
     --elks-page-h: 10in;
 }
-.o_elksbulletin.o_elks_legal { --elks-page-h: 13in; }
-.o_elksbulletin, .o_elksbulletin * { box-sizing: border-box; }
-.o_elksbulletin p { margin: 0 0 16px; line-height: calc(1em + 5px); }
-.o_elksbulletin li { line-height: calc(1em + 5px); }
-.o_elksbulletin h1 { font-size: 40px; }
-.o_elksbulletin h2 { font-size: 32px; }
-.o_elksbulletin h3 { font-size: 28px; }
-.o_elksbulletin h4 { font-size: 24px; }
-.o_elksbulletin h5 { font-size: 20px; }
-.o_elksbulletin h6 { font-size: 16px; }
-.o_elksbulletin h1, .o_elksbulletin h2, .o_elksbulletin h3,
-.o_elksbulletin h4, .o_elksbulletin h5, .o_elksbulletin h6 {
+.o_elks_newsletter.o_elks_legal { --elks-page-h: 13in; }
+.o_elks_newsletter, .o_elks_newsletter * { box-sizing: border-box; }
+.o_elks_newsletter p { margin: 0 0 16px; line-height: calc(1em + 5px); }
+.o_elks_newsletter li { line-height: calc(1em + 5px); }
+.o_elks_newsletter h1 { font-size: 40px; }
+.o_elks_newsletter h2 { font-size: 32px; }
+.o_elks_newsletter h3 { font-size: 28px; }
+.o_elks_newsletter h4 { font-size: 24px; }
+.o_elks_newsletter h5 { font-size: 20px; }
+.o_elks_newsletter h6 { font-size: 16px; }
+.o_elks_newsletter h1, .o_elks_newsletter h2, .o_elks_newsletter h3,
+.o_elks_newsletter h4, .o_elks_newsletter h5, .o_elks_newsletter h6 {
     margin: 0 0 8px; line-height: 1.2; font-weight: 500;
     break-after: avoid; page-break-after: avoid;
 }
-.o_elksbulletin ul, .o_elksbulletin ol { margin: 0 0 16px; padding-left: 1.5em; }
-.o_elksbulletin ul { list-style: disc outside; }
-.o_elksbulletin ol { list-style: decimal outside; }
-.o_elksbulletin ul ul { list-style: circle outside; }
-.o_elksbulletin li { display: list-item; }
-.o_elksbulletin img { max-width: 100%; max-height: 9in; height: auto; vertical-align: middle; }
-.o_elksbulletin table { border-collapse: collapse; max-width: 100%; }
-.o_elksbulletin .container, .o_elksbulletin .container-fluid {
+.o_elks_newsletter ul, .o_elks_newsletter ol { margin: 0 0 16px; padding-left: 1.5em; }
+.o_elks_newsletter ul { list-style: disc outside; }
+.o_elks_newsletter ol { list-style: decimal outside; }
+.o_elks_newsletter ul ul { list-style: circle outside; }
+.o_elks_newsletter li { display: list-item; }
+.o_elks_newsletter img { max-width: 100%; max-height: 9in; height: auto; vertical-align: middle; }
+.o_elks_newsletter table { border-collapse: collapse; max-width: 100%; }
+.o_elks_newsletter .container, .o_elks_newsletter .container-fluid {
     width: 100% !important; max-width: 100% !important;
     margin-left: 0 !important; margin-right: 0 !important;
     padding-left: 0; padding-right: 0;
 }
-.o_elksbulletin .o_mail_snippet_general { display: block; width: 100%; break-inside: auto; }
-.o_elksbulletin .o_elks_inner { display: block; break-inside: auto; }
-.o_elksbulletin .row {
+.o_elks_newsletter .o_mail_snippet_general { display: block; width: 100%; break-inside: auto; }
+.o_elks_newsletter .o_elks_inner { display: block; break-inside: auto; }
+.o_elks_newsletter .row {
     display: flex; flex-wrap: wrap;
     /* Negative Bootstrap gutters protrude beyond the printable area and make
        Chromium shrink the entire page. Keep gutters inside the sheet. */
     margin-left: 0 !important; margin-right: 0 !important;
     --bs-gutter-x: 16px; --bs-gutter-y: 0;
 }
-.o_elksbulletin .row:not(.o_grid_mode) > [class*="col-"] {
+.o_elks_newsletter .row:not(.o_grid_mode) > [class*="col-"] {
     box-sizing: border-box; padding-left: 8px; padding-right: 8px;
     flex: 0 0 auto; min-width: 0;
 }
-.o_elksbulletin .col { flex: 1 0 0%; }
+.o_elks_newsletter .col { flex: 1 0 0%; }
 /* Paper layout always uses the desktop column arrangement. Responsive email
    breakpoints must not stack columns just because the sheet is 816px wide. */
-.o_elksbulletin .col-1 { width: 8.333333%; }
-.o_elksbulletin .col-2 { width: 16.666667%; }
-.o_elksbulletin .col-3 { width: 25.000000%; }
-.o_elksbulletin .col-4 { width: 33.333333%; }
-.o_elksbulletin .col-5 { width: 41.666667%; }
-.o_elksbulletin .col-6 { width: 50.000000%; }
-.o_elksbulletin .col-7 { width: 58.333333%; }
-.o_elksbulletin .col-8 { width: 66.666667%; }
-.o_elksbulletin .col-9 { width: 75.000000%; }
-.o_elksbulletin .col-10 { width: 83.333333%; }
-.o_elksbulletin .col-11 { width: 91.666667%; }
-.o_elksbulletin .col-12 { width: 100.000000%; }
-.o_elksbulletin .col-sm-1 { width: 8.333333%; }
-.o_elksbulletin .col-sm-2 { width: 16.666667%; }
-.o_elksbulletin .col-sm-3 { width: 25.000000%; }
-.o_elksbulletin .col-sm-4 { width: 33.333333%; }
-.o_elksbulletin .col-sm-5 { width: 41.666667%; }
-.o_elksbulletin .col-sm-6 { width: 50.000000%; }
-.o_elksbulletin .col-sm-7 { width: 58.333333%; }
-.o_elksbulletin .col-sm-8 { width: 66.666667%; }
-.o_elksbulletin .col-sm-9 { width: 75.000000%; }
-.o_elksbulletin .col-sm-10 { width: 83.333333%; }
-.o_elksbulletin .col-sm-11 { width: 91.666667%; }
-.o_elksbulletin .col-sm-12 { width: 100.000000%; }
-.o_elksbulletin .col-md-1 { width: 8.333333%; }
-.o_elksbulletin .col-md-2 { width: 16.666667%; }
-.o_elksbulletin .col-md-3 { width: 25.000000%; }
-.o_elksbulletin .col-md-4 { width: 33.333333%; }
-.o_elksbulletin .col-md-5 { width: 41.666667%; }
-.o_elksbulletin .col-md-6 { width: 50.000000%; }
-.o_elksbulletin .col-md-7 { width: 58.333333%; }
-.o_elksbulletin .col-md-8 { width: 66.666667%; }
-.o_elksbulletin .col-md-9 { width: 75.000000%; }
-.o_elksbulletin .col-md-10 { width: 83.333333%; }
-.o_elksbulletin .col-md-11 { width: 91.666667%; }
-.o_elksbulletin .col-md-12 { width: 100.000000%; }
-.o_elksbulletin .col-lg-1 { width: 8.333333%; }
-.o_elksbulletin .col-lg-2 { width: 16.666667%; }
-.o_elksbulletin .col-lg-3 { width: 25.000000%; }
-.o_elksbulletin .col-lg-4 { width: 33.333333%; }
-.o_elksbulletin .col-lg-5 { width: 41.666667%; }
-.o_elksbulletin .col-lg-6 { width: 50.000000%; }
-.o_elksbulletin .col-lg-7 { width: 58.333333%; }
-.o_elksbulletin .col-lg-8 { width: 66.666667%; }
-.o_elksbulletin .col-lg-9 { width: 75.000000%; }
-.o_elksbulletin .col-lg-10 { width: 83.333333%; }
-.o_elksbulletin .col-lg-11 { width: 91.666667%; }
-.o_elksbulletin .col-lg-12 { width: 100.000000%; }
-.o_elksbulletin .col-xl-1 { width: 8.333333%; }
-.o_elksbulletin .col-xl-2 { width: 16.666667%; }
-.o_elksbulletin .col-xl-3 { width: 25.000000%; }
-.o_elksbulletin .col-xl-4 { width: 33.333333%; }
-.o_elksbulletin .col-xl-5 { width: 41.666667%; }
-.o_elksbulletin .col-xl-6 { width: 50.000000%; }
-.o_elksbulletin .col-xl-7 { width: 58.333333%; }
-.o_elksbulletin .col-xl-8 { width: 66.666667%; }
-.o_elksbulletin .col-xl-9 { width: 75.000000%; }
-.o_elksbulletin .col-xl-10 { width: 83.333333%; }
-.o_elksbulletin .col-xl-11 { width: 91.666667%; }
-.o_elksbulletin .col-xl-12 { width: 100.000000%; }
-.o_elksbulletin .col-xxl-1 { width: 8.333333%; }
-.o_elksbulletin .col-xxl-2 { width: 16.666667%; }
-.o_elksbulletin .col-xxl-3 { width: 25.000000%; }
-.o_elksbulletin .col-xxl-4 { width: 33.333333%; }
-.o_elksbulletin .col-xxl-5 { width: 41.666667%; }
-.o_elksbulletin .col-xxl-6 { width: 50.000000%; }
-.o_elksbulletin .col-xxl-7 { width: 58.333333%; }
-.o_elksbulletin .col-xxl-8 { width: 66.666667%; }
-.o_elksbulletin .col-xxl-9 { width: 75.000000%; }
-.o_elksbulletin .col-xxl-10 { width: 83.333333%; }
-.o_elksbulletin .col-xxl-11 { width: 91.666667%; }
-.o_elksbulletin .col-xxl-12 { width: 100.000000%; }
-.o_elksbulletin .o_grid_mode {
+.o_elks_newsletter .col-1 { width: 8.333333%; }
+.o_elks_newsletter .col-2 { width: 16.666667%; }
+.o_elks_newsletter .col-3 { width: 25.000000%; }
+.o_elks_newsletter .col-4 { width: 33.333333%; }
+.o_elks_newsletter .col-5 { width: 41.666667%; }
+.o_elks_newsletter .col-6 { width: 50.000000%; }
+.o_elks_newsletter .col-7 { width: 58.333333%; }
+.o_elks_newsletter .col-8 { width: 66.666667%; }
+.o_elks_newsletter .col-9 { width: 75.000000%; }
+.o_elks_newsletter .col-10 { width: 83.333333%; }
+.o_elks_newsletter .col-11 { width: 91.666667%; }
+.o_elks_newsletter .col-12 { width: 100.000000%; }
+.o_elks_newsletter .col-sm-1 { width: 8.333333%; }
+.o_elks_newsletter .col-sm-2 { width: 16.666667%; }
+.o_elks_newsletter .col-sm-3 { width: 25.000000%; }
+.o_elks_newsletter .col-sm-4 { width: 33.333333%; }
+.o_elks_newsletter .col-sm-5 { width: 41.666667%; }
+.o_elks_newsletter .col-sm-6 { width: 50.000000%; }
+.o_elks_newsletter .col-sm-7 { width: 58.333333%; }
+.o_elks_newsletter .col-sm-8 { width: 66.666667%; }
+.o_elks_newsletter .col-sm-9 { width: 75.000000%; }
+.o_elks_newsletter .col-sm-10 { width: 83.333333%; }
+.o_elks_newsletter .col-sm-11 { width: 91.666667%; }
+.o_elks_newsletter .col-sm-12 { width: 100.000000%; }
+.o_elks_newsletter .col-md-1 { width: 8.333333%; }
+.o_elks_newsletter .col-md-2 { width: 16.666667%; }
+.o_elks_newsletter .col-md-3 { width: 25.000000%; }
+.o_elks_newsletter .col-md-4 { width: 33.333333%; }
+.o_elks_newsletter .col-md-5 { width: 41.666667%; }
+.o_elks_newsletter .col-md-6 { width: 50.000000%; }
+.o_elks_newsletter .col-md-7 { width: 58.333333%; }
+.o_elks_newsletter .col-md-8 { width: 66.666667%; }
+.o_elks_newsletter .col-md-9 { width: 75.000000%; }
+.o_elks_newsletter .col-md-10 { width: 83.333333%; }
+.o_elks_newsletter .col-md-11 { width: 91.666667%; }
+.o_elks_newsletter .col-md-12 { width: 100.000000%; }
+.o_elks_newsletter .col-lg-1 { width: 8.333333%; }
+.o_elks_newsletter .col-lg-2 { width: 16.666667%; }
+.o_elks_newsletter .col-lg-3 { width: 25.000000%; }
+.o_elks_newsletter .col-lg-4 { width: 33.333333%; }
+.o_elks_newsletter .col-lg-5 { width: 41.666667%; }
+.o_elks_newsletter .col-lg-6 { width: 50.000000%; }
+.o_elks_newsletter .col-lg-7 { width: 58.333333%; }
+.o_elks_newsletter .col-lg-8 { width: 66.666667%; }
+.o_elks_newsletter .col-lg-9 { width: 75.000000%; }
+.o_elks_newsletter .col-lg-10 { width: 83.333333%; }
+.o_elks_newsletter .col-lg-11 { width: 91.666667%; }
+.o_elks_newsletter .col-lg-12 { width: 100.000000%; }
+.o_elks_newsletter .col-xl-1 { width: 8.333333%; }
+.o_elks_newsletter .col-xl-2 { width: 16.666667%; }
+.o_elks_newsletter .col-xl-3 { width: 25.000000%; }
+.o_elks_newsletter .col-xl-4 { width: 33.333333%; }
+.o_elks_newsletter .col-xl-5 { width: 41.666667%; }
+.o_elks_newsletter .col-xl-6 { width: 50.000000%; }
+.o_elks_newsletter .col-xl-7 { width: 58.333333%; }
+.o_elks_newsletter .col-xl-8 { width: 66.666667%; }
+.o_elks_newsletter .col-xl-9 { width: 75.000000%; }
+.o_elks_newsletter .col-xl-10 { width: 83.333333%; }
+.o_elks_newsletter .col-xl-11 { width: 91.666667%; }
+.o_elks_newsletter .col-xl-12 { width: 100.000000%; }
+.o_elks_newsletter .col-xxl-1 { width: 8.333333%; }
+.o_elks_newsletter .col-xxl-2 { width: 16.666667%; }
+.o_elks_newsletter .col-xxl-3 { width: 25.000000%; }
+.o_elks_newsletter .col-xxl-4 { width: 33.333333%; }
+.o_elks_newsletter .col-xxl-5 { width: 41.666667%; }
+.o_elks_newsletter .col-xxl-6 { width: 50.000000%; }
+.o_elks_newsletter .col-xxl-7 { width: 58.333333%; }
+.o_elks_newsletter .col-xxl-8 { width: 66.666667%; }
+.o_elks_newsletter .col-xxl-9 { width: 75.000000%; }
+.o_elks_newsletter .col-xxl-10 { width: 83.333333%; }
+.o_elks_newsletter .col-xxl-11 { width: 91.666667%; }
+.o_elks_newsletter .col-xxl-12 { width: 100.000000%; }
+.o_elks_newsletter .o_grid_mode {
     display: grid !important; grid-template-columns: repeat(12, 1fr) !important;
     grid-auto-rows: 50px; row-gap: 0; column-gap: 0;
 }
-.o_elksbulletin .o_grid_mode > .o_grid_item {
+.o_elks_newsletter .o_grid_mode > .o_grid_item {
     width: auto !important; min-width: 0; padding: 8px; margin: 0 !important;
 }
-.o_elksbulletin .o_elks_w_full { display: block; width: 100%; }
-.o_elksbulletin .o_elks_w_23 { display: inline-block; vertical-align: top; width: 66%; }
-.o_elksbulletin .o_elks_w_12 { display: inline-block; vertical-align: top; width: 49.6%; }
-.o_elksbulletin .o_elks_w_13 { display: inline-block; vertical-align: top; width: 33%; }
-.o_elksbulletin .text-start, .o_elksbulletin .text-left { text-align: left !important; }
-.o_elksbulletin .text-center { text-align: center !important; }
-.o_elksbulletin .text-end, .o_elksbulletin .text-right { text-align: right !important; }
-.o_elksbulletin .align-items-start { align-items: flex-start !important; }
-.o_elksbulletin .align-items-center { align-items: center !important; }
-.o_elksbulletin .align-items-end { align-items: flex-end !important; }
-.o_elksbulletin .align-self-center { align-self: center !important; }
-.o_elksbulletin .align-self-end { align-self: flex-end !important; }
-.o_elksbulletin .justify-content-center { justify-content: center !important; }
-.o_elksbulletin .d-flex { display: flex !important; }
-.o_elksbulletin .d-block { display: block !important; }
-.o_elksbulletin .d-none { display: none !important; }
-.o_elksbulletin .w-100 { width: 100% !important; }
-.o_elksbulletin .img-fluid { max-width: 100%; height: auto; }
-.o_elksbulletin .mx-auto { margin-left: auto !important; margin-right: auto !important; }
-.o_elksbulletin [style*="--box-border-radius"] {
+.o_elks_newsletter .o_elks_w_full { display: block; width: 100%; }
+.o_elks_newsletter .o_elks_w_23 { display: inline-block; vertical-align: top; width: 66%; }
+.o_elks_newsletter .o_elks_w_12 { display: inline-block; vertical-align: top; width: 49.6%; }
+.o_elks_newsletter .o_elks_w_13 { display: inline-block; vertical-align: top; width: 33%; }
+.o_elks_newsletter .text-start, .o_elks_newsletter .text-left { text-align: left !important; }
+.o_elks_newsletter .text-center { text-align: center !important; }
+.o_elks_newsletter .text-end, .o_elks_newsletter .text-right { text-align: right !important; }
+.o_elks_newsletter .align-items-start { align-items: flex-start !important; }
+.o_elks_newsletter .align-items-center { align-items: center !important; }
+.o_elks_newsletter .align-items-end { align-items: flex-end !important; }
+.o_elks_newsletter .align-self-center { align-self: center !important; }
+.o_elks_newsletter .align-self-end { align-self: flex-end !important; }
+.o_elks_newsletter .justify-content-center { justify-content: center !important; }
+.o_elks_newsletter .d-flex { display: flex !important; }
+.o_elks_newsletter .d-block { display: block !important; }
+.o_elks_newsletter .d-none { display: none !important; }
+.o_elks_newsletter .w-100 { width: 100% !important; }
+.o_elks_newsletter .img-fluid { max-width: 100%; height: auto; }
+.o_elks_newsletter .mx-auto { margin-left: auto !important; margin-right: auto !important; }
+.o_elks_newsletter [style*="--box-border-radius"] {
     border-radius: var(--box-border-top-left-radius, var(--box-border-radius))
         var(--box-border-top-right-radius, var(--box-border-radius))
         var(--box-border-bottom-right-radius, var(--box-border-radius))
         var(--box-border-bottom-left-radius, var(--box-border-radius)) !important;
 }
-.o_elksbulletin [style*="--box-border-width"] {
+.o_elks_newsletter [style*="--box-border-width"] {
     border-style: solid;
     border-width: var(--box-border-top-width, var(--box-border-width))
         var(--box-border-right-width, var(--box-border-width))
         var(--box-border-bottom-width, var(--box-border-width))
         var(--box-border-left-width, var(--box-border-width)) !important;
 }
-.o_elksbulletin .s_elks_masthead table { width: 100% !important; }
-.o_elksbulletin .s_elks_masthead { break-after: avoid; }
-.o_elksbulletin .s_elks_spacer { display: block; width: 100%; break-inside: avoid; }
-.o_elksbulletin .s_elks_calendar .elks-cal table.grid-table td.cell { height: 58px !important; font-size: 9px !important; padding: 2px 4px 3px !important; }
-.o_elksbulletin .s_elks_calendar .elks-cal .month,
-.o_elksbulletin .s_elks_calendar .elks-cal .year { font-size: 30px !important; }
-.o_elksbulletin .s_elks_calendar .elks-cal .deco { font-size: 15px !important; letter-spacing: 2px !important; }
-.o_elksbulletin .s_elks_calendar .elks-cal table.grid-table th { font-size: 11px !important; padding: 2px 0 3px !important; }
-.o_elksbulletin .s_elks_calendar .elks-cal .cell .num { font-size: 9px !important; }
-.o_elksbulletin .s_elks_calendar .elks-cal .cell .event-line,
-.o_elksbulletin .s_elks_calendar .elks-cal .cell .holiday,
-.o_elksbulletin .s_elks_calendar .elks-cal .cell .event-time,
-.o_elksbulletin .s_elks_calendar .elks-cal .cell .banner-headline,
-.o_elksbulletin .s_elks_calendar .elks-cal .cell .banner-sub { font-size: 8px !important; line-height: 1.15 !important; }
-.o_elksbulletin .s_elks_calendar .elks-cal .footer-note { font-size: 9px !important; margin-top: 3px !important; }
-.o_elksbulletin tr, .o_elksbulletin img { break-inside: avoid; }
-.o_elksbulletin .s_elks_photo_grid img { width: 88px; height: 88px; object-fit: cover; }
+.o_elks_newsletter .s_elks_masthead table { width: 100% !important; }
+.o_elks_newsletter .s_elks_masthead { break-after: avoid; }
+.o_elks_newsletter .s_elks_spacer { display: block; width: 100%; break-inside: avoid; }
+.o_elks_newsletter .s_elks_calendar .elks-cal table.grid-table td.cell { height: 58px !important; font-size: 9px !important; padding: 2px 4px 3px !important; }
+.o_elks_newsletter .s_elks_calendar .elks-cal .month,
+.o_elks_newsletter .s_elks_calendar .elks-cal .year { font-size: 30px !important; }
+.o_elks_newsletter .s_elks_calendar .elks-cal .deco { font-size: 15px !important; letter-spacing: 2px !important; }
+.o_elks_newsletter .s_elks_calendar .elks-cal table.grid-table th { font-size: 11px !important; padding: 2px 0 3px !important; }
+.o_elks_newsletter .s_elks_calendar .elks-cal .cell .num { font-size: 9px !important; }
+.o_elks_newsletter .s_elks_calendar .elks-cal .cell .event-line,
+.o_elks_newsletter .s_elks_calendar .elks-cal .cell .holiday,
+.o_elks_newsletter .s_elks_calendar .elks-cal .cell .event-time,
+.o_elks_newsletter .s_elks_calendar .elks-cal .cell .banner-headline,
+.o_elks_newsletter .s_elks_calendar .elks-cal .cell .banner-sub { font-size: 8px !important; line-height: 1.15 !important; }
+.o_elks_newsletter .s_elks_calendar .elks-cal .footer-note { font-size: 9px !important; margin-top: 3px !important; }
+.o_elks_newsletter tr, .o_elks_newsletter img { break-inside: avoid; }
+.o_elks_newsletter .s_elks_photo_grid img { width: 88px; height: 88px; object-fit: cover; }
 /* These are print-only affordances; they must not hide the editor handles. */
 @media print {
     html, body { margin: 0 !important; padding: 0 !important; background: white !important; }
-    .o_elksbulletin, .o_elksbulletin.o_layout {
+    .o_elks_newsletter, .o_elks_newsletter.o_layout {
         width: 100% !important; max-width: none !important;
         margin: 0 !important; padding: 0 !important; min-height: 0 !important;
         box-shadow: none !important; background: white;
     }
-    .o_elksbulletin::after, .o_elksbulletin .o_elks_pin_bottom::after { display: none !important; }
-    .o_elksbulletin .s_elks_page_break, .o_elksbulletin .s_elks_page_break_inline {
+    .o_elks_newsletter::after, .o_elks_newsletter .o_elks_pin_bottom::after { display: none !important; }
+    .o_elks_newsletter .s_elks_page_break, .o_elks_newsletter .s_elks_page_break_inline {
         display: block !important; break-after: page; page-break-after: always;
         height: 0 !important; min-height: 0 !important;
         margin: 0 !important; padding: 0 !important; border: 0 !important;
     }
-    .o_elksbulletin .s_elks_page_break_line,
-    .o_elksbulletin .s_elks_spacer_label { display: none !important; }
+    .o_elks_newsletter .s_elks_page_break_line,
+    .o_elks_newsletter .s_elks_spacer_label { display: none !important; }
 }
-.o_elksbulletin .pt0 { padding-top: 0px !important; }
-.o_elksbulletin .pb0 { padding-bottom: 0px !important; }
-.o_elksbulletin .mt0 { margin-top: 0px !important; }
-.o_elksbulletin .mb0 { margin-bottom: 0px !important; }
-.o_elksbulletin .pt4 { padding-top: 4px !important; }
-.o_elksbulletin .pb4 { padding-bottom: 4px !important; }
-.o_elksbulletin .mt4 { margin-top: 4px !important; }
-.o_elksbulletin .mb4 { margin-bottom: 4px !important; }
-.o_elksbulletin .pt8 { padding-top: 8px !important; }
-.o_elksbulletin .pb8 { padding-bottom: 8px !important; }
-.o_elksbulletin .mt8 { margin-top: 8px !important; }
-.o_elksbulletin .mb8 { margin-bottom: 8px !important; }
-.o_elksbulletin .pt12 { padding-top: 12px !important; }
-.o_elksbulletin .pb12 { padding-bottom: 12px !important; }
-.o_elksbulletin .mt12 { margin-top: 12px !important; }
-.o_elksbulletin .mb12 { margin-bottom: 12px !important; }
-.o_elksbulletin .pt16 { padding-top: 16px !important; }
-.o_elksbulletin .pb16 { padding-bottom: 16px !important; }
-.o_elksbulletin .mt16 { margin-top: 16px !important; }
-.o_elksbulletin .mb16 { margin-bottom: 16px !important; }
-.o_elksbulletin .pt20 { padding-top: 20px !important; }
-.o_elksbulletin .pb20 { padding-bottom: 20px !important; }
-.o_elksbulletin .mt20 { margin-top: 20px !important; }
-.o_elksbulletin .mb20 { margin-bottom: 20px !important; }
-.o_elksbulletin .pt24 { padding-top: 24px !important; }
-.o_elksbulletin .pb24 { padding-bottom: 24px !important; }
-.o_elksbulletin .mt24 { margin-top: 24px !important; }
-.o_elksbulletin .mb24 { margin-bottom: 24px !important; }
-.o_elksbulletin .pt28 { padding-top: 28px !important; }
-.o_elksbulletin .pb28 { padding-bottom: 28px !important; }
-.o_elksbulletin .mt28 { margin-top: 28px !important; }
-.o_elksbulletin .mb28 { margin-bottom: 28px !important; }
-.o_elksbulletin .pt32 { padding-top: 32px !important; }
-.o_elksbulletin .pb32 { padding-bottom: 32px !important; }
-.o_elksbulletin .mt32 { margin-top: 32px !important; }
-.o_elksbulletin .mb32 { margin-bottom: 32px !important; }
-.o_elksbulletin .pt36 { padding-top: 36px !important; }
-.o_elksbulletin .pb36 { padding-bottom: 36px !important; }
-.o_elksbulletin .mt36 { margin-top: 36px !important; }
-.o_elksbulletin .mb36 { margin-bottom: 36px !important; }
-.o_elksbulletin .pt40 { padding-top: 40px !important; }
-.o_elksbulletin .pb40 { padding-bottom: 40px !important; }
-.o_elksbulletin .mt40 { margin-top: 40px !important; }
-.o_elksbulletin .mb40 { margin-bottom: 40px !important; }
-.o_elksbulletin .pt44 { padding-top: 44px !important; }
-.o_elksbulletin .pb44 { padding-bottom: 44px !important; }
-.o_elksbulletin .mt44 { margin-top: 44px !important; }
-.o_elksbulletin .mb44 { margin-bottom: 44px !important; }
-.o_elksbulletin .pt48 { padding-top: 48px !important; }
-.o_elksbulletin .pb48 { padding-bottom: 48px !important; }
-.o_elksbulletin .mt48 { margin-top: 48px !important; }
-.o_elksbulletin .mb48 { margin-bottom: 48px !important; }
-.o_elksbulletin .pt52 { padding-top: 52px !important; }
-.o_elksbulletin .pb52 { padding-bottom: 52px !important; }
-.o_elksbulletin .mt52 { margin-top: 52px !important; }
-.o_elksbulletin .mb52 { margin-bottom: 52px !important; }
-.o_elksbulletin .pt56 { padding-top: 56px !important; }
-.o_elksbulletin .pb56 { padding-bottom: 56px !important; }
-.o_elksbulletin .mt56 { margin-top: 56px !important; }
-.o_elksbulletin .mb56 { margin-bottom: 56px !important; }
-.o_elksbulletin .pt60 { padding-top: 60px !important; }
-.o_elksbulletin .pb60 { padding-bottom: 60px !important; }
-.o_elksbulletin .mt60 { margin-top: 60px !important; }
-.o_elksbulletin .mb60 { margin-bottom: 60px !important; }
-.o_elksbulletin .pt64 { padding-top: 64px !important; }
-.o_elksbulletin .pb64 { padding-bottom: 64px !important; }
-.o_elksbulletin .mt64 { margin-top: 64px !important; }
-.o_elksbulletin .mb64 { margin-bottom: 64px !important; }
-.o_elksbulletin .pt68 { padding-top: 68px !important; }
-.o_elksbulletin .pb68 { padding-bottom: 68px !important; }
-.o_elksbulletin .mt68 { margin-top: 68px !important; }
-.o_elksbulletin .mb68 { margin-bottom: 68px !important; }
-.o_elksbulletin .pt72 { padding-top: 72px !important; }
-.o_elksbulletin .pb72 { padding-bottom: 72px !important; }
-.o_elksbulletin .mt72 { margin-top: 72px !important; }
-.o_elksbulletin .mb72 { margin-bottom: 72px !important; }
-.o_elksbulletin .pt76 { padding-top: 76px !important; }
-.o_elksbulletin .pb76 { padding-bottom: 76px !important; }
-.o_elksbulletin .mt76 { margin-top: 76px !important; }
-.o_elksbulletin .mb76 { margin-bottom: 76px !important; }
-.o_elksbulletin .pt80 { padding-top: 80px !important; }
-.o_elksbulletin .pb80 { padding-bottom: 80px !important; }
-.o_elksbulletin .mt80 { margin-top: 80px !important; }
-.o_elksbulletin .mb80 { margin-bottom: 80px !important; }
-.o_elksbulletin .pt84 { padding-top: 84px !important; }
-.o_elksbulletin .pb84 { padding-bottom: 84px !important; }
-.o_elksbulletin .mt84 { margin-top: 84px !important; }
-.o_elksbulletin .mb84 { margin-bottom: 84px !important; }
-.o_elksbulletin .pt88 { padding-top: 88px !important; }
-.o_elksbulletin .pb88 { padding-bottom: 88px !important; }
-.o_elksbulletin .mt88 { margin-top: 88px !important; }
-.o_elksbulletin .mb88 { margin-bottom: 88px !important; }
-.o_elksbulletin .pt92 { padding-top: 92px !important; }
-.o_elksbulletin .pb92 { padding-bottom: 92px !important; }
-.o_elksbulletin .mt92 { margin-top: 92px !important; }
-.o_elksbulletin .mb92 { margin-bottom: 92px !important; }
-.o_elksbulletin .pt96 { padding-top: 96px !important; }
-.o_elksbulletin .pb96 { padding-bottom: 96px !important; }
-.o_elksbulletin .mt96 { margin-top: 96px !important; }
-.o_elksbulletin .mb96 { margin-bottom: 96px !important; }
-.o_elksbulletin .pt100 { padding-top: 100px !important; }
-.o_elksbulletin .pb100 { padding-bottom: 100px !important; }
-.o_elksbulletin .mt100 { margin-top: 100px !important; }
-.o_elksbulletin .mb100 { margin-bottom: 100px !important; }
-.o_elksbulletin .pt104 { padding-top: 104px !important; }
-.o_elksbulletin .pb104 { padding-bottom: 104px !important; }
-.o_elksbulletin .mt104 { margin-top: 104px !important; }
-.o_elksbulletin .mb104 { margin-bottom: 104px !important; }
-.o_elksbulletin .pt108 { padding-top: 108px !important; }
-.o_elksbulletin .pb108 { padding-bottom: 108px !important; }
-.o_elksbulletin .mt108 { margin-top: 108px !important; }
-.o_elksbulletin .mb108 { margin-bottom: 108px !important; }
-.o_elksbulletin .pt112 { padding-top: 112px !important; }
-.o_elksbulletin .pb112 { padding-bottom: 112px !important; }
-.o_elksbulletin .mt112 { margin-top: 112px !important; }
-.o_elksbulletin .mb112 { margin-bottom: 112px !important; }
-.o_elksbulletin .pt116 { padding-top: 116px !important; }
-.o_elksbulletin .pb116 { padding-bottom: 116px !important; }
-.o_elksbulletin .mt116 { margin-top: 116px !important; }
-.o_elksbulletin .mb116 { margin-bottom: 116px !important; }
-.o_elksbulletin .pt120 { padding-top: 120px !important; }
-.o_elksbulletin .pb120 { padding-bottom: 120px !important; }
-.o_elksbulletin .mt120 { margin-top: 120px !important; }
-.o_elksbulletin .mb120 { margin-bottom: 120px !important; }
-.o_elksbulletin .pt124 { padding-top: 124px !important; }
-.o_elksbulletin .pb124 { padding-bottom: 124px !important; }
-.o_elksbulletin .mt124 { margin-top: 124px !important; }
-.o_elksbulletin .mb124 { margin-bottom: 124px !important; }
-.o_elksbulletin .pt128 { padding-top: 128px !important; }
-.o_elksbulletin .pb128 { padding-bottom: 128px !important; }
-.o_elksbulletin .mt128 { margin-top: 128px !important; }
-.o_elksbulletin .mb128 { margin-bottom: 128px !important; }
-.o_elksbulletin .pt132 { padding-top: 132px !important; }
-.o_elksbulletin .pb132 { padding-bottom: 132px !important; }
-.o_elksbulletin .mt132 { margin-top: 132px !important; }
-.o_elksbulletin .mb132 { margin-bottom: 132px !important; }
-.o_elksbulletin .pt136 { padding-top: 136px !important; }
-.o_elksbulletin .pb136 { padding-bottom: 136px !important; }
-.o_elksbulletin .mt136 { margin-top: 136px !important; }
-.o_elksbulletin .mb136 { margin-bottom: 136px !important; }
-.o_elksbulletin .pt140 { padding-top: 140px !important; }
-.o_elksbulletin .pb140 { padding-bottom: 140px !important; }
-.o_elksbulletin .mt140 { margin-top: 140px !important; }
-.o_elksbulletin .mb140 { margin-bottom: 140px !important; }
-.o_elksbulletin .pt144 { padding-top: 144px !important; }
-.o_elksbulletin .pb144 { padding-bottom: 144px !important; }
-.o_elksbulletin .mt144 { margin-top: 144px !important; }
-.o_elksbulletin .mb144 { margin-bottom: 144px !important; }
-.o_elksbulletin .pt148 { padding-top: 148px !important; }
-.o_elksbulletin .pb148 { padding-bottom: 148px !important; }
-.o_elksbulletin .mt148 { margin-top: 148px !important; }
-.o_elksbulletin .mb148 { margin-bottom: 148px !important; }
-.o_elksbulletin .pt152 { padding-top: 152px !important; }
-.o_elksbulletin .pb152 { padding-bottom: 152px !important; }
-.o_elksbulletin .mt152 { margin-top: 152px !important; }
-.o_elksbulletin .mb152 { margin-bottom: 152px !important; }
-.o_elksbulletin .pt156 { padding-top: 156px !important; }
-.o_elksbulletin .pb156 { padding-bottom: 156px !important; }
-.o_elksbulletin .mt156 { margin-top: 156px !important; }
-.o_elksbulletin .mb156 { margin-bottom: 156px !important; }
-.o_elksbulletin .pt160 { padding-top: 160px !important; }
-.o_elksbulletin .pb160 { padding-bottom: 160px !important; }
-.o_elksbulletin .mt160 { margin-top: 160px !important; }
-.o_elksbulletin .mb160 { margin-bottom: 160px !important; }
-.o_elksbulletin .pt164 { padding-top: 164px !important; }
-.o_elksbulletin .pb164 { padding-bottom: 164px !important; }
-.o_elksbulletin .mt164 { margin-top: 164px !important; }
-.o_elksbulletin .mb164 { margin-bottom: 164px !important; }
-.o_elksbulletin .pt168 { padding-top: 168px !important; }
-.o_elksbulletin .pb168 { padding-bottom: 168px !important; }
-.o_elksbulletin .mt168 { margin-top: 168px !important; }
-.o_elksbulletin .mb168 { margin-bottom: 168px !important; }
-.o_elksbulletin .pt172 { padding-top: 172px !important; }
-.o_elksbulletin .pb172 { padding-bottom: 172px !important; }
-.o_elksbulletin .mt172 { margin-top: 172px !important; }
-.o_elksbulletin .mb172 { margin-bottom: 172px !important; }
-.o_elksbulletin .pt176 { padding-top: 176px !important; }
-.o_elksbulletin .pb176 { padding-bottom: 176px !important; }
-.o_elksbulletin .mt176 { margin-top: 176px !important; }
-.o_elksbulletin .mb176 { margin-bottom: 176px !important; }
-.o_elksbulletin .pt180 { padding-top: 180px !important; }
-.o_elksbulletin .pb180 { padding-bottom: 180px !important; }
-.o_elksbulletin .mt180 { margin-top: 180px !important; }
-.o_elksbulletin .mb180 { margin-bottom: 180px !important; }
-.o_elksbulletin .pt184 { padding-top: 184px !important; }
-.o_elksbulletin .pb184 { padding-bottom: 184px !important; }
-.o_elksbulletin .mt184 { margin-top: 184px !important; }
-.o_elksbulletin .mb184 { margin-bottom: 184px !important; }
-.o_elksbulletin .pt188 { padding-top: 188px !important; }
-.o_elksbulletin .pb188 { padding-bottom: 188px !important; }
-.o_elksbulletin .mt188 { margin-top: 188px !important; }
-.o_elksbulletin .mb188 { margin-bottom: 188px !important; }
-.o_elksbulletin .pt192 { padding-top: 192px !important; }
-.o_elksbulletin .pb192 { padding-bottom: 192px !important; }
-.o_elksbulletin .mt192 { margin-top: 192px !important; }
-.o_elksbulletin .mb192 { margin-bottom: 192px !important; }
-.o_elksbulletin .pt196 { padding-top: 196px !important; }
-.o_elksbulletin .pb196 { padding-bottom: 196px !important; }
-.o_elksbulletin .mt196 { margin-top: 196px !important; }
-.o_elksbulletin .mb196 { margin-bottom: 196px !important; }
-.o_elksbulletin .pt200 { padding-top: 200px !important; }
-.o_elksbulletin .pb200 { padding-bottom: 200px !important; }
-.o_elksbulletin .mt200 { margin-top: 200px !important; }
-.o_elksbulletin .mb200 { margin-bottom: 200px !important; }
-.o_elksbulletin .pt204 { padding-top: 204px !important; }
-.o_elksbulletin .pb204 { padding-bottom: 204px !important; }
-.o_elksbulletin .mt204 { margin-top: 204px !important; }
-.o_elksbulletin .mb204 { margin-bottom: 204px !important; }
-.o_elksbulletin .pt208 { padding-top: 208px !important; }
-.o_elksbulletin .pb208 { padding-bottom: 208px !important; }
-.o_elksbulletin .mt208 { margin-top: 208px !important; }
-.o_elksbulletin .mb208 { margin-bottom: 208px !important; }
-.o_elksbulletin .pt212 { padding-top: 212px !important; }
-.o_elksbulletin .pb212 { padding-bottom: 212px !important; }
-.o_elksbulletin .mt212 { margin-top: 212px !important; }
-.o_elksbulletin .mb212 { margin-bottom: 212px !important; }
-.o_elksbulletin .pt216 { padding-top: 216px !important; }
-.o_elksbulletin .pb216 { padding-bottom: 216px !important; }
-.o_elksbulletin .mt216 { margin-top: 216px !important; }
-.o_elksbulletin .mb216 { margin-bottom: 216px !important; }
-.o_elksbulletin .pt220 { padding-top: 220px !important; }
-.o_elksbulletin .pb220 { padding-bottom: 220px !important; }
-.o_elksbulletin .mt220 { margin-top: 220px !important; }
-.o_elksbulletin .mb220 { margin-bottom: 220px !important; }
-.o_elksbulletin .pt224 { padding-top: 224px !important; }
-.o_elksbulletin .pb224 { padding-bottom: 224px !important; }
-.o_elksbulletin .mt224 { margin-top: 224px !important; }
-.o_elksbulletin .mb224 { margin-bottom: 224px !important; }
-.o_elksbulletin .pt228 { padding-top: 228px !important; }
-.o_elksbulletin .pb228 { padding-bottom: 228px !important; }
-.o_elksbulletin .mt228 { margin-top: 228px !important; }
-.o_elksbulletin .mb228 { margin-bottom: 228px !important; }
-.o_elksbulletin .pt232 { padding-top: 232px !important; }
-.o_elksbulletin .pb232 { padding-bottom: 232px !important; }
-.o_elksbulletin .mt232 { margin-top: 232px !important; }
-.o_elksbulletin .mb232 { margin-bottom: 232px !important; }
-.o_elksbulletin .pt236 { padding-top: 236px !important; }
-.o_elksbulletin .pb236 { padding-bottom: 236px !important; }
-.o_elksbulletin .mt236 { margin-top: 236px !important; }
-.o_elksbulletin .mb236 { margin-bottom: 236px !important; }
-.o_elksbulletin .pt240 { padding-top: 240px !important; }
-.o_elksbulletin .pb240 { padding-bottom: 240px !important; }
-.o_elksbulletin .mt240 { margin-top: 240px !important; }
-.o_elksbulletin .mb240 { margin-bottom: 240px !important; }
-.o_elksbulletin .pt244 { padding-top: 244px !important; }
-.o_elksbulletin .pb244 { padding-bottom: 244px !important; }
-.o_elksbulletin .mt244 { margin-top: 244px !important; }
-.o_elksbulletin .mb244 { margin-bottom: 244px !important; }
-.o_elksbulletin .pt248 { padding-top: 248px !important; }
-.o_elksbulletin .pb248 { padding-bottom: 248px !important; }
-.o_elksbulletin .mt248 { margin-top: 248px !important; }
-.o_elksbulletin .mb248 { margin-bottom: 248px !important; }
-.o_elksbulletin .pt252 { padding-top: 252px !important; }
-.o_elksbulletin .pb252 { padding-bottom: 252px !important; }
-.o_elksbulletin .mt252 { margin-top: 252px !important; }
-.o_elksbulletin .mb252 { margin-bottom: 252px !important; }
-.o_elksbulletin .pt256 { padding-top: 256px !important; }
-.o_elksbulletin .pb256 { padding-bottom: 256px !important; }
-.o_elksbulletin .mt256 { margin-top: 256px !important; }
-.o_elksbulletin .mb256 { margin-bottom: 256px !important; }
+.o_elks_newsletter .pt0 { padding-top: 0px !important; }
+.o_elks_newsletter .pb0 { padding-bottom: 0px !important; }
+.o_elks_newsletter .mt0 { margin-top: 0px !important; }
+.o_elks_newsletter .mb0 { margin-bottom: 0px !important; }
+.o_elks_newsletter .pt4 { padding-top: 4px !important; }
+.o_elks_newsletter .pb4 { padding-bottom: 4px !important; }
+.o_elks_newsletter .mt4 { margin-top: 4px !important; }
+.o_elks_newsletter .mb4 { margin-bottom: 4px !important; }
+.o_elks_newsletter .pt8 { padding-top: 8px !important; }
+.o_elks_newsletter .pb8 { padding-bottom: 8px !important; }
+.o_elks_newsletter .mt8 { margin-top: 8px !important; }
+.o_elks_newsletter .mb8 { margin-bottom: 8px !important; }
+.o_elks_newsletter .pt12 { padding-top: 12px !important; }
+.o_elks_newsletter .pb12 { padding-bottom: 12px !important; }
+.o_elks_newsletter .mt12 { margin-top: 12px !important; }
+.o_elks_newsletter .mb12 { margin-bottom: 12px !important; }
+.o_elks_newsletter .pt16 { padding-top: 16px !important; }
+.o_elks_newsletter .pb16 { padding-bottom: 16px !important; }
+.o_elks_newsletter .mt16 { margin-top: 16px !important; }
+.o_elks_newsletter .mb16 { margin-bottom: 16px !important; }
+.o_elks_newsletter .pt20 { padding-top: 20px !important; }
+.o_elks_newsletter .pb20 { padding-bottom: 20px !important; }
+.o_elks_newsletter .mt20 { margin-top: 20px !important; }
+.o_elks_newsletter .mb20 { margin-bottom: 20px !important; }
+.o_elks_newsletter .pt24 { padding-top: 24px !important; }
+.o_elks_newsletter .pb24 { padding-bottom: 24px !important; }
+.o_elks_newsletter .mt24 { margin-top: 24px !important; }
+.o_elks_newsletter .mb24 { margin-bottom: 24px !important; }
+.o_elks_newsletter .pt28 { padding-top: 28px !important; }
+.o_elks_newsletter .pb28 { padding-bottom: 28px !important; }
+.o_elks_newsletter .mt28 { margin-top: 28px !important; }
+.o_elks_newsletter .mb28 { margin-bottom: 28px !important; }
+.o_elks_newsletter .pt32 { padding-top: 32px !important; }
+.o_elks_newsletter .pb32 { padding-bottom: 32px !important; }
+.o_elks_newsletter .mt32 { margin-top: 32px !important; }
+.o_elks_newsletter .mb32 { margin-bottom: 32px !important; }
+.o_elks_newsletter .pt36 { padding-top: 36px !important; }
+.o_elks_newsletter .pb36 { padding-bottom: 36px !important; }
+.o_elks_newsletter .mt36 { margin-top: 36px !important; }
+.o_elks_newsletter .mb36 { margin-bottom: 36px !important; }
+.o_elks_newsletter .pt40 { padding-top: 40px !important; }
+.o_elks_newsletter .pb40 { padding-bottom: 40px !important; }
+.o_elks_newsletter .mt40 { margin-top: 40px !important; }
+.o_elks_newsletter .mb40 { margin-bottom: 40px !important; }
+.o_elks_newsletter .pt44 { padding-top: 44px !important; }
+.o_elks_newsletter .pb44 { padding-bottom: 44px !important; }
+.o_elks_newsletter .mt44 { margin-top: 44px !important; }
+.o_elks_newsletter .mb44 { margin-bottom: 44px !important; }
+.o_elks_newsletter .pt48 { padding-top: 48px !important; }
+.o_elks_newsletter .pb48 { padding-bottom: 48px !important; }
+.o_elks_newsletter .mt48 { margin-top: 48px !important; }
+.o_elks_newsletter .mb48 { margin-bottom: 48px !important; }
+.o_elks_newsletter .pt52 { padding-top: 52px !important; }
+.o_elks_newsletter .pb52 { padding-bottom: 52px !important; }
+.o_elks_newsletter .mt52 { margin-top: 52px !important; }
+.o_elks_newsletter .mb52 { margin-bottom: 52px !important; }
+.o_elks_newsletter .pt56 { padding-top: 56px !important; }
+.o_elks_newsletter .pb56 { padding-bottom: 56px !important; }
+.o_elks_newsletter .mt56 { margin-top: 56px !important; }
+.o_elks_newsletter .mb56 { margin-bottom: 56px !important; }
+.o_elks_newsletter .pt60 { padding-top: 60px !important; }
+.o_elks_newsletter .pb60 { padding-bottom: 60px !important; }
+.o_elks_newsletter .mt60 { margin-top: 60px !important; }
+.o_elks_newsletter .mb60 { margin-bottom: 60px !important; }
+.o_elks_newsletter .pt64 { padding-top: 64px !important; }
+.o_elks_newsletter .pb64 { padding-bottom: 64px !important; }
+.o_elks_newsletter .mt64 { margin-top: 64px !important; }
+.o_elks_newsletter .mb64 { margin-bottom: 64px !important; }
+.o_elks_newsletter .pt68 { padding-top: 68px !important; }
+.o_elks_newsletter .pb68 { padding-bottom: 68px !important; }
+.o_elks_newsletter .mt68 { margin-top: 68px !important; }
+.o_elks_newsletter .mb68 { margin-bottom: 68px !important; }
+.o_elks_newsletter .pt72 { padding-top: 72px !important; }
+.o_elks_newsletter .pb72 { padding-bottom: 72px !important; }
+.o_elks_newsletter .mt72 { margin-top: 72px !important; }
+.o_elks_newsletter .mb72 { margin-bottom: 72px !important; }
+.o_elks_newsletter .pt76 { padding-top: 76px !important; }
+.o_elks_newsletter .pb76 { padding-bottom: 76px !important; }
+.o_elks_newsletter .mt76 { margin-top: 76px !important; }
+.o_elks_newsletter .mb76 { margin-bottom: 76px !important; }
+.o_elks_newsletter .pt80 { padding-top: 80px !important; }
+.o_elks_newsletter .pb80 { padding-bottom: 80px !important; }
+.o_elks_newsletter .mt80 { margin-top: 80px !important; }
+.o_elks_newsletter .mb80 { margin-bottom: 80px !important; }
+.o_elks_newsletter .pt84 { padding-top: 84px !important; }
+.o_elks_newsletter .pb84 { padding-bottom: 84px !important; }
+.o_elks_newsletter .mt84 { margin-top: 84px !important; }
+.o_elks_newsletter .mb84 { margin-bottom: 84px !important; }
+.o_elks_newsletter .pt88 { padding-top: 88px !important; }
+.o_elks_newsletter .pb88 { padding-bottom: 88px !important; }
+.o_elks_newsletter .mt88 { margin-top: 88px !important; }
+.o_elks_newsletter .mb88 { margin-bottom: 88px !important; }
+.o_elks_newsletter .pt92 { padding-top: 92px !important; }
+.o_elks_newsletter .pb92 { padding-bottom: 92px !important; }
+.o_elks_newsletter .mt92 { margin-top: 92px !important; }
+.o_elks_newsletter .mb92 { margin-bottom: 92px !important; }
+.o_elks_newsletter .pt96 { padding-top: 96px !important; }
+.o_elks_newsletter .pb96 { padding-bottom: 96px !important; }
+.o_elks_newsletter .mt96 { margin-top: 96px !important; }
+.o_elks_newsletter .mb96 { margin-bottom: 96px !important; }
+.o_elks_newsletter .pt100 { padding-top: 100px !important; }
+.o_elks_newsletter .pb100 { padding-bottom: 100px !important; }
+.o_elks_newsletter .mt100 { margin-top: 100px !important; }
+.o_elks_newsletter .mb100 { margin-bottom: 100px !important; }
+.o_elks_newsletter .pt104 { padding-top: 104px !important; }
+.o_elks_newsletter .pb104 { padding-bottom: 104px !important; }
+.o_elks_newsletter .mt104 { margin-top: 104px !important; }
+.o_elks_newsletter .mb104 { margin-bottom: 104px !important; }
+.o_elks_newsletter .pt108 { padding-top: 108px !important; }
+.o_elks_newsletter .pb108 { padding-bottom: 108px !important; }
+.o_elks_newsletter .mt108 { margin-top: 108px !important; }
+.o_elks_newsletter .mb108 { margin-bottom: 108px !important; }
+.o_elks_newsletter .pt112 { padding-top: 112px !important; }
+.o_elks_newsletter .pb112 { padding-bottom: 112px !important; }
+.o_elks_newsletter .mt112 { margin-top: 112px !important; }
+.o_elks_newsletter .mb112 { margin-bottom: 112px !important; }
+.o_elks_newsletter .pt116 { padding-top: 116px !important; }
+.o_elks_newsletter .pb116 { padding-bottom: 116px !important; }
+.o_elks_newsletter .mt116 { margin-top: 116px !important; }
+.o_elks_newsletter .mb116 { margin-bottom: 116px !important; }
+.o_elks_newsletter .pt120 { padding-top: 120px !important; }
+.o_elks_newsletter .pb120 { padding-bottom: 120px !important; }
+.o_elks_newsletter .mt120 { margin-top: 120px !important; }
+.o_elks_newsletter .mb120 { margin-bottom: 120px !important; }
+.o_elks_newsletter .pt124 { padding-top: 124px !important; }
+.o_elks_newsletter .pb124 { padding-bottom: 124px !important; }
+.o_elks_newsletter .mt124 { margin-top: 124px !important; }
+.o_elks_newsletter .mb124 { margin-bottom: 124px !important; }
+.o_elks_newsletter .pt128 { padding-top: 128px !important; }
+.o_elks_newsletter .pb128 { padding-bottom: 128px !important; }
+.o_elks_newsletter .mt128 { margin-top: 128px !important; }
+.o_elks_newsletter .mb128 { margin-bottom: 128px !important; }
+.o_elks_newsletter .pt132 { padding-top: 132px !important; }
+.o_elks_newsletter .pb132 { padding-bottom: 132px !important; }
+.o_elks_newsletter .mt132 { margin-top: 132px !important; }
+.o_elks_newsletter .mb132 { margin-bottom: 132px !important; }
+.o_elks_newsletter .pt136 { padding-top: 136px !important; }
+.o_elks_newsletter .pb136 { padding-bottom: 136px !important; }
+.o_elks_newsletter .mt136 { margin-top: 136px !important; }
+.o_elks_newsletter .mb136 { margin-bottom: 136px !important; }
+.o_elks_newsletter .pt140 { padding-top: 140px !important; }
+.o_elks_newsletter .pb140 { padding-bottom: 140px !important; }
+.o_elks_newsletter .mt140 { margin-top: 140px !important; }
+.o_elks_newsletter .mb140 { margin-bottom: 140px !important; }
+.o_elks_newsletter .pt144 { padding-top: 144px !important; }
+.o_elks_newsletter .pb144 { padding-bottom: 144px !important; }
+.o_elks_newsletter .mt144 { margin-top: 144px !important; }
+.o_elks_newsletter .mb144 { margin-bottom: 144px !important; }
+.o_elks_newsletter .pt148 { padding-top: 148px !important; }
+.o_elks_newsletter .pb148 { padding-bottom: 148px !important; }
+.o_elks_newsletter .mt148 { margin-top: 148px !important; }
+.o_elks_newsletter .mb148 { margin-bottom: 148px !important; }
+.o_elks_newsletter .pt152 { padding-top: 152px !important; }
+.o_elks_newsletter .pb152 { padding-bottom: 152px !important; }
+.o_elks_newsletter .mt152 { margin-top: 152px !important; }
+.o_elks_newsletter .mb152 { margin-bottom: 152px !important; }
+.o_elks_newsletter .pt156 { padding-top: 156px !important; }
+.o_elks_newsletter .pb156 { padding-bottom: 156px !important; }
+.o_elks_newsletter .mt156 { margin-top: 156px !important; }
+.o_elks_newsletter .mb156 { margin-bottom: 156px !important; }
+.o_elks_newsletter .pt160 { padding-top: 160px !important; }
+.o_elks_newsletter .pb160 { padding-bottom: 160px !important; }
+.o_elks_newsletter .mt160 { margin-top: 160px !important; }
+.o_elks_newsletter .mb160 { margin-bottom: 160px !important; }
+.o_elks_newsletter .pt164 { padding-top: 164px !important; }
+.o_elks_newsletter .pb164 { padding-bottom: 164px !important; }
+.o_elks_newsletter .mt164 { margin-top: 164px !important; }
+.o_elks_newsletter .mb164 { margin-bottom: 164px !important; }
+.o_elks_newsletter .pt168 { padding-top: 168px !important; }
+.o_elks_newsletter .pb168 { padding-bottom: 168px !important; }
+.o_elks_newsletter .mt168 { margin-top: 168px !important; }
+.o_elks_newsletter .mb168 { margin-bottom: 168px !important; }
+.o_elks_newsletter .pt172 { padding-top: 172px !important; }
+.o_elks_newsletter .pb172 { padding-bottom: 172px !important; }
+.o_elks_newsletter .mt172 { margin-top: 172px !important; }
+.o_elks_newsletter .mb172 { margin-bottom: 172px !important; }
+.o_elks_newsletter .pt176 { padding-top: 176px !important; }
+.o_elks_newsletter .pb176 { padding-bottom: 176px !important; }
+.o_elks_newsletter .mt176 { margin-top: 176px !important; }
+.o_elks_newsletter .mb176 { margin-bottom: 176px !important; }
+.o_elks_newsletter .pt180 { padding-top: 180px !important; }
+.o_elks_newsletter .pb180 { padding-bottom: 180px !important; }
+.o_elks_newsletter .mt180 { margin-top: 180px !important; }
+.o_elks_newsletter .mb180 { margin-bottom: 180px !important; }
+.o_elks_newsletter .pt184 { padding-top: 184px !important; }
+.o_elks_newsletter .pb184 { padding-bottom: 184px !important; }
+.o_elks_newsletter .mt184 { margin-top: 184px !important; }
+.o_elks_newsletter .mb184 { margin-bottom: 184px !important; }
+.o_elks_newsletter .pt188 { padding-top: 188px !important; }
+.o_elks_newsletter .pb188 { padding-bottom: 188px !important; }
+.o_elks_newsletter .mt188 { margin-top: 188px !important; }
+.o_elks_newsletter .mb188 { margin-bottom: 188px !important; }
+.o_elks_newsletter .pt192 { padding-top: 192px !important; }
+.o_elks_newsletter .pb192 { padding-bottom: 192px !important; }
+.o_elks_newsletter .mt192 { margin-top: 192px !important; }
+.o_elks_newsletter .mb192 { margin-bottom: 192px !important; }
+.o_elks_newsletter .pt196 { padding-top: 196px !important; }
+.o_elks_newsletter .pb196 { padding-bottom: 196px !important; }
+.o_elks_newsletter .mt196 { margin-top: 196px !important; }
+.o_elks_newsletter .mb196 { margin-bottom: 196px !important; }
+.o_elks_newsletter .pt200 { padding-top: 200px !important; }
+.o_elks_newsletter .pb200 { padding-bottom: 200px !important; }
+.o_elks_newsletter .mt200 { margin-top: 200px !important; }
+.o_elks_newsletter .mb200 { margin-bottom: 200px !important; }
+.o_elks_newsletter .pt204 { padding-top: 204px !important; }
+.o_elks_newsletter .pb204 { padding-bottom: 204px !important; }
+.o_elks_newsletter .mt204 { margin-top: 204px !important; }
+.o_elks_newsletter .mb204 { margin-bottom: 204px !important; }
+.o_elks_newsletter .pt208 { padding-top: 208px !important; }
+.o_elks_newsletter .pb208 { padding-bottom: 208px !important; }
+.o_elks_newsletter .mt208 { margin-top: 208px !important; }
+.o_elks_newsletter .mb208 { margin-bottom: 208px !important; }
+.o_elks_newsletter .pt212 { padding-top: 212px !important; }
+.o_elks_newsletter .pb212 { padding-bottom: 212px !important; }
+.o_elks_newsletter .mt212 { margin-top: 212px !important; }
+.o_elks_newsletter .mb212 { margin-bottom: 212px !important; }
+.o_elks_newsletter .pt216 { padding-top: 216px !important; }
+.o_elks_newsletter .pb216 { padding-bottom: 216px !important; }
+.o_elks_newsletter .mt216 { margin-top: 216px !important; }
+.o_elks_newsletter .mb216 { margin-bottom: 216px !important; }
+.o_elks_newsletter .pt220 { padding-top: 220px !important; }
+.o_elks_newsletter .pb220 { padding-bottom: 220px !important; }
+.o_elks_newsletter .mt220 { margin-top: 220px !important; }
+.o_elks_newsletter .mb220 { margin-bottom: 220px !important; }
+.o_elks_newsletter .pt224 { padding-top: 224px !important; }
+.o_elks_newsletter .pb224 { padding-bottom: 224px !important; }
+.o_elks_newsletter .mt224 { margin-top: 224px !important; }
+.o_elks_newsletter .mb224 { margin-bottom: 224px !important; }
+.o_elks_newsletter .pt228 { padding-top: 228px !important; }
+.o_elks_newsletter .pb228 { padding-bottom: 228px !important; }
+.o_elks_newsletter .mt228 { margin-top: 228px !important; }
+.o_elks_newsletter .mb228 { margin-bottom: 228px !important; }
+.o_elks_newsletter .pt232 { padding-top: 232px !important; }
+.o_elks_newsletter .pb232 { padding-bottom: 232px !important; }
+.o_elks_newsletter .mt232 { margin-top: 232px !important; }
+.o_elks_newsletter .mb232 { margin-bottom: 232px !important; }
+.o_elks_newsletter .pt236 { padding-top: 236px !important; }
+.o_elks_newsletter .pb236 { padding-bottom: 236px !important; }
+.o_elks_newsletter .mt236 { margin-top: 236px !important; }
+.o_elks_newsletter .mb236 { margin-bottom: 236px !important; }
+.o_elks_newsletter .pt240 { padding-top: 240px !important; }
+.o_elks_newsletter .pb240 { padding-bottom: 240px !important; }
+.o_elks_newsletter .mt240 { margin-top: 240px !important; }
+.o_elks_newsletter .mb240 { margin-bottom: 240px !important; }
+.o_elks_newsletter .pt244 { padding-top: 244px !important; }
+.o_elks_newsletter .pb244 { padding-bottom: 244px !important; }
+.o_elks_newsletter .mt244 { margin-top: 244px !important; }
+.o_elks_newsletter .mb244 { margin-bottom: 244px !important; }
+.o_elks_newsletter .pt248 { padding-top: 248px !important; }
+.o_elks_newsletter .pb248 { padding-bottom: 248px !important; }
+.o_elks_newsletter .mt248 { margin-top: 248px !important; }
+.o_elks_newsletter .mb248 { margin-bottom: 248px !important; }
+.o_elks_newsletter .pt252 { padding-top: 252px !important; }
+.o_elks_newsletter .pb252 { padding-bottom: 252px !important; }
+.o_elks_newsletter .mt252 { margin-top: 252px !important; }
+.o_elks_newsletter .mb252 { margin-bottom: 252px !important; }
+.o_elks_newsletter .pt256 { padding-top: 256px !important; }
+.o_elks_newsletter .pb256 { padding-bottom: 256px !important; }
+.o_elks_newsletter .mt256 { margin-top: 256px !important; }
+.o_elks_newsletter .mb256 { margin-bottom: 256px !important; }

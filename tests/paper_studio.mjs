@@ -26,9 +26,9 @@ try {
     page.on('pageerror', error => { throw error; });
     await page.route('https://newsletter.test/**', async route => {
         const uri = new URL(route.request().url()).pathname;
-        if (uri === '/host') return route.fulfill({ contentType: 'text/html', body: '<html><body style="margin:0"><iframe id="studio" style="width:100vw;height:100vh;border:0" src="/elksbulletin/static/src/studio/editor.html"></iframe></body></html>' });
-        if (!uri.startsWith('/elksbulletin/static/')) return route.abort();
-        const file = path.join(root, uri.slice('/elksbulletin/'.length));
+        if (uri === '/host') return route.fulfill({ contentType: 'text/html', body: '<html><body style="margin:0"><iframe id="studio" style="width:100vw;height:100vh;border:0" src="/elks_newsletter/static/src/studio/editor.html"></iframe></body></html>' });
+        if (!uri.startsWith('/elks_newsletter/static/')) return route.abort();
+        const file = path.join(root, uri.slice('/elks_newsletter/'.length));
         const ext = path.extname(file);
         await route.fulfill({ body: readFileSync(file), contentType: { '.html': 'text/html', '.css': 'text/css', '.js': 'application/javascript', '.ttf': 'font/ttf' }[ext] });
     });
@@ -103,7 +103,7 @@ try {
     const print = await browser.newPage();
     await print.route('https://newsletter.test/**', async route => {
         const resource = new URL(route.request().url()).pathname;
-        await route.fulfill({ body: readFileSync(path.join(root, resource.slice('/elksbulletin/'.length))), contentType: 'font/ttf' });
+        await route.fulfill({ body: readFileSync(path.join(root, resource.slice('/elks_newsletter/'.length))), contentType: 'font/ttf' });
     });
     const shared = readFileSync(path.join(root,'static/src/css/newsletter_layout.css'),'utf8');
     const paperCSS = readFileSync(path.join(root,'static/src/studio/paper.css'),'utf8');
