@@ -68,3 +68,21 @@ still needs an integration check after upgrade.
 This phase uses ordered page blocks and explicit continuation. Free-form drag
 positioning, automatic legacy import, persistent revision history, and email or
 website publishing remain future work.
+
+## Wrapping, framing and moving blocks (19.0.1.36.0)
+
+Select a photo-and-text or officer-message block and set **Text around photo** to
+**Wrap around photo**. The article continues beneath the picture. Use **Photo
+area width** to adjust the space reserved for the image; photo-and-text blocks
+also offer left/right positioning. Keep the article in that same block to wrap
+it around the photo; separate text blocks remain separate.
+
+**Inside padding**, **Block border**, **Block corners**, **Picture border** and
+**Picture corners** apply in both editor and PDF. A border of zero means no
+printed border. The purple selection outline is an editor guide.
+
+Open **Widget gallery** for sample illustrations of each widget. Click a card
+or drag it onto a sheet. Hover or select a block and drag its **Move** handle to
+reorder it or move it onto another page. Dropping on a block inserts before it;
+dropping on empty page space appends. Moves support Undo. Layout stays in the
+page's normal reading order rather than arbitrary overlapping positions.

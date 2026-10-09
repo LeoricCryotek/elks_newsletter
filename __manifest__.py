@@ -26,18 +26,20 @@
 # =============================================================================
 {
     "name": "Elks Newsletter — Lodge Newsletter Builder",
-    "version": "19.0.1.35.0",
+    "version": "19.0.1.36.0",
     "category": "Marketing",
     "summary": "Drag-and-drop, print-ready lodge newsletter in Grand Lodge style.",
     "description": """
-Elks Newsletter — v19.0.1.35.0
+Elks Newsletter — v19.0.1.36.0
 ============================
 A lodge newsletter builder that works like Odoo's email-marketing editor
 (a side panel of drag-in content blocks) but produces a print-ready,
 page-sized document (US Letter / Legal) instead of an email.
 
-Paper Studio button fix (19.0.1.35.0)
+Paper Studio design controls (19.0.1.36.0)
 -----------------------------------
+Add photo text wrapping, block and picture framing, a demo widget gallery,
+and drag handles for moving blocks within or between sheets.
 Accept New Paper Newsletter calls with or without explicit selected-record IDs.
 Both call forms create one new paper edition without modifying selected issues.
 

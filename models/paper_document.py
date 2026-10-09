@@ -103,6 +103,15 @@ def normalise_document(document, resolve=None):
                     'gap': number(block.get('gap'), 12, 0, 96),
                     'align': block.get('align', 'left'),
                     'font': block.get('font', 'sans')}
+            item.update(padding=number(block.get('padding'), 0, 0, 64),
+                        border=number(block.get('border'), 0, 0, 8),
+                        radius=number(block.get('radius'), 0, 0, 40),
+                        photoBorder=number(block.get('photoBorder'), 0, 0, 8),
+                        photoRadius=number(block.get('photoRadius'), 0, 0, 100),
+                        photoWidth=number(block.get('photoWidth'), 33, 15, 60),
+                        layout=block.get('layout', 'columns'))
+            if item['layout'] not in ('columns', 'wrap'):
+                raise ValueError('Choose columns or text wrapping.')
             if item['align'] not in ('left', 'center', 'right', 'justify') or item['font'] not in ('sans', 'serif', 'script'):
                 raise ValueError('This text appearance is not supported.')
             if block['kind'] in ('text', 'heading'):

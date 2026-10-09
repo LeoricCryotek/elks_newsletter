@@ -53,3 +53,16 @@ h2 { font-size: 13px; margin: 0 0 14px; }
 .muted { color: #968a9f; font-size: 13px; line-height: 1.5; }
 hr { border: 0; border-top: 1px solid var(--line); margin: 24px 0; }
 @media(max-width: 1000px) { .studio-workspace { grid-template-columns: 130px minmax(300px,1fr) 200px; } .paper-desk { padding: 24px; } }
+
+.paper-block { position: relative; }
+.block-drag-handle { position: absolute; z-index: 2; right: 0; top: -13px; font: 11px Arial; padding: 2px 6px; cursor: grab; opacity: 0; background: #eee7f5; }
+.paper-block:hover > .block-drag-handle, .paper-block.selected > .block-drag-handle, .block-drag-handle:focus { opacity: 1; }
+.drop-before { box-shadow: 0 -4px #725198; }
+#widget-gallery { width: min(850px,90vw); max-height: 80vh; border: 1px solid #d4c8e2; border-radius: 12px; padding: 24px; }
+#widget-gallery::backdrop { background: #20132f66; }
+.gallery-heading { display: flex; justify-content: space-between; align-items: center; }
+#widget-cards { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; }
+.widget-card { padding: 8px; cursor: grab; display: grid; gap: 8px; text-align: center; }
+.widget-card svg { width: 100%; border: 1px solid #eee; }
+.widget-card span { font-size: 12px; }
+@media print { .block-drag-handle { display: none !important; } }

@@ -32,3 +32,8 @@
     }
     .elks-paper-sheet { margin: 0 !important; box-shadow: none !important; }
 }
+
+.paper-wrap, .paper-officer-wrap { display: flow-root !important; }
+.paper-wrap > .paper-richtext, .paper-officer-wrap > .s_elks_story_flow { display: block; }
+.paper-block .paper-richtext { white-space: normal; overflow-wrap: anywhere; }
+.paper-officer-wrap > .s_elks_story_flow { padding: 0 !important; }

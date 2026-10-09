@@ -24,7 +24,7 @@
     <section class="studio-centre">
         <div class="insert-toolbar" aria-label="Content blocks">
             <span>Add a block</span><button data-add="heading">Heading</button><button data-add="text">Text</button><button data-add="columns">Columns</button><button data-add="image">Photo</button><button data-add="dynamic">Lodge data</button>
-            <label>Bulletin widgets <select id="widget-picker"><option value="">Choose a widget…</option></select></label><button id="refresh-data">Refresh Odoo data</button><button id="fit-pages">Auto-format pages</button><span class="toolbar-divider"></span><button id="undo" title="Undo layout change">Undo</button>
+            <button id="browse-widgets">Widget gallery</button><label>Bulletin widgets <select id="widget-picker"><option value="">Choose a widget…</option></select></label><button id="refresh-data">Refresh Odoo data</button><button id="fit-pages">Auto-format pages</button><span class="toolbar-divider"></span><button id="undo" title="Undo layout change">Undo</button>
         </div>
         <div class="format-toolbar" aria-label="Text formatting"><span>Text</span><button data-format="bold"><b>B</b></button><button data-format="italic"><i>I</i></button><button data-format="underline"><u>U</u></button><button data-format="insertUnorderedList">• List</button><button data-format="insertOrderedList">1. List</button><button id="split-text">Continue on next page</button></div>
         <div id="page-problems" role="status" hidden></div>
@@ -32,5 +32,6 @@
     </section>
     <aside class="properties-sidebar"><h2>Block settings</h2><div id="properties"><p class="muted">Select a block on the page to change its appearance or position.</p></div><hr><h2>Page settings</h2><div class="page-actions"><button id="page-up">Move page up</button><button id="page-down">Move page down</button><button id="delete-page" class="danger">Delete page</button></div><p class="sidebar-note">Oversized content is flagged. Move it to another page or continue a text block at the cursor.</p></aside>
 </main>
+<dialog id="widget-gallery"><div class="gallery-heading"><h2>Bulletin widgets</h2><button id="close-gallery">Close</button></div><p>Click a demo to insert it, or drag it onto a page. Demo illustrations use sample content.</p><div id="widget-cards"></div></dialog>
 <input id="photo-file" type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden>
 </body></html>

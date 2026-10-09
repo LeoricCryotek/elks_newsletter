@@ -43,6 +43,13 @@ class PaperDocumentTests(unittest.TestCase):
         self.assertEqual(block['html'], '<p>Story</p>')
         with self.assertRaises(ValueError): paper.normalise_document(self.document(kind='photo_text', src='https://private/photo'))
 
+    def test_framing_and_wrap_settings_are_validated_and_retained(self):
+        block = paper.normalise_document(self.document(padding=12, border=2, photoBorder=3, radius=8, layout='wrap'))['pages'][0]['blocks'][0]
+        self.assertEqual(block['padding'], 12)
+        self.assertEqual(block['layout'], 'wrap')
+        for values in [{'padding': -1}, {'border': 100}, {'layout': 'script'}, {'photoWidth': 101}]:
+            with self.assertRaises(ValueError): paper.normalise_document(self.document(**values))
+
     def test_gallery_rejects_external_photos(self):
         with self.assertRaises(ValueError): paper.normalise_document(self.document(kind='gallery', photos=[{'src': 'https://private/photo'}]))
         self.assertEqual(len(paper.normalise_document(self.document(kind='gallery', photos=[{'src': '', 'caption': '<p>Member</p>'}]))['pages'][0]['blocks'][0]['photos']), 1)

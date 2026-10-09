@@ -75,7 +75,7 @@
     }
     function setDisabled() {
         const disabled = !editable();
-        document.querySelectorAll('[data-add],#save,#add-page,#paper-size,#page-up,#page-down,#delete-page,[data-format],#split-text,#undo,#widget-picker,#refresh-data,#fit-pages').forEach(node => node.disabled = disabled);
+        document.querySelectorAll('[data-add],#save,#add-page,#paper-size,#page-up,#page-down,#delete-page,[data-format],#split-text,#undo,#widget-picker,#refresh-data,#fit-pages,#browse-widgets').forEach(node => node.disabled = disabled);
         $('undo').disabled = disabled || !undo.length;
         $('preview').disabled = pending || (payload?.readonly && payload?.mode === 'legacy');
         $('reload').disabled = pending;
@@ -100,10 +100,72 @@
             node.contentEditable = String(editable());
             node.spellcheck = true;
         });
-        renderPages(); highlight(); renderProperties(); setDisabled();
+        attachHandles(); renderPages(); highlight(); renderProperties(); setDisabled();
         requestAnimationFrame(measure);
         document.fonts.ready.then(measure);
     }
+    let dragging = null;
+    function beginPointerDrag(event, move) {
+        if (!editable() || event.button !== 0) return;
+        event.preventDefault();
+        const x = event.clientX, y = event.clientY; let started = false;
+        const motion = event => {
+            if (!started && Math.hypot(event.clientX - x, event.clientY - y) < 5) return;
+            started = true; dragging = move;
+            if ($('widget-gallery').open) $('widget-gallery').close();
+            document.querySelectorAll('.drop-before').forEach(n=>n.classList.remove('drop-before'));
+            document.elementFromPoint(event.clientX,event.clientY)?.closest('#sheets [data-block-id]')?.classList.add('drop-before');
+        };
+        const release = event => {
+            document.removeEventListener('pointermove',motion); document.removeEventListener('pointerup',release);
+            if (started) {
+                const target = document.elementFromPoint(event.clientX,event.clientY);
+                if (target?.closest('#sheets .elks-paper-sheet')) target.dispatchEvent(new Event('drop',{bubbles:true,cancelable:true}));
+            }
+            dragging = null; document.querySelectorAll('.drop-before').forEach(n=>n.classList.remove('drop-before'));
+        };
+        document.addEventListener('pointermove',motion); document.addEventListener('pointerup',release,{once:true});
+    }
+    function attachHandles() {
+        $('sheets').querySelectorAll('[data-block-id]').forEach(node => {
+            const handle = document.createElement('span'); handle.tabIndex = 0; handle.className = 'block-drag-handle';
+            handle.textContent = '⠿ Move'; handle.title = 'Drag to reorder or move to another page';
+            handle.draggable = false;
+            handle.addEventListener('pointerdown',event=>beginPointerDrag(event,{blockId:node.dataset.blockId})); handle.contentEditable = 'false'; handle.disabled = !editable();
+            handle.addEventListener('dragstart', event => {
+                if (!editable()) return event.preventDefault();
+                dragging = { blockId: node.dataset.blockId }; event.dataTransfer.setData('text/plain', 'newsletter-block'); event.dataTransfer.effectAllowed = 'move';
+            });
+            handle.addEventListener('dragend', () => { dragging = null; document.querySelectorAll('.drop-before').forEach(n => n.classList.remove('drop-before')); });
+            node.prepend(handle);
+        });
+    }
+    $('sheets').addEventListener('dragover', event => {
+        if (!editable() || !dragging) return;
+        event.preventDefault();
+        document.querySelectorAll('.drop-before').forEach(n => n.classList.remove('drop-before'));
+        event.target.closest('[data-block-id]')?.classList.add('drop-before');
+    });
+    $('sheets').addEventListener('drop', event => {
+        if (!editable() || !dragging) return;
+        event.preventDefault();
+        const sheet = event.target.closest('.elks-paper-sheet'); if (!sheet) return;
+        const targetId = event.target.closest('[data-block-id]')?.dataset.blockId;
+        const targetPage = payload.document.pages.find(p => p.id === sheet.dataset.pageId);
+        const move = dragging; dragging = null;
+        if (move.widget) {
+            activePage = targetPage.id; insertWidget(move.widget);
+            const added = targetPage.blocks.pop(); const index = targetPage.blocks.findIndex(b => b.id === targetId);
+            targetPage.blocks.splice(index < 0 ? targetPage.blocks.length : index, 0, added); render(); return;
+        }
+        if (targetId === move.blockId) return;
+        const from = payload.document.pages.find(p => p.blocks.some(b => b.id === move.blockId));
+        if (!from) return;
+        remember(); const index = from.blocks.findIndex(b => b.id === move.blockId); const [block] = from.blocks.splice(index, 1);
+        const dest = targetPage.blocks.findIndex(b => b.id === targetId);
+        targetPage.blocks.splice(dest < 0 ? targetPage.blocks.length : dest, 0, block);
+        activePage = targetPage.id; selectedId = block.id; change(); render();
+    });
     function highlight() {
         $('sheets').querySelectorAll('.paper-block').forEach(node => node.classList.toggle('selected', node.dataset.blockId === selectedId));
         document.querySelectorAll('.page-thumb').forEach(node => node.classList.toggle('active', node.dataset.pageId === activePage));
@@ -137,7 +199,7 @@
             const option = document.createElement('option'); option.value = value; option.textContent = text; input.append(option);
         });
         else { input.type = 'number'; input.min = key === 'fontSize' ? '8' : '0'; input.max = key === 'fontSize' ? '72' : key === 'height' ? '900' : '100'; }
-        input.value = selected().block[key] ?? ({ gap: 12, fontSize: 16, font: 'sans', align: 'left', ratio: 'equal', source: 'new_members', width: 100, height: 240, fit: 'contain' }[key]);
+        input.value = selected().block[key] ?? ({ gap: 12, fontSize: 16, font: 'sans', align: 'left', ratio: 'equal', source: 'new_members', width: 100, height: 240, fit: 'contain', layout: 'columns', photoWidth: 33, padding: 0, border: 0, radius: 0, photoBorder: 0, photoRadius: 0 }[key]);
         input.addEventListener('change', () => {
             if (!editable()) return;
             remember(); selected().block[key] = options ? input.value : Number(input.value);
@@ -173,6 +235,8 @@
         if (block.kind === 'columns' && block.columns.length === 2) panel.append(field('Column widths', 'ratio', { equal: 'Half / half', 'wide-left': 'Two thirds / one third', 'wide-right': 'One third / two thirds' }));
         if (block.kind === 'photo_text') panel.append(field('Photo position', 'side', { left: 'Left', right: 'Right' }), field('Column widths', 'ratio', { equal: 'Half / half', 'wide-left': 'Two thirds / one third', 'wide-right': 'One third / two thirds' }));
         if (block.kind === 'image' || block.kind === 'photo_text') panel.append(actionButton(block.src ? 'Replace photo' : 'Choose photo', () => $('photo-file').click()), field('Photo width (%)', 'width'), field('Photo height (px)', 'height'), field('Photo fitting', 'fit', { contain: 'Show whole photo', cover: 'Fill and crop' }));
+        if (block.kind === 'photo_text' || (block.kind === 'widget' && block.source === 'message')) panel.append(field('Text around photo', 'layout', { columns: 'Separate columns', wrap: 'Wrap around photo' }), field('Photo area width (%)', 'photoWidth'));
+        panel.append(field('Inside padding (px)', 'padding'), field('Block border (px; 0 = none)', 'border'), field('Block corners (px)', 'radius'), field('Picture border (px)', 'photoBorder'), field('Picture corners (px)', 'photoRadius'));
         panel.append(field('Space after block (px)', 'gap'));
         const actions = document.createElement('div'); actions.className = 'block-actions';
         actions.append(actionButton('Move up', () => moveBlock(-1)), actionButton('Move down', () => moveBlock(1)), actionButton('Next page', nextPage), actionButton('Duplicate', duplicate), actionButton('Delete', () => {
@@ -222,13 +286,34 @@
     const widgets = { masthead: 'Lodge masthead', message: 'Officer message', section_bar: 'Section bar', mailing: 'Mailing panel', ...sources,
         photo_text: 'Photo + text (two columns)', photo_grid: 'Member photo grid', two_thirds: 'Two-thirds + one-third', three_columns: 'Three columns', continued: 'Continued on page', spacer: 'Spacer', page_break: 'Page break' };
     for (const [key, title] of Object.entries(widgets)) { const option = document.createElement('option'); option.value = key; option.textContent = title; picker.append(option); }
-    picker.addEventListener('change', () => {
-        const source = picker.value; picker.value = ''; if (!source || !editable()) return;
+    function insertWidget(source) {
+        if (!source || !editable()) return;
         if (source === 'page_break') return $('add-page').click();
         const kind = sources[source] ? 'dynamic' : ['two_thirds', 'three_columns'].includes(source) ? 'columns'
             : source === 'photo_text' ? 'photo_text' : source === 'photo_grid' ? 'gallery' : source === 'continued' ? 'text' : source === 'spacer' ? 'spacer' : 'widget';
         add(kind, source, source);
-    });
+    }
+    picker.addEventListener('change', () => { const source = picker.value; picker.value = ''; insertWidget(source); });
+    function demo(source) {
+        const photo = '<rect x="120" y="38" width="55" height="65" rx="4" fill="#d8cee5"/><circle cx="147" cy="57" r="10" fill="#927ba8"/><path d="M131 93v-10q16-24 32 0v10" fill="#927ba8"/>';
+        const lines = '<path d="M14 48h90M14 60h90M14 72h90M14 84h90M14 96h70" stroke="#a7a0b2" stroke-width="5"/>';
+        let body = '<rect x="10" y="13" width="170" height="17" rx="3" fill="#725198"/>' + lines;
+        if (['message','photo_text','masthead'].includes(source)) body += photo;
+        if (source === 'calendar') body = '<rect x="10" y="13" width="170" height="17" fill="#725198"/><path d="M10 38h170M10 62h170M10 86h170M10 110h170M10 38v72M44 38v72M78 38v72M112 38v72M146 38v72M180 38v72" stroke="#a7a0b2" fill="none"/>';
+        if (['photo_grid','officers','new_members','in_memoriam'].includes(source)) body = '<rect x="10" y="13" width="170" height="17" fill="#725198"/>' + [35,95,155].map(x => `<circle cx="${x}" cy="64" r="17" fill="#d8cee5"/><path d="M${x-20} 93h40M${x-20} 105h40" stroke="#a7a0b2" stroke-width="4"/>`).join('');
+        if (['three_columns','two_thirds'].includes(source)) body = '<path d="M10 20h170" stroke="#725198" stroke-width="14"/>' + [15,75,135].map(x=>`<path d="M${x} 45h40M${x} 58h40M${x} 71h40M${x} 84h40M${x} 97h40" stroke="#a7a0b2" stroke-width="5"/>`).join('');
+        return `<svg viewBox="0 0 190 125" aria-hidden="true"><rect width="190" height="125" fill="white"/>${body}</svg>`;
+    }
+    for (const [source, title] of Object.entries(widgets)) {
+        const card = document.createElement('button'); card.className = 'widget-card'; card.dataset.widget = source; card.draggable = false; card.addEventListener('pointerdown',event=>beginPointerDrag(event,{widget:source}));
+        card.innerHTML = demo(source); const label = document.createElement('span'); label.textContent = title; card.append(label);
+        card.addEventListener('click', () => { $('widget-gallery').close(); insertWidget(source); });
+        card.addEventListener('dragstart', event => { if (!editable()) return event.preventDefault(); dragging = { widget: source }; event.dataTransfer.setData('text/plain', 'newsletter-widget'); $('widget-gallery').close(); });
+        card.addEventListener('dragend', () => dragging = null);
+        $('widget-cards').append(card);
+    }
+    $('browse-widgets').addEventListener('click', () => $('widget-gallery').showModal());
+    $('close-gallery').addEventListener('click', () => $('widget-gallery').close());
     $('refresh-data').addEventListener('click', refreshData);
     $('fit-pages').addEventListener('click', fitPages);
     // Refresh draft data periodically and on return to the editor. Final editions

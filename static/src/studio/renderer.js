@@ -21,6 +21,9 @@
         node.style.fontSize = `${block.fontSize || 16}px`;
         node.style.fontFamily = fonts[block.font || 'sans'];
         node.style.textAlign = block.align || 'left';
+        node.style.padding = `${block.padding || 0}px`;
+        node.style.border = block.border ? `${block.border}px solid #75559a` : '';
+        node.style.borderRadius = `${block.radius || 0}px`;
         node.style.marginBottom = `${block.gap ?? 12}px`;
         if (block.kind === 'text' || block.kind === 'heading') {
             node.append(richText(block.html, 'html', block));
@@ -34,11 +37,17 @@
         } else if (block.kind === 'photo_text') {
             const columns = element('div', 'paper-columns');
             columns.style.gridTemplateColumns = block.ratio === 'wide-left' ? '2fr 1fr' : block.ratio === 'wide-right' ? '1fr 2fr' : '1fr 1fr';
-            const photo = blockNode({ ...block, kind: 'image', gap: 0 });
+            const photo = blockNode({ ...block, kind: 'image', gap: 0, padding: 0, border: 0, radius: 0 });
             // Only the outer block owns selection and movement.
             delete photo.dataset.blockId;
             const text = richText(block.html, 'html', block);
-            columns.append(...(block.side === 'right' ? [text, photo] : [photo, text])); node.append(columns);
+            if (block.layout === 'wrap') {
+                columns.className = 'paper-wrap';
+                photo.style.cssFloat = block.side || 'left'; photo.style.width = `${block.photoWidth || 33}%`;
+                photo.style.margin = block.side === 'right' ? '0 0 12px 20px' : '0 20px 12px 0';
+                columns.append(photo, text);
+            } else columns.append(...(block.side === 'right' ? [text, photo] : [photo, text]));
+            node.append(columns);
         } else if (block.kind === 'image') {
             if (block.src) {
                 const image = element('img', 'paper-photo');
@@ -77,6 +86,22 @@
                 }
             }
             node.append(data);
+        }
+        for (const image of node.querySelectorAll('img')) {
+            if (block.photoBorder) image.style.border = `${block.photoBorder}px solid #75559a`;
+            if (block.photoRadius) image.style.borderRadius = `${block.photoRadius}px`;
+            image.style.boxSizing = 'border-box';
+        }
+        if (block.kind === 'widget' && block.source === 'message' && block.layout === 'wrap') {
+            const row = node.querySelector('.s_elks_msg_byline')?.parentElement;
+            const byline = row?.querySelector('.s_elks_msg_byline');
+            const story = row?.querySelector('.s_elks_story_flow');
+            if (byline && story) {
+                row.classList.add('paper-officer-wrap'); row.prepend(byline);
+                byline.style.cssFloat = 'right'; byline.style.width = `${block.photoWidth || 33}%`;
+                byline.style.margin = '0 0 12px 20px';
+                story.style.width = 'auto'; story.style.maxWidth = 'none'; story.style.flex = 'none';
+            }
         }
         return node;
     }
