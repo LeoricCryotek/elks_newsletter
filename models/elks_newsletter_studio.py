@@ -116,9 +116,9 @@ class ElksBulletinIssueStudio(models.Model):
         return {'type': 'ir.actions.client', 'tag': 'elks_newsletter.paper_studio',
                 'name': _('Paper Studio'), 'params': {'issue_id': self.id}}
 
-    def action_new_paper_newsletter(self):
-        # List object buttons pass selected ids as a recordset, even when empty.
-        # Keep the recordset API so RPC dispatch consumes that ids argument.
+    def action_new_paper_newsletter(self, selected_ids=None):
+        # Accept list-button callers that also pass ids explicitly. This action
+        # always creates one new issue and never modifies the selected issues.
         issue = self.create({})
         issue.write({'studio_document': initial_document(issue.name), 'editor_mode': 'paper'})
         return issue.action_open_paper_studio()

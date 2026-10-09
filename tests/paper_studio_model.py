@@ -50,7 +50,7 @@ class StudioModelTests(unittest.TestCase):
         source = ast.parse((ROOT / 'models/elks_newsletter_studio.py').read_text())
         method = next(node for node in ast.walk(source) if isinstance(node, ast.FunctionDef) and node.name == 'action_new_paper_newsletter')
         self.assertFalse(method.decorator_list, 'Object-button RPC must consume ids as a recordset, not pass them to an @api.model method')
-        for selected_ids in [[], [42], [42, 43]]:
+        for explicit_args in [(), ([],), ([42],), ([42, 43],)]:
             button_records = self.issue()
             created = self.issue()
             calls = []
@@ -59,7 +59,7 @@ class StudioModelTests(unittest.TestCase):
                 return created
             button_records.create = create
             created.action_open_paper_studio = lambda: {'type': 'ir.actions.client', 'params': {'issue_id': 99}}
-            action = button_records.action_new_paper_newsletter()
+            action = button_records.action_new_paper_newsletter(*explicit_args)
             self.assertEqual(calls, [{}])
             self.assertEqual(action['params']['issue_id'], 99)
             self.assertEqual(created.editor_mode, 'paper')
