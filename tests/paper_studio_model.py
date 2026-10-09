@@ -1,5 +1,6 @@
 """Run the actual Studio model methods against an in-memory ORM boundary."""
 import json
+import ast
 import re
 from datetime import date
 from lxml import etree
@@ -26,7 +27,7 @@ class MemoryIssue:
 
 
 Issue = load_methods('models/elks_newsletter_studio.py', 'ElksBulletinIssueStudio',
-                     {'write', 'action_studio_load', 'action_studio_save', '_studio_print_markup', '_studio_resolve_dynamic', 'action_studio_resolve'},
+                     {'write', 'action_studio_load', 'action_studio_save', '_studio_print_markup', '_studio_resolve_dynamic', 'action_studio_resolve', 'action_new_paper_newsletter'},
                      {'normalise_document': paper.normalise_document, 'initial_document': paper.initial_document,
                       'UserError': StudioError, '_': lambda value: value, 'Markup': str, 'json': json,
                       'lxml_html': lxml_html, 'ASSETS': ROOT / 'static/src/studio'}, MemoryIssue)
@@ -44,6 +45,26 @@ class StudioModelTests(unittest.TestCase):
         issue._render_print_body_inner = lambda markup: markup
         issue._dynamic_block_html = lambda source: '<div class="page elks-cal"><p>Saved calendar</p></div>'
         return issue
+
+    def test_new_paper_list_button_uses_recordset_dispatch_and_creates_one_issue(self):
+        source = ast.parse((ROOT / 'models/elks_newsletter_studio.py').read_text())
+        method = next(node for node in ast.walk(source) if isinstance(node, ast.FunctionDef) and node.name == 'action_new_paper_newsletter')
+        self.assertFalse(method.decorator_list, 'Object-button RPC must consume ids as a recordset, not pass them to an @api.model method')
+        for selected_ids in [[], [42], [42, 43]]:
+            button_records = self.issue()
+            created = self.issue()
+            calls = []
+            def create(values):
+                calls.append(values)
+                return created
+            button_records.create = create
+            created.action_open_paper_studio = lambda: {'type': 'ir.actions.client', 'params': {'issue_id': 99}}
+            action = button_records.action_new_paper_newsletter()
+            self.assertEqual(calls, [{}])
+            self.assertEqual(action['params']['issue_id'], 99)
+            self.assertEqual(created.editor_mode, 'paper')
+            self.assertIsNotNone(created.studio_document)
+            self.assertIsNone(button_records.studio_document)
 
     def test_saving_selects_paper_and_conflicting_revision_cannot_overwrite(self):
         issue = self.issue()
