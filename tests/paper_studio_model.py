@@ -1,0 +1,99 @@
+"""Run the actual Studio model methods against an in-memory ORM boundary."""
+import json
+from pathlib import Path
+import unittest
+
+from lxml import html as lxml_html
+from paper_layout_model import load_methods, ROOT
+from studio_document_test import paper
+
+
+class StudioError(Exception): pass
+
+
+class MemoryIssue:
+    def ensure_one(self): pass
+    def check_access(self, operation):
+        if getattr(self, 'denied', False): raise PermissionError(operation)
+    def sorted(self, key): return [self]
+    def _studio_lock(self): pass
+    def write(self, values):
+        for key, value in values.items(): setattr(self, key, value)
+        return True
+
+
+Issue = load_methods('models/elks_bulletin_studio.py', 'ElksBulletinIssueStudio',
+                     {'write', 'action_studio_load', 'action_studio_save', '_studio_print_markup', '_studio_resolve_dynamic', 'action_studio_resolve'},
+                     {'normalise_document': paper.normalise_document, 'initial_document': paper.initial_document,
+                      'UserError': StudioError, '_': lambda value: value, 'Markup': str, 'json': json,
+                      'lxml_html': lxml_html, 'ASSETS': ROOT / 'static/src/studio'}, MemoryIssue)
+
+
+class StudioModelTests(unittest.TestCase):
+    def issue(self):
+        issue = Issue()
+        issue.name = 'October issue'; issue.lodge_name = 'Lodge 896'; issue.issue_date = None
+        issue.studio_document = None; issue.studio_revision = 0
+        issue.page_size = 'letter'; issue.editor_mode = 'legacy'; issue.state = 'draft'
+        class QWeb:
+            def _render(self, template, values): return '<div class="page elks-cal"><p>Saved calendar</p></div>'
+        issue.env = {'ir.qweb': QWeb()}
+        issue._render_print_body_inner = lambda markup: markup
+        issue._dynamic_block_html = lambda source: '<div class="page elks-cal"><p>Saved calendar</p></div>'
+        return issue
+
+    def test_saving_selects_paper_and_conflicting_revision_cannot_overwrite(self):
+        issue = self.issue()
+        saved = issue.action_studio_save(paper.initial_document('Issue'), 'legal', 0)
+        self.assertEqual(saved['revision'], 1)
+        self.assertEqual(issue.page_size, 'legal')
+        self.assertEqual(issue.editor_mode, 'paper')
+        with self.assertRaises(StudioError): issue.action_studio_save(paper.initial_document('Other'), 'letter', 0)
+        self.assertEqual(issue.studio_document['pages'][0]['blocks'][0]['html'], '<p>Issue</p>')
+
+    def test_load_and_save_enforce_permissions(self):
+        issue = self.issue(); issue.denied = True
+        with self.assertRaises(PermissionError): issue.action_studio_load()
+        with self.assertRaises(PermissionError): issue.action_studio_save(paper.initial_document('Issue'), 'letter', 0)
+
+    def test_saved_snapshot_does_not_follow_lodge_name_changes(self):
+        issue = self.issue(); issue.action_studio_save(paper.initial_document('Issue'), 'letter', 0)
+        issue.lodge_name = 'Changed lodge'
+        self.assertEqual(issue.action_studio_load()['lodge'], 'Lodge 896')
+
+    def test_final_paper_edition_is_locked(self):
+        issue = self.issue(); issue.action_studio_save(paper.initial_document('Issue'), 'letter', 0); issue.state = 'final'
+        for change in [{'page_size': 'legal'}, {'editor_mode': 'legacy'}, {'studio_document': paper.initial_document('Replacement')}]:
+            with self.assertRaises(StudioError): issue.write(change)
+        self.assertTrue(issue.action_studio_load()['readonly'])
+
+    def test_print_uses_shared_renderer_without_re_resolving_data(self):
+        issue = self.issue()
+        document = paper.initial_document('Issue')
+        document['pages'][0]['blocks'].append({'id': 'calendar', 'kind': 'dynamic', 'source': 'calendar'})
+        issue.action_studio_save(document, 'letter', 0)
+        issue._dynamic_block_html = lambda source: (_ for _ in ()).throw(AssertionError('Export must not refresh saved data'))
+        markup = str(issue._studio_print_markup())
+        self.assertIn('Saved calendar', markup)
+        self.assertIn('window.ElksPaperRenderer.mountAll()', markup)
+        self.assertIn('elks-paper-sheet', markup)
+        self.assertNotIn('class=\\"page ', markup)
+
+    def test_live_resolution_does_not_save_and_enforces_access_and_final_lock(self):
+        issue = self.issue()
+        doc = paper.initial_document('Issue')
+        doc['pages'][0]['blocks'].append({'id': 'live', 'kind': 'dynamic', 'source': 'calendar'})
+        blocks = issue.action_studio_resolve(doc)
+        self.assertIn('Saved calendar', blocks[0]['resolvedHTML'])
+        self.assertIsNone(issue.studio_document)
+        self.assertEqual(issue.studio_revision, 0)
+        issue.denied = True
+        with self.assertRaises(PermissionError): issue.action_studio_resolve(doc)
+        issue.denied = False; issue.state = 'final'
+        with self.assertRaises(StudioError): issue.action_studio_resolve(doc)
+
+    def test_print_rejects_unsaved_paper_document(self):
+        with self.assertRaises(StudioError): self.issue()._studio_print_markup()
+
+
+if __name__ == '__main__': unittest.main()

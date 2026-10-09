@@ -19,6 +19,7 @@ import calendar as _calmod
 import logging
 import re
 from datetime import date, timedelta
+from pathlib import Path
 
 from dateutil.relativedelta import relativedelta
 from lxml import etree, html as lxml_html
@@ -557,6 +558,27 @@ class ElksBulletinIssue(models.Model):
             start = date(ref.year - 1, m, d if d <= 28 else 1)
         end = start + relativedelta(years=1) - timedelta(days=1)
         return start, end
+
+    def _newsletter_layout_css(self):
+        """The same content CSS loaded by the mailing editor's iframe bundle."""
+        path = (Path(__file__).resolve().parent.parent
+                / "static/src/css/newsletter_layout.css")
+        return Markup(path.read_text(encoding="utf-8"))
+
+    @api.onchange("page_size")
+    def _onchange_page_size_canvas(self):
+        # Updating the source resets the iframe through the HTML field's normal
+        # onchange handling, so switching sizes updates its guides immediately.
+        if self.body_arch:
+            frag = lxml_html.fragment_fromstring(self.body_arch, create_parent="div")
+            for wrapper in frag.xpath(
+                    ".//*[contains(concat(' ', normalize-space(@class), ' '), ' o_elksbulletin ')]"):
+                classes = [c for c in wrapper.get("class", "").split()
+                           if c != "o_elks_legal"]
+                if self.page_size == "legal":
+                    classes.append("o_elks_legal")
+                wrapper.set("class", " ".join(classes))
+            self.body_arch = "".join(lxml_html.tostring(c, encoding="unicode") for c in frag)
 
     # === HUMAN ===
     # Produces the print-ready page: takes the drag-and-drop layout, swaps each

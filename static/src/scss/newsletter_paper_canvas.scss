@@ -1,31 +1,8 @@
-// =============================================================================
-// === HUMAN ===
-// Makes the newsletter editing canvas look like a real sheet of US Letter paper
-// (8.5 in wide, with the print margins and a page shadow) instead of the fluid
-// email width — so columns and wrapping preview much closer to the printed PDF.
-// Adds ruler tick marks down both side edges (short tick every quarter inch,
-// long tick every inch) and a red line where each printed page ends, so you can
-// eyeball how far content is from the next page turn while editing. Only
-// affects the Lodge Newsletter editor; regular Email Marketing is untouched.
-//
-// === AI AGENT ===
-// Loaded into the mass_mailing EDITING iframe via the bundle
-// mass_mailing.assets_inside_builder_iframe (SCSS-only in core — no JS runs in
-// the iframe; the page-turn spacers at forced breaks are computed by the
-// PageBreakPreview plugin in elks_builder_options.js, which owns the iframe
-// from the top frame). Everything is scoped to .o_elksbulletin — the class on
-// our template's .o_layout wrapper (see data/bulletin_template_data.xml) — so
-// it can never touch other mailings. Letter and Legal share the same 8.5 in
-// width; the printable-page HEIGHT lives in --elks-page-h (Letter default,
-// .o_elks_legal modifier), the single source of truth shared by the boundary
-// lines, the rulers, and the plugin's spacer math. HONESTY NOTE: the browser
-// canvas and WeasyPrint don't rasterize text identically, so the red lines are
-// a close approximation of natural breaks — the print-time auto-continuation
-// pass works off the REAL WeasyPrint layout and is the source of truth.
-// !important is required to beat the theme's email-width .o_layout rules.
-// The :has() desk-background rule is Chrome-friendly (the supported editor
-// browser) and simply no-ops elsewhere.
-// =============================================================================
+// Editor-only sheet and ruler decorations. Content layout is shared with the
+// report in static/src/css/newsletter_layout.css. Letter and Legal have the same
+// width and margins; the page-height modifier follows the issue's Paper Size.
+// The page guides indicate manual breaks; Preview PDF is the final paginated
+// view after the dynamic lodge blocks are resolved.
 
 // Gray "desk" behind the page so the white sheet stands out (Chrome supports :has)
 body:has(.o_elksbulletin) {
@@ -38,12 +15,10 @@ body:has(.o_elksbulletin) {
     width: 8.5in !important;
     max-width: 8.5in !important;
     margin: 16px auto !important;
-    // Match the WeasyPrint @page margins EXACTLY (report: 0.42in sides) so the
-    // editable text column is the same width as the printed page — what you type
-    // wraps where it will print. (The PDF engine is WeasyPrint, whose @page
-    // margin is 0.42in; the 8mm paperformat only matters for the wkhtmltopdf
-    // fallback.)
-    padding: 0.42in !important;
+    // Match the report margins using whole CSS pixels. Fractional-pixel
+    // print margins are rounded by Chromium and can change line wrapping.
+    padding: 40px 40px 56px !important;
+    min-height: 11in;
     background: #ffffff !important;
     box-sizing: border-box !important;
     box-shadow: 0 0 0 1px #cfcfcf,
@@ -55,10 +30,10 @@ body:has(.o_elksbulletin) {
 }
 
 // Legal page size: taller printable area. Applied when the page is Legal
-// (a .o_elks_legal class on the wrapper — see note in the module: this can be
-// set from the page_size field via a small editor hook if desired).
+// (the onchange updates the wrapper; the plugin also reads the issue field).
 .o_elksbulletin.o_elks_legal {
     --elks-page-h: 13in;   // 14in - 0.42in - 0.58in
+    min-height: 14in;
 }
 
 // Non-interactive overlay: a dashed "printable area" boundary, faint
@@ -68,18 +43,16 @@ body:has(.o_elksbulletin) {
 // break while editing. All strips derive from the same --elks-page-h /
 // physical-inch units, so the ruler, the red boundary lines, and the PDF's
 // paperformat stay in agreement. Purely a visual guide; never blocks editing.
-// HONESTY NOTE: the browser canvas and WeasyPrint don't rasterize text
-// identically (font metrics, image loading), so the red line is a close
-// approximation of the natural break, not a guarantee -- the auto
-// "Continued on page #" pass works off the REAL WeasyPrint layout at print
-// time and is the source of truth.
+// Natural pagination can keep headings with paragraphs and moves unbreakable
+// images to the next page; dynamic blocks also grow when filled. Preview PDF
+// remains the exact paginated view. These guides align the manual page breaks.
 .o_elksbulletin::after {
     content: "";
     position: absolute;
-    top: 0.42in;
-    left: 0.42in;
-    right: 0.42in;
-    bottom: 0.58in;
+    top: 40px;
+    left: 40px;
+    right: 40px;
+    bottom: 56px;
     pointer-events: none;
     z-index: 5;
     border: 1px dashed rgba(91, 59, 140, 0.55);
@@ -129,56 +102,6 @@ body:has(.o_elksbulletin) {
     background-repeat: no-repeat;
 }
 
-// Masthead banner tables (top date|website|Volume bar, and the logo|title|photo
-// row) are full-width by design. Re-assert width:100% so the top bar always
-// spans the banner in the editor even if the mass_mailing sanitizer stripped the
-// inline table width when the body was rewritten (e.g. on an issue-date change).
-.o_elksbulletin .s_elks_masthead table {
-    width: 100% !important;
-}
-
-// Let our containers fill the page width (matches the print stylesheet), instead
-// of Bootstrap's narrower responsive container max-widths.
-.o_elksbulletin .container,
-.o_elksbulletin .container-fluid {
-    width: 100% !important;
-    max-width: 100% !important;
-    margin-left: 0 !important;
-    margin-right: 0 !important;
-}
-
-// Per-block Width (Style panel): only SIZED blocks become inline-block so they
-// sit side by side; unsized blocks keep normal full-width block layout (so the
-// editor's drag/drop and drop zones behave). Mirrors the print stylesheet.
-.o_elksbulletin .o_mail_snippet_general.o_elks_w_23,
-.o_elksbulletin .o_mail_snippet_general.o_elks_w_12,
-.o_elksbulletin .o_mail_snippet_general.o_elks_w_13 {
-    display: inline-block !important;
-    vertical-align: top;
-    box-sizing: border-box;
-}
-.o_elksbulletin .o_mail_snippet_general.o_elks_w_23 { width: 66% !important; }
-.o_elksbulletin .o_mail_snippet_general.o_elks_w_12 { width: 49.5% !important; }
-.o_elksbulletin .o_mail_snippet_general.o_elks_w_13 { width: 33% !important; }
-
-// -----------------------------------------------------------------------------
-// "Bulletin" font — the default newsletter type. The named font-family lives in
-// the editor's font dropdown (static/src/js/elks_editor_font.js); the tight,
-// newspaper-style leading (~5px between lines) can't ride on a font-family, so
-// it's set here as the page default. calc(1em + 5px) means "the line's own
-// height plus exactly 5px of leading" — a literal 5px gap between lines at any
-// font size, and it renders the same in the browser canvas and in WeasyPrint
-// (the report stylesheet carries the identical rule so editor == PDF). Applied
-// to the body text (p / li); headers and the purple bars set their own tighter
-// line-height inline and are intentionally left alone.
-.o_elksbulletin {
-    font-family: Georgia, 'Times New Roman', serif;
-}
-.o_elksbulletin p,
-.o_elksbulletin li {
-    line-height: calc(1em + 5px);
-}
-
 // -----------------------------------------------------------------------------
 // Layout-control blocks (19.0.1.8.0). EDITOR-ONLY affordances — none of this
 // prints (the report hides the Spacer label; the pin badge is a canvas overlay).
@@ -221,5 +144,18 @@ body:has(.o_elksbulletin) {
     background: rgba(91, 59, 140, 0.85);
     padding: 1px 6px;
     border-radius: 3px;
+    pointer-events: none;
+}
+
+// A break marker takes no printable space. The label is an overlay so the
+// plugin can measure the same break location used by the PDF.
+.o_elksbulletin .s_elks_page_break,
+.o_elksbulletin .s_elks_page_break_inline {
+    position: relative;
+    height: 0 !important; min-height: 0 !important;
+    padding: 0 !important; border: 0 !important;
+}
+.o_elksbulletin .s_elks_page_break_line {
+    position: absolute; width: 100%; top: -12px;
     pointer-events: none;
 }

@@ -58,6 +58,7 @@ class ElksBulletinPreview(http.Controller):
         # by @page, ignoring @media screen). Legal issues just show a slightly
         # narrower sheet than their true 8.5in — fine for a data preview.
         page_w = "8.5in"
+        page_h = "14in" if issue.page_size == "legal" else "11in"
         # Preview-only paper CSS. Two things to note:
         #   1. `.article` is pinned to 8.5in wide and centered so the
         #      browser shows a true-size sheet (not scaled to viewport).
@@ -82,15 +83,16 @@ class ElksBulletinPreview(http.Controller):
             "html{background:#dfdce6 !important;}"
             "body{width:" + page_w + " !important;max-width:" + page_w
             + " !important;"
+            "min-height:" + page_h + " !important;"
             "margin:18px auto !important;"
-            "padding:0.42in 0.42in 0.58in 0.42in !important;"
-            "background:#ffffff !important;box-sizing:border-box !important;"
+            + ("padding:0 !important;" if issue.editor_mode == "paper"
+             else "padding:40px 40px 56px 40px !important;")
+            + "background:#ffffff !important;box-sizing:border-box !important;"
             "overflow-x:hidden !important;"
             "box-shadow:0 0 0 1px #cfcfcf,0 6px 24px rgba(0,0,0,.25) !important;}"
             "body .container,body .container-fluid{"
             "width:100% !important;max-width:100% !important;}"
-            "body img{max-width:100% !important;height:auto !important;"
-            "max-height:9in !important;}"
+            "body img{max-width:100%;max-height:9in;}"
             "body table{max-width:100% !important;}"
             "}</style>"
         )

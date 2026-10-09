@@ -11,3 +11,5 @@ from . import elks_bulletin_template
 from . import elks_bulletin_issue
 from . import elks_bulletin_in_memoriam_wizard
 from . import ir_actions_report
+
+from . import elks_bulletin_studio

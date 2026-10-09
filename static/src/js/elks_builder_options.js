@@ -179,6 +179,13 @@ class ElksPageBreakPreviewPlugin extends Plugin {
         if (this.window) {
             this.addDomListener(this.window, "resize", schedule, false, true);
         }
+        // Images and fonts can change line wraps after the initial DOM render.
+        this.addDomListener(this.editable, "load", schedule, true, true);
+        this.document.fonts?.ready.then(() => {
+            if (!this.isDestroyed) {
+                schedule();
+            }
+        });
         schedule();
     }
 
@@ -197,30 +204,30 @@ class ElksPageBreakPreviewPlugin extends Plugin {
             this._styleEl.textContent = "";
             return; // not a Lodge Newsletter (e.g. regular Email Marketing)
         }
-        // --elks-page-h (printable page height) in px, via a probe element so
-        // the browser does the in->px conversion for us.
-        const probe = this.document.createElement("div");
-        probe.style.cssText =
-            "position:absolute;visibility:hidden;height:var(--elks-page-h);";
-        wrapper.appendChild(probe);
-        const pageH = probe.getBoundingClientRect().height;
-        probe.remove();
-        if (!pageH || pageH <= 0) {
-            this._styleEl.textContent = "";
-            return;
-        }
+        // Read the issue field even for old Legal issues whose saved wrapper
+        // predates the size modifier. Head-only rules never enter saved HTML.
+        const record = this.config.getRecordInfo?.();
+        const legal = record?.data?.page_size
+            ? record.data.page_size === "legal"
+            : wrapper.classList.contains("o_elks_legal");
+        const sheetH = legal ? 14 : 11;
+        const pageH = (sheetH - 1) * 96;
+        const sizeRule = `.o_elksbulletin{--elks-page-h:${sheetH - 1}in !important;min-height:${sheetH}in !important;}`;
+        this._styleEl.textContent = sizeRule;
+        // CSS defines one inch as 96 CSS pixels. No editable DOM probe: its
+        // insertion/removal made the observer reschedule itself forever.
         const padTop = parseFloat(
             this.window.getComputedStyle(wrapper).paddingTop) || 0;
         const breaks = wrapper.querySelectorAll(
             ".s_elks_page_break, .s_elks_page_break_inline");
-        const rules = [];
+        const rules = [sizeRule];
         for (const el of breaks) {
             // Apply spacers computed so far before measuring the next break —
             // each spacer shifts everything below it.
             this._styleEl.textContent = rules.join("\n");
             void wrapper.offsetHeight; // force reflow before measuring
             const contentTop = wrapper.getBoundingClientRect().top + padTop;
-            const dist = el.getBoundingClientRect().bottom - contentTop;
+            const dist = el.getBoundingClientRect().top - contentTop;
             if (dist <= 0) {
                 continue;
             }

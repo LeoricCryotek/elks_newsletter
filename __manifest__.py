@@ -26,15 +26,31 @@
 # =============================================================================
 {
     "name": "Elks Bulletin — Lodge Newsletter Builder",
-    "version": "19.0.1.31.5",
+    "version": "19.0.1.33.0",
     "category": "Marketing",
     "summary": "Drag-and-drop, print-ready lodge newsletter in Grand Lodge style.",
     "description": """
-Elks Bulletin — v19.0.1.31.0
+Elks Bulletin — v19.0.1.33.0
 ============================
 A lodge newsletter builder that works like Odoo's email-marketing editor
 (a side panel of drag-in content blocks) but produces a print-ready,
 page-sized document (US Letter / Legal) instead of an email.
+
+Paper Studio (19.0.1.33.0)
+------------------------
+A dedicated page editor offers real Letter and Legal sheets, page thumbnails,
+text, headings, columns, uploaded photos and lodge-data blocks. The editor and
+PDF use the same renderer. Overflow stops export; content can be moved or split
+onto the next page. Saves snapshot lodge data, detect concurrent changes, and
+lock final editions. Existing newsletters retain their original editor.
+
+Original editor layout improvements
+-----------------------------------
+Letter and Legal now use matching editor and print margins and a shared content
+stylesheet. Authored font sizes and spacing are preserved instead of compressed
+only at print time. Open-license body and masthead fonts are bundled for consistent
+wrapping. Chromium is the default; failures stop printing rather than silently
+switching engines. Existing explicit legacy engine settings remain opt-ins.
 
 Features
 --------
@@ -534,6 +550,9 @@ FRS-driven masthead, Letter/Legal PDF export.
         # Backend (web client, OUTSIDE the builder iframe): widen the newsletter
         # editor form so the canvas can show true page width, matching print.
         "web.assets_backend": [
+            "elksbulletin/static/src/js/elks_paper_studio.js",
+            "elksbulletin/static/src/js/elks_paper_studio.xml",
+            "elksbulletin/static/src/scss/elks_paper_studio.scss",
             "elksbulletin/static/src/scss/newsletter_form_backend.scss",
             "elksbulletin/static/src/scss/elks_masthead_font.scss",
         ],
@@ -541,6 +560,7 @@ FRS-driven masthead, Letter/Legal PDF export.
         # width inside the mass_mailing editing iframe. Scoped to .o_elksbulletin
         # so only this module's editor is affected.
         "mass_mailing.assets_inside_builder_iframe": [
+            "elksbulletin/static/src/css/newsletter_layout.css",
             "elksbulletin/static/src/scss/newsletter_paper_canvas.scss",
             "elksbulletin/static/src/scss/elks_masthead_font.scss",
         ],

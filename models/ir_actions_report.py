@@ -1,39 +1,7 @@
 # -*- coding: utf-8 -*-
-# =============================================================================
-# === HUMAN ===
-# Chooses the print engine for the Lodge Newsletter reports (only ours; every
-# other report in the system prints normally). The engine is set by the system
-# parameter elksbulletin.pdf_engine:
-#   * (default) wkhtmltopdf — Odoo's built-in WebKit engine; paginates this
-#     newsletter's flex/tall-block layout reliably. No page-number footer, no
-#     colour emoji.
-#   * "chromium" — headless Chromium (recommended): true browser pagination,
-#     full-colour emoji, and the CSS @page page-number footer. Needs the
-#     `playwright` package + a chromium browser; degrades to wkhtmltopdf if
-#     absent or on error.
-#   * "weasyprint" — WeasyPrint paged-media (nice CSS + the auto
-#     "Continued on page #" bars), but can halt pagination on tall blocks.
-#
-# === AI AGENT ===
-# Overrides ir.actions.report._render_qweb_pdf. For our two report_names it
-# dispatches on elksbulletin.pdf_engine (default "wkhtmltopdf"):
-#   * "weasyprint" (and weasyprint importable) -> _render_bulletin_weasyprint:
-#     renders the QWeb to HTML, runs the OPT-IN two-pass continuation markers,
-#     and pipes through WeasyPrint (real paged-media: break-inside, @page
-#     size/margins + @bottom counter(page) footer).
-#   * "chromium" -> _render_bulletin_chromium (see there); any failure logs a
-#     warning and falls through to wkhtmltopdf.
-#   * anything else -> super() (wkhtmltopdf).
-# The WeasyPrint/Chromium paths share _bulletin_url_fetcher, which resolves
-# /web/image and /web/content URLs via the ORM (member photos / dragged images,
-# no authenticated HTTP round-trip) and serves /<module>/static/* assets off
-# disk (the calendar's Font Awesome); data: URIs need no fetch.
-# WeasyPrint is a SOFT dependency: the import guard catches Exception (NOT just
-# ImportError) because on macOS a missing native lib raises OSError from cffi's
-# dlopen at import time, which once took down the whole registry at start.
-# Model/report changes need -u elksbulletin; this controller-style Python
-# needs a server restart.
-# =============================================================================
+# Newsletter PDFs use Chromium by default to match the browser editor. Legacy
+# engines remain explicit administrator opt-ins. Chromium errors stop printing
+# instead of silently changing the layout. All other Odoo reports are unaffected.
 import base64
 import logging
 import mimetypes
@@ -45,6 +13,7 @@ from contextlib import contextmanager
 from lxml import etree, html as lxml_html
 
 from odoo import api, models
+from odoo.exceptions import UserError
 from odoo.tools import file_path as _odoo_file_path
 
 # Emoji font auto-install (see _elks_ensure_emoji_font). Monochrome Noto Emoji
@@ -86,31 +55,18 @@ BULLETIN_REPORTS = (
 class IrActionsReport(models.Model):
     _inherit = "ir.actions.report"
 
-    # === HUMAN ===
-    # The traffic cop: pick the newsletter's print engine from the system
-    # parameter elksbulletin.pdf_engine — wkhtmltopdf (default), "chromium", or
-    # "weasyprint". Everything except the two newsletter reports prints the
-    # normal way. Every newsletter print logs which engine actually rendered it.
-    # === AI AGENT ===
-    # Engine dispatch; only BULLETIN_REPORTS are affected. Reads
-    # elksbulletin.pdf_engine (default "wkhtmltopdf"): "weasyprint" (if
-    # importable) -> _render_bulletin_weasyprint, errors surface; "chromium" ->
-    # _render_bulletin_chromium, errors log + fall through to wkhtmltopdf;
-    # anything else -> super() (wkhtmltopdf).
+    # Dispatch only our two reports. Existing explicit engine settings are
+    # respected; an unset parameter now selects the browser-compatible engine.
     def _render_qweb_pdf(self, report_ref, res_ids=None, data=None):
         report = self._get_report(report_ref)
         if report.report_name in BULLETIN_REPORTS:
-            # Engine selection. DEFAULT is now wkhtmltopdf (WebKit): it renders
-            # the newsletter the way a browser does — which paginates this
-            # layout correctly, whereas WeasyPrint could halt on tall/flex blocks
-            # and drop everything after them. Set the system parameter
-            # `elksbulletin.pdf_engine` = "weasyprint" to opt back into the
-            # WeasyPrint pipeline (nicer CSS: gradients, CSS grid, @page
-            # page-number footer, bundled monochrome emoji — but the pagination
-            # fragility). The INFO line records which engine actually ran.
             engine = (self.env["ir.config_parameter"].sudo().get_param(
-                "elksbulletin.pdf_engine", "wkhtmltopdf") or "wkhtmltopdf")
+                "elksbulletin.pdf_engine", "chromium") or "chromium")
             engine = engine.strip().lower()
+            if res_ids and self.env['elks.bulletin.issue'].browse(res_ids).filtered(
+                    lambda issue: issue.editor_mode == 'paper'):
+                # Paper Studio needs the exact browser renderer and validation.
+                engine = 'chromium'
             if weasyprint and engine == "weasyprint":
                 # Errors surface (no silent fallback) so layout problems can be
                 # fixed rather than masked.
@@ -120,27 +76,27 @@ class IrActionsReport(models.Model):
                     report.report_name, weasyprint.__version__)
                 return self._render_bulletin_weasyprint(report_ref, res_ids, data)
             if engine == "chromium":
-                # Headless Chromium (Blink) renders the newsletter exactly like a
-                # browser: correct pagination on this flex/tall-block layout AND
-                # full-colour emoji from the platform emoji font — the one engine
-                # that gives us both. If Chromium/Playwright isn't available or
-                # the render fails, we fall through to wkhtmltopdf rather than
-                # error the print (graceful degrade), with a warning naming why.
+                # Preserve the browser layout on failures, too: changing
+                # engines behind the editor's back invalidates its page guides.
                 try:
                     _logger.info(
                         "elksbulletin: rendering %s with headless Chromium "
                         "(elksbulletin.pdf_engine=chromium)", report.report_name)
                     return self._render_bulletin_chromium(
                         report_ref, res_ids, data)
+                except UserError:
+                    raise
                 except Exception:
-                    _logger.warning(
-                        "elksbulletin: Chromium render failed; falling back to "
-                        "wkhtmltopdf. Install a chromium/chrome binary (or the "
-                        "Playwright chromium) on the server to use this engine.",
-                        exc_info=True)
+                    _logger.exception("elksbulletin: Chromium render failed")
+                    raise UserError(
+                        "The newsletter could not be printed with Chromium. "
+                        "Ask your administrator to install Playwright and its "
+                        "Chromium browser, or configure elksbulletin.chromium_path. "
+                        "Printing stopped to preserve the paper layout; it did "
+                        "not switch to another PDF engine.")
             else:
                 _logger.info(
-                    "elksbulletin: rendering %s with wkhtmltopdf (default engine; "
+                    "elksbulletin: rendering %s with wkhtmltopdf (legacy engine; "
                     "set elksbulletin.pdf_engine=weasyprint or =chromium to "
                     "change)", report.report_name)
         return super()._render_qweb_pdf(report_ref, res_ids=res_ids, data=data)
@@ -278,6 +234,8 @@ class IrActionsReport(models.Model):
         try:
             from playwright.sync_api import sync_playwright
         except Exception:
+            if doc and doc.editor_mode == 'paper':
+                raise UserError('Paper Studio requires Playwright and Chromium so page overflow can be checked before printing.')
             return self._bulletin_chromium_pdf_cli(html, legal)
         # Reuse a system-installed chromium/chrome so the server only needs the
         # small `playwright` Python package — NOT Playwright's ~300MB bundled
@@ -313,6 +271,26 @@ class IrActionsReport(models.Model):
                     page = browser.new_page()
                     page.set_content(html, wait_until="load")
                     page.emulate_media(media="print")
+                    page.evaluate("""async () => {
+                        await document.fonts.ready;
+                        await Promise.all(Array.from(document.images, image =>
+                            image.decode().catch(() => {})));
+                    }""")
+                    if doc and doc.editor_mode == 'paper':
+                        height = '14in' if legal else '11in'
+                        page.add_style_tag(content=(
+                            '@page { size: 8.5in %s; margin: 0; '
+                            '@bottom-left { content: none; } '
+                            '@bottom-center { content: none; } '
+                            '@bottom-right { content: none; } }' % height))
+                        problems = page.evaluate("""() => {
+                            if (!window.ElksPaperRenderer || !document.querySelector('.elks-paper-mount .elks-paper-sheet'))
+                                return [{page: 1, message: 'The paper renderer did not load.'}];
+                            return window.ElksPaperRenderer.problems(document);
+                        }""")
+                        if problems:
+                            raise UserError('Fix these pages in Paper Studio before printing:\n' + '\n'.join(
+                                'Page %s: %s' % (problem['page'], problem['message']) for problem in problems))
                     # NO display_header_footer / footer_template: Chromium 151
                     # renders the report's CSS @page @bottom-* margin boxes
                     # (lodge · B.P.O.E. / Page N of M / month) itself, so an

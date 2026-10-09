@@ -1,0 +1,34 @@
+/* Physical sheets. This file is used unchanged in the editor and PDF report. */
+.elks-paper-root { font-size: 16px; color: #171321; }
+.elks-paper-sheet {
+    position: relative; width: 816px; padding: 40px 40px 56px;
+    box-sizing: border-box; background: white; flex-shrink: 0;
+    break-after: page; page-break-after: always;
+}
+.elks-paper-sheet:last-child { break-after: auto; page-break-after: auto; }
+.paper-content { height: 100%; display: flow-root; overflow: visible; }
+.paper-block { display: flow-root; width: 100%; box-sizing: border-box; overflow-wrap: anywhere; }
+.paper-block:last-child { margin-bottom: 0 !important; }
+.paper-richtext { min-width: 0; line-height: 1.4; }
+.paper-richtext p, .paper-richtext li { font-size: inherit; line-height: inherit; margin: 0 0 8px; }
+.paper-richtext > :last-child { margin-bottom: 0; }
+.paper-heading { font-weight: 700; line-height: 1.15; color: #513482; }
+.paper-columns { display: grid; gap: 20px; align-items: start; }
+.paper-image { text-align: center; }
+.paper-photo { max-width: 100%; max-height: none !important; display: block; margin: 0 auto; }
+.paper-image .paper-richtext { font-size: 12px; margin-top: 6px; color: #655e70; }
+.paper-missing-photo { height: 160px; border: 1px dashed #b9aecb; display: grid; place-items: center; color: #766b86; }
+.paper-lodge-data .elks-cal { font-family: Arial,sans-serif !important; }
+.paper-footer {
+    position: absolute; bottom: 16px; left: 40px; right: 40px;
+    display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px;
+    font: 11px Arial,sans-serif; color: #655277; line-height: 1.3;
+}
+.paper-footer span:last-child { text-align: right; }
+@media print {
+    .elks-paper-root, .elks-paper-root.o_elksbulletin {
+        margin: 0 !important; padding: 0 !important; width: 816px !important;
+        max-width: none !important; min-height: 0 !important;
+    }
+    .elks-paper-sheet { margin: 0 !important; box-shadow: none !important; }
+}
