@@ -30,11 +30,11 @@
                     <button name="action_print_pdf" type="object"
                             string="Print / Download PDF" class="btn-primary"
                             icon="fa-file-pdf-o"/>
-                    <button name="action_select_new_members" type="object"
+                    <button name="action_select_new_members" type="object" invisible="editor_mode == 'paper'"
                             string="New Members…" class="btn-secondary"
                             icon="fa-user-plus"
                             help="Choose exactly who appears in the New Members block. Opens pre-filled with the automatic list so you can deselect or add members."/>
-                    <button name="action_select_in_memoriam" type="object"
+                    <button name="action_select_in_memoriam" type="object" invisible="editor_mode == 'paper'"
                             string="In Memoriam…" class="btn-secondary"
                             icon="fa-users"
                             help="Choose exactly who appears in the In Memoriam block. Opens pre-filled with the automatic list so you can deselect or add members."/>

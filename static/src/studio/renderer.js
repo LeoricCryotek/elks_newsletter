@@ -15,9 +15,29 @@
         node.dataset.owner = block.id;
         return node;
     }
-    function blockNode(block) {
+    function flowRows(block) {
+        const root=document.createElement('div');root.innerHTML=block.resolvedHTML || '';
+        const container=root.querySelector(`[data-elks-block="${block.source}"]`);
+        return container ? [...container.children].filter(n=>!['STYLE','SCRIPT'].includes(n.tagName)) : [];
+    }
+    function storyTitle(block) {
+        if (block.storyTitle) return block.storyTitle.replace(/^Officer Message \((.+)\)$/, 'Officer Message $1');
+        if (block.kind === 'widget' && block.source === 'message') {
+            const source = document.createElement('div'); source.innerHTML = block.resolvedHTML || '';
+            const title = source.querySelector('.s_elks_msg_byline')?.querySelector('i,em,span')?.textContent.trim()
+                || (block.officer || 'exalted_ruler').replaceAll('_', ' ').replace(/\b\w/g, c => c.toUpperCase());
+            return `Officer Message ${title}`;
+        }
+        return '';
+    }
+    function blockNode(block, nextPage) {
         const node = element('section', `paper-block paper-${block.kind}`);
         node.dataset.blockId = block.id;
+        node.classList.toggle('paper-fit', Boolean(block.fitFont));
+        if(block.fitFont) node.style.setProperty('--paper-fit-font',`${block.fitFont}px`);
+        node.classList.toggle('paper-compact', Boolean(block.compact));
+        node.style.setProperty('--paper-line-height', block.lineHeight ?? 1.4);
+        node.style.setProperty('--paper-paragraph-gap', `${block.paragraphGap ?? 8}px`);
         node.style.fontSize = `${block.fontSize || 16}px`;
         node.style.fontFamily = fonts[block.font || 'sans'];
         node.style.textAlign = block.align || 'left';
@@ -75,6 +95,10 @@
         } else if (block.kind === 'dynamic' || block.kind === 'widget') {
             const data = element('div', 'paper-lodge-data');
             data.innerHTML = block.resolvedHTML || '<p>Save to fill this block with lodge data.</p>';
+            if (block.flowRange) {
+                const container=data.querySelector(`[data-elks-block="${block.source}"]`);
+                if (container) [...container.children].filter(n=>!['STYLE','SCRIPT'].includes(n.tagName)).forEach((row,i)=>{if(i<block.flowRange[0] || i>=block.flowRange[1]) row.remove();});
+            }
             if (!block.resolvedHTML) data.dataset.unresolved = 'true';
             // Calendar CSS uses the legacy snippet scope; keep it in both views.
             data.classList.add(`s_elks_${block.source}`);
@@ -92,17 +116,27 @@
             if (block.photoRadius) image.style.borderRadius = `${block.photoRadius}px`;
             image.style.boxSizing = 'border-box';
         }
-        if (block.kind === 'widget' && block.source === 'message' && block.layout === 'wrap') {
+        if (block.kind === 'widget' && block.source === 'message') {
             const row = node.querySelector('.s_elks_msg_byline')?.parentElement;
             const byline = row?.querySelector('.s_elks_msg_byline');
             const story = row?.querySelector('.s_elks_story_flow');
             if (byline && story) {
+                const side = block.side || 'right';
+                if (block.layout !== 'wrap') {
+                    row.style.display = 'flex'; row.style.flexWrap = 'nowrap';
+                    byline.style.width = `${block.photoWidth || 33}%`; byline.style.flex = `0 0 ${block.photoWidth || 33}%`;
+                    story.style.flex = '1'; story.style.width = 'auto'; story.style.maxWidth = 'none';
+                    if (side === 'left') row.prepend(byline); else row.append(byline);
+                } else {
                 row.classList.add('paper-officer-wrap'); row.prepend(byline);
-                byline.style.cssFloat = 'right'; byline.style.width = `${block.photoWidth || 33}%`;
-                byline.style.margin = '0 0 12px 20px';
+                byline.style.cssFloat = side; byline.style.width = `${block.photoWidth || 33}%`;
+                byline.style.margin = side === 'left' ? '0 20px 12px 0' : '0 0 12px 20px';
                 story.style.width = 'auto'; story.style.maxWidth = 'none'; story.style.flex = 'none';
+                }
             }
         }
+        if (block.continuation) node.prepend(element('h3','paper-continuation', storyTitle(block) ? `${storyTitle(block)} Continued....` : 'Continued'));
+        if (nextPage || block.reserveContinuation) node.append(element('div','paper-continuation-link',`Continued on page ${nextPage || 'XX'}`));
         const body = element('div', 'paper-block-body');
         while (node.firstChild) body.append(node.firstChild);
         node.append(body); node.style.display = 'flex'; node.style.flexDirection = 'column';
@@ -115,20 +149,37 @@
         root.replaceChildren();
         root.classList.add('elks-paper-root', 'o_elks_newsletter');
         root.dataset.paperSize = payload.paperSize;
+        const positions = payload.document.pages.flatMap((page, i) => page.blocks.map(block => ({block, page: i + 1})));
         payload.document.pages.forEach((page, i) => {
             const sheet = element('article', 'elks-paper-sheet');
             sheet.dataset.pageId = page.id;
             sheet.style.height = payload.paperSize === 'legal' ? '1344px' : '1056px';
             const content = element('div', 'paper-content');
-            let row, used = 3;
-            page.blocks.forEach(block => {
+            let row, used = 3, rowVertical;
+            // Stable groups: normal flow at the top, page anchors at the bottom.
+            const ordered = ['top','middle','bottom'].flatMap(vertical=>page.blocks.filter(block=>(block.vertical || 'top')===vertical));
+            let firstBottom;
+            ordered.forEach(block => {
                 const span = Number(block.span || 3);
-                if (used + span > 3) { row = element('div', 'paper-row'); content.append(row); used = 0; }
-                const node = blockNode(block);
+                const vertical=block.vertical || 'top';
+                if (used + span > 3 || rowVertical !== vertical) {
+                    row = element('div', 'paper-row'); content.append(row); used = 0; rowVertical=vertical;
+                    if(vertical==='bottom' && !firstBottom)firstBottom=row;
+                    if(vertical==='middle'){content.classList.add('paper-align-page');row.classList.add('paper-fill-remainder');}
+                }
+                const index = positions.findIndex(entry => entry.block === block);
+                const next = block.flowGroup && positions.slice(index + 1).find(entry => entry.block.flowGroup === block.flowGroup && entry.block.continuation);
+                const origin = block.continuation && block.flowGroup && positions.find(entry => entry.block.flowGroup === block.flowGroup && !entry.block.continuation);
+                const displayBlock = origin && !block.storyTitle ? {...block,storyTitle:storyTitle(origin.block)} : block;
+                const node = blockNode(displayBlock, next?.page);
                 node.style.width = `calc((100% - 40px) * ${span} / 3 + ${(span - 1) * 20}px)`;
                 row.append(node); used += span;
                 row.style.justifyContent = row.children.length === 1 ? {left:'flex-start',center:'center',right:'flex-end'}[block.horizontal || 'left'] : 'flex-start';
             });
+            if (firstBottom) {
+                content.classList.add('paper-align-page');
+                firstBottom.classList.add('paper-bottom-anchor');
+            }
             const footer = element('footer', 'paper-footer');
             footer.append(element('span', '', payload.lodge || payload.title),
                 element('span', '', `Page ${i + 1} of ${payload.document.pages.length}`),
@@ -156,5 +207,5 @@
             if (data) render(root, JSON.parse(data.textContent));
         });
     }
-    window.ElksPaperRenderer = { render, problems, blockNode, mountAll };
+    window.ElksPaperRenderer = { render, problems, blockNode, mountAll, flowRows, storyTitle };
 })();

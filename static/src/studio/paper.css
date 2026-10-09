@@ -9,8 +9,8 @@
 .paper-content { height: 100%; display: flow-root; overflow: visible; }
 .paper-block { display: flow-root; width: 100%; box-sizing: border-box; overflow-wrap: anywhere; }
 
-.paper-richtext { min-width: 0; line-height: 1.4; }
-.paper-richtext p, .paper-richtext li { font-size: inherit; line-height: inherit; margin: 0 0 8px; }
+.paper-richtext { min-width: 0; line-height: var(--paper-line-height,1.4); }
+.paper-richtext p, .paper-richtext li { font-size: inherit; line-height: inherit; margin: 0 0 var(--paper-paragraph-gap,8px); }
 .paper-richtext > :last-child { margin-bottom: 0; }
 .paper-heading { font-weight: 700; line-height: 1.15; color: #513482; }
 .paper-columns { display: grid; gap: 20px; align-items: start; }
@@ -40,3 +40,23 @@
 
 .paper-row { display: flex; gap: 20px; align-items: flex-start; width: 100%; }
 .paper-block-body { display: flow-root; min-width: 0; width: 100%; }
+
+.paper-compact .paper-lodge-data > section { padding-top: 2px !important; padding-bottom: 2px !important; }
+.paper-compact .paper-lodge-data .container { padding-top: 4px !important; padding-bottom: 4px !important; }
+.paper-compact .s_elks_msg_title { font-size: 26px !important; margin-bottom: 6px !important; }
+.paper-compact .s_elks_msg_byline img { max-height: 180px !important; width: auto !important; max-width: 100% !important; height: auto !important; object-fit: contain; }
+.paper-compact .paper-richtext p, .paper-compact .paper-richtext li { margin-top: 0 !important; margin-bottom: var(--paper-paragraph-gap,4px) !important; line-height: var(--paper-line-height,1.15) !important; }
+
+.paper-continuation { font: italic 11px Arial,sans-serif; color:#655277; margin-bottom:4px; }
+
+.paper-fit .paper-richtext { font-size: var(--paper-fit-font) !important; }
+.paper-fit .paper-lodge-data [data-elks-block] :is(p,div,span,b,td,th) { font-size: var(--paper-fit-font) !important; }
+
+.paper-continuation { font: bold 16px Arial,sans-serif; margin:0 0 8px; color:#553781; }
+.paper-continuation-link { clear:both; border:1px solid #75559a; padding:4px 8px; margin-top:8px; text-align:right; font:italic 12px Arial,sans-serif; color:#553781; }
+
+.paper-content.paper-align-page { display:flex; flex-direction:column; }
+.paper-align-page > .paper-row { flex-shrink:0; }
+.paper-align-page > .paper-fill-remainder { flex-grow:1; }
+
+.paper-align-page > .paper-bottom-anchor { margin-top:auto; }

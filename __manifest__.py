@@ -26,18 +26,36 @@
 # =============================================================================
 {
     "name": "Elks Newsletter — Lodge Newsletter Builder",
-    "version": "19.0.1.37.0",
+    "version": "19.0.1.49.0",
     "category": "Marketing",
     "summary": "Drag-and-drop, print-ready lodge newsletter in Grand Lodge style.",
     "description": """
-Elks Newsletter — v19.0.1.37.0
+Elks Newsletter — v19.0.1.49.0
 ============================
 A lodge newsletter builder that works like Odoo's email-marketing editor
 (a side panel of drag-in content blocks) but produces a print-ready,
 page-sized document (US Letter / Legal) instead of an email.
 
-Paper Studio layout and data controls (19.0.1.37.0)
+Standard Elks widgets (19.0.1.49.0)
 -----------------------------------
+Adds the sections most Elks bulletins carry, in both Paper Studio and the
+original editor. Lodge-data widgets: Member Birthdays and Membership Milestones
+(5-year multiples, both with a Month shown override in Paper Studio),
+Applications for Membership (pending applications with proposers) and
+Committee Chairs (current lodge year). Fraternal widgets with editable text:
+Eleven O'Clock Toast, Elks Mission, Elks National Foundation, Veterans Service,
+Youth Programs, Sickness & Distress (prefilled from the latest lodge meeting
+minutes) and Lodge Meetings & Hours (contact lines from Lodge Settings). Paper
+Studio also gains an Elk of the Month photo-and-story preset.
+
+Paper Studio publisher flow (19.0.1.49.0)
+-----------------------------------
+Add linked text/story continuation and event-entry pagination, automatic/manual
+flow policies, keep-together controls, page-space feedback and bounded local
+text fitting. Existing saved editions retain manual mode; new editions use auto.
+Add Compact pages to repack sparse pages, tighten visible spacing, remove fixed
+empty frame height, and retain all content with Undo. Add line-height and
+paragraph-spacing controls shared by editor and PDF.
 Add one/two/three-column widget widths, horizontal/vertical placement, calendar
 month overrides and direct member-list dialogs.
 Add photo text wrapping, block and picture framing, a demo widget gallery,

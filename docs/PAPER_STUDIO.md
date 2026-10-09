@@ -110,3 +110,84 @@ selected block's month. Reset to Automatic in that wizard restores date filterin
 The memorial's automatic window remains the calendar month before the issue date.
 The underlying Odoo initiation/death dates determine automatic membership lists;
 the newsletter's member picker changes who appears, not those source records.
+
+## Compact pages (19.0.1.38.0)
+
+**Compact pages** repacks all blocks in reading order starting at page one,
+removes empty sheets and minimum frame heights, tightens paragraph/line/block
+spacing, reduces spacer heights, and trims excess officer-widget padding and
+photo height. It changes the visible layout and saved PDF together. Undo restores
+the prior pages and settings. It intentionally removes previous page boundaries;
+use it when you want fewer pages. It does not drop articles or scale an entire
+page. Content that still exceeds a whole sheet remains flagged.
+
+Select a block to fine-tune **Line height**, **Paragraph spacing**, and **Space
+after block**. Fitting all content onto one page depends on its actual length;
+compaction reports the resulting number of pages rather than clipping text.
+
+## Publisher-style flow (19.0.1.39.0)
+
+The [publisher/platform review](PUBLISHER_RESEARCH.md) explains the design changes.
+**Flow pages** now uses the available space in reading order, continuing text and
+Events/Upcoming Events rather than moving every whole widget. Text is editable in
+each continuation. The portrait stays in the first officer-message fragment.
+Event fragments keep their Odoo source and select ranges of whole entries.
+
+**Auto flow** runs after leaving text editing and after live Odoo data refresh.
+New editions start with it enabled. Existing saved editions remain manual until
+you enable it. Reflow merges adjacent linked fragments before calculating the
+new layout, so shortening a story can reclaim earlier blank space. Manual page
+boundaries are intentionally removed by Flow pages; use manual mode for deliberate
+full-page calendars or mailing sections.
+
+**Page flow** on a selected block can keep it together. Complex calendars,
+photo grids and arbitrary column/table layouts remain indivisible in this release.
+A single oversized object still needs manual adjustment and remains flagged.
+
+**Fit selected widget** tightens its frame and paragraph spacing and reduces
+supported text sizes only as far as 12px. **Compact pages** tightens the edition
+then applies the continuation engine. Both are visible changes with Undo. Page
+thumbnails show space usage. Save and PDF export retain the resulting fragments;
+no separate printer-only shrink is applied.
+
+### Linked continuation notices (v40)
+
+Split stories show a framed “Continued on page X” notice at the end of each fragment. The destination follows the next linked fragment when pages are moved or inserted. Officer story continuations open with “Officer Message (officer title) Continued....”. Automatic flow reserves room for the notice; manual Continue on next page also links the fragments. Both editor and PDF use the same labels.
+
+### Officer photos and member dialogs (v41)
+
+Select an officer message and use Photo position → Left or Right. This applies to separate columns and wrapped text, including PDF output. Page thumbnail frames fit within their cards. Member chooser actions include explicit form views for the Odoo 19 action service.
+
+### Page alignment and stable editing position (v42)
+
+The last widget row uses remaining page space for Middle or Bottom vertical alignment without requiring a minimum frame height. Within earlier rows, widgets align relative to their neighbors; a taller minimum frame also aligns content inside that frame. Redraws preserve the center desk and settings panel scroll positions. Automatic flow keeps the visible block anchored and retains the selected page when possible.
+
+### Blank starts and refresh identity (v43)
+
+New Paper Newsletter starts with one empty page. The issue ID is retained in Odoo action navigation state so refreshing loads that same issue. A missing issue ID raises a clear error and never creates a replacement. Existing saved layouts remain intact; save authored changes before refreshing.
+
+### Standard Elks widgets (v44)
+
+The widget picker and gallery add the sections most Elks bulletins carry. These are also available in the original editor's Lodge block group.
+
+- **Lodge data:** Member birthdays (grouped by day, no birth years), Membership milestones (members reaching a multiple of five years this month, less lost years), Applications for membership (Proposed, Under Investigation and Balloting applications with proposers), and Committee chairs (current lodge year). Birthdays and milestones accept **Month shown** like the calendar.
+- **Fraternal text (editable):** Eleven O'Clock Toast, Elks mission, Elks National Foundation, Veterans service, Youth programs, Sickness & distress (prefilled from the latest lodge meeting minutes within 60 days of the issue date), and Lodge meetings & hours (lodge address, phone and website from Lodge Settings, with schedule lines to fill in).
+- **Elk of the Month:** a photo-and-text preset.
+
+Review the editable placeholder lines (meeting nights, office hours, youth program dates) before printing.
+
+### Opening and continuation fit (v44)
+
+The host passes only serializable state to Odoo’s bound updateActionState callback. Member-list header buttons are hidden in Paper Studio mode; use Choose members within widgets. Pagination validates the fully rendered document and remeasures linked continuations when later page-number notices add height.
+
+### Shared top and bottom stacks (v46)
+
+Vertical alignment Bottom anchors a widget to the printable bottom edge regardless of its insertion order. Multiple bottom widgets form a stable stack. Default Top widgets stack from the top of the same page, filling the space above bottom widgets. The groups share a page while their combined heights fit; overflow remains visible and Flow pages paginates when they collide. Thumbnail free-space counts exclude the flexible gap between stacks.
+
+### Lock and reorder pages (v47)
+
+Select a thumbnail, then Page settings → Lock page. Locked pages retain their saved widgets and data snapshots; flow and compaction only affect unlocked sections. Unlock before editing or refreshing the page. Adding a widget while a locked page is selected creates a new blank destination; moving content to a locked next page creates an unlocked page before it. Drag thumbnails to another thumbnail to place the dragged page before it, including locked pages. Page order updates printed page numbers and continuation links. Save persists locks and order; Undo restores either change.
+
+### Review cleanup (v49)
+
+Officer photo-side controls match the rendered default. Failed pagination restores its original structured layout and removes temporary styles. Saving locked snapshots checks final page/widget IDs to prevent accidental duplication when a locked widget is moved through an external client.

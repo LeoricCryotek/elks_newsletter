@@ -11,8 +11,13 @@ from lxml import etree, html
 DYNAMIC_SOURCES = (
     'new_members', 'in_memoriam', 'officers', 'calendar', 'charity',
     'leaderboard', 'events', 'upcoming_events', 'project_dollars', 'delinquents',
+    'birthdays', 'anniversaries', 'applications', 'committees',
 )
-WIDGET_SOURCES = ('masthead', 'message', 'section_bar', 'mailing')
+WIDGET_SOURCES = ('masthead', 'message', 'section_bar', 'mailing',
+                  'eleven_oclock', 'mission', 'enf', 'veterans', 'youth',
+                  'sick_distressed', 'lodge_info')
+# Lodge-data widgets whose Paper Studio block carries a "Month shown" override.
+MONTH_SOURCES = ('calendar', 'new_members', 'leaderboard', 'birthdays', 'anniversaries')
 OFFICERS = ('exalted_ruler', 'leading_knight', 'loyal_knight', 'lecturing_knight', 'secretary', 'treasurer', 'tiler', 'esquire', 'chaplain', 'inner_guard', 'organist', 'pianist', 'sergeant_at_arms', 'presiding_justice', 'boardchair', 'trustee1y', 'trustee2y', 'trustee3y', 'trustee4y', 'trustee5y', 'assistant_secretary', 'assistant_treasurer', 'house_chair', 'activities_chair', 'membership_chair', 'lodge_advisor')
 KINDS = ('text', 'heading', 'columns', 'image', 'dynamic', 'widget', 'spacer', 'gallery', 'photo_text')
 TAGS = {'p', 'div', 'span', 'br', 'b', 'strong', 'em', 'i', 'u', 's', 'ul', 'ol', 'li', 'a', 'h1', 'h2', 'h3', 'blockquote'}
@@ -83,6 +88,7 @@ def normalise_document(document, resolve=None):
     if not isinstance(pages, list) or not 1 <= len(pages) <= 60:
         raise ValueError('A newsletter must have between 1 and 60 pages.')
     identifiers = set()
+    resolved_sources = {}
 
     def identifier(value):
         value = value or uuid4().hex
@@ -91,11 +97,15 @@ def normalise_document(document, resolve=None):
         identifiers.add(value)
         return value
 
-    result = {'version': 1, 'pages': []}
+    result = {'version': 1, 'pages': [], 'flowMode': document.get('flowMode', 'manual')}
+    if result['flowMode'] not in ('manual', 'auto'):
+        raise ValueError('Choose manual pages or automatic flow.')
     for page in pages:
         if not isinstance(page, dict) or not isinstance(page.get('blocks'), list) or len(page['blocks']) > 100:
             raise ValueError('Each page supports up to 100 content blocks.')
-        cleaned = {'id': identifier(page.get('id')), 'blocks': []}
+        if not isinstance(page.get('locked', False), bool):
+            raise ValueError('Choose a supported page lock setting.')
+        cleaned = {'id': identifier(page.get('id')), 'blocks': [], 'locked': page.get('locked', False)}
         for block in page['blocks']:
             if not isinstance(block, dict) or block.get('kind') not in KINDS:
                 raise ValueError('This content block is not supported.')
@@ -111,6 +121,30 @@ def normalise_document(document, resolve=None):
                         photoRadius=number(block.get('photoRadius'), 0, 0, 100),
                         photoWidth=number(block.get('photoWidth'), 33, 15, 60),
                         layout=block.get('layout', 'columns'))
+            if 'fitFont' in block:
+                item['fitFont'] = number(block['fitFont'], 16, 12, 24)
+            if 'flowGroup' in block:
+                group = block['flowGroup']
+                if not isinstance(group, str) or not re.fullmatch(r'[A-Za-z0-9_-]{1,80}',group):
+                    raise ValueError('The linked story identifier is invalid.')
+                item['flowGroup'] = group
+            if 'storyTitle' in block:
+                if not isinstance(block['storyTitle'], str) or len(block['storyTitle']) > 160:
+                    raise ValueError('The continuation title is invalid.')
+                item['storyTitle'] = block['storyTitle']
+            for key in ('keepTogether','continuation'):
+                if not isinstance(block.get(key,False),bool): raise ValueError('Choose a supported flow option.')
+                item[key] = block.get(key,False)
+            if 'flowRange' in block:
+                bounds = block['flowRange']
+                if block['kind'] != 'dynamic' or block.get('source') not in ('events','upcoming_events') or not isinstance(bounds,list) or len(bounds)!=2 or any(isinstance(n,bool) or not isinstance(n,int) for n in bounds) or not 0<=bounds[0]<bounds[1]<=100000:
+                    raise ValueError('The event continuation range is invalid.')
+                item['flowRange'] = bounds
+            if not isinstance(block.get('compact', False), bool):
+                raise ValueError('Choose a supported compact layout setting.')
+            item.update(compact=block.get('compact', False),
+                        lineHeight=number(block.get('lineHeight'), 1.4, 1, 2.4),
+                        paragraphGap=number(block.get('paragraphGap'), 8, 0, 32))
             item.update(span=number(block.get('span'), 3, 1, 3),
                         horizontal=block.get('horizontal', 'left'), vertical=block.get('vertical', 'top'),
                         boxHeight=number(block.get('boxHeight'), 0, 0, 900))
@@ -180,11 +214,14 @@ def normalise_document(document, resolve=None):
                     item['html'] = clean_text(block.get('html', ''))
                     item['html2'] = clean_text(block.get('html2', ''))
                     if source == 'message':
+                        item['side'] = block.get('side', 'right')
+                        if item['side'] not in ('left', 'right'):
+                            raise ValueError('Choose left or right for the officer photo.')
                         item['officer'] = block.get('officer', 'exalted_ruler')
                         if item['officer'] not in OFFICERS:
                             raise ValueError('Choose a lodge officer.')
                 resolve_key = source + ':' + item['officer'] if source == 'message' else source
-                if source in ('calendar', 'new_members', 'leaderboard'):
+                if source in MONTH_SOURCES:
                     month = block.get('month', '')
                     if not isinstance(month, str) or (month and not re.fullmatch(r'\d{4}-\d{2}', month)):
                         raise ValueError('Choose a month in YYYY-MM format.')
@@ -193,7 +230,9 @@ def normalise_document(document, resolve=None):
                         except ValueError: raise ValueError('Choose a valid calendar month.') from None
                         resolve_key += ':' + month
                     item['month'] = month
-                item['resolvedHTML'] = str(resolve(resolve_key)) if resolve else ''
+                if resolve_key not in resolved_sources:
+                    resolved_sources[resolve_key] = str(resolve(resolve_key)) if resolve else ''
+                item['resolvedHTML'] = resolved_sources[resolve_key]
             cleaned['blocks'].append(item)
         result['pages'].append(cleaned)
     if len(json.dumps(result)) > 24000000:
@@ -202,8 +241,4 @@ def normalise_document(document, resolve=None):
 
 
 def initial_document(name):
-    from html import escape
-    return {'version': 1, 'pages': [{'id': uuid4().hex, 'blocks': [
-        {'id': uuid4().hex, 'kind': 'heading', 'html': f'<p>{escape(name)}</p>', 'fontSize': 32},
-        {'id': uuid4().hex, 'kind': 'text', 'html': '<p>Write your newsletter here.</p>'},
-    ]}]}
+    return {'version': 1, 'flowMode': 'auto', 'pages': [{'id': uuid4().hex, 'blocks': []}]}

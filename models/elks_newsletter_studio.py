@@ -8,7 +8,7 @@ from lxml import html as lxml_html
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError
 
-from .paper_document import initial_document, normalise_document
+from .paper_document import MONTH_SOURCES, initial_document, normalise_document
 
 ASSETS = Path(__file__).resolve().parent.parent / 'static/src/studio'
 
@@ -51,6 +51,14 @@ class ElksBulletinIssueStudio(models.Model):
                     raise UserError(_('Reset this issue to Draft before editing its paper pages.'))
                 try:
                     values['studio_document'] = normalise_document(values['studio_document'], issue._studio_resolve_dynamic)
+                    saved_pages = {page['id']: page for page in (issue.studio_document or {}).get('pages', []) if page.get('locked')}
+                    values['studio_document']['pages'] = [
+                        saved_pages.get(page['id'], page) if page.get('locked') else page
+                        for page in values['studio_document']['pages']]
+                    identifiers = [item['id'] for page in values['studio_document']['pages']
+                                   for item in [page, *page['blocks']]]
+                    if len(identifiers) != len(set(identifiers)):
+                        raise ValueError('Unlock a page before moving its widgets into another page.')
                     values['studio_document']['metadata'] = {
                         'title': issue.name, 'lodge': issue.lodge_name or '',
                         'month': issue.issue_date.strftime('%B %Y') if issue.issue_date else '',
@@ -73,7 +81,13 @@ class ElksBulletinIssueStudio(models.Model):
                      'officers': 'officers', 'calendar': 'calendar', 'charity': 'charity',
                      'leaderboard': 'leaderboard_full', 'events': 'events',
                      'upcoming_events': 'upcoming_events', 'project_dollars': 'project_dollars',
-                     'delinquents': 'delinquents'}
+                     'delinquents': 'delinquents',
+                     # Standard Elks widgets (19.0.1.44.0)
+                     'birthdays': 'birthdays', 'anniversaries': 'anniversaries',
+                     'applications': 'applications', 'committees': 'committees',
+                     'eleven_oclock': 'eleven_oclock', 'mission': 'mission', 'enf': 'enf',
+                     'veterans': 'veterans', 'youth': 'youth',
+                     'sick_distressed': 'sick_distressed', 'lodge_info': 'lodge_info'}
         template = templates.get(source)
         if not template:
             raise UserError(_('This bulletin widget is not supported.'))
@@ -81,9 +95,10 @@ class ElksBulletinIssueStudio(models.Model):
         markup = str(markup)
         if source == 'message' and officer:
             markup = markup.replace('o_elks_officer_exalted_ruler', 'o_elks_officer_' + officer)
-        if source in ('calendar', 'new_members', 'leaderboard') and officer:
+        if source in MONTH_SOURCES and officer:
             tree = lxml_html.fragment_fromstring(markup, create_parent='div')
-            attr = {'calendar': 'data-elks-cal-month', 'new_members': 'data-elks-nm-month', 'leaderboard': 'data-elks-lb-month'}[source]
+            attr = {'calendar': 'data-elks-cal-month', 'new_members': 'data-elks-nm-month', 'leaderboard': 'data-elks-lb-month',
+                    'birthdays': 'data-elks-bd-month', 'anniversaries': 'data-elks-ann-month'}[source]
             for node in tree.xpath('.//*[@data-elks-block]'): node.set(attr, officer)
             markup = ''.join(lxml_html.tostring(child, encoding='unicode') for child in tree)
         rendered = self._render_print_body_inner(markup)
@@ -120,7 +135,8 @@ class ElksBulletinIssueStudio(models.Model):
         self.ensure_one()
         self.check_access('read')
         return {'type': 'ir.actions.client', 'tag': 'elks_newsletter.paper_studio',
-                'name': _('Paper Studio'), 'params': {'issue_id': self.id}}
+                'name': _('Paper Studio'), 'params': {'issue_id': self.id},
+                'context': {'active_id': self.id, 'active_model': self._name}}
 
     def action_new_paper_newsletter(self, selected_ids=None):
         # Accept list-button callers that also pass ids explicitly. This action

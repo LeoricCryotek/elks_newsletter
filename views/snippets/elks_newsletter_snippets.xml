@@ -96,6 +96,29 @@
                t-thumbnail="/elks_newsletter/static/src/img/snippets_thumbs/ico_events.svg"/>
             <t t-snippet="elks_newsletter.s_elks_events" string="Events" group="lodge"
                t-thumbnail="/elks_newsletter/static/src/img/snippets_thumbs/ico_events.svg"/>
+            <!-- Standard Elks widgets (19.0.1.44.0) -->
+            <t t-snippet="elks_newsletter.s_elks_birthdays" string="Member Birthdays" group="lodge"
+               t-thumbnail="/elks_newsletter/static/src/img/snippets_thumbs/ico_members.svg"/>
+            <t t-snippet="elks_newsletter.s_elks_anniversaries" string="Membership Milestones" group="lodge"
+               t-thumbnail="/elks_newsletter/static/src/img/snippets_thumbs/ico_members.svg"/>
+            <t t-snippet="elks_newsletter.s_elks_applications" string="Applications for Membership" group="lodge"
+               t-thumbnail="/elks_newsletter/static/src/img/snippets_thumbs/ico_members.svg"/>
+            <t t-snippet="elks_newsletter.s_elks_committees" string="Committee Chairs" group="lodge"
+               t-thumbnail="/elks_newsletter/static/src/img/snippets_thumbs/ico_officers.svg"/>
+            <t t-snippet="elks_newsletter.s_elks_eleven_oclock" string="Eleven O'Clock Toast" group="lodge"
+               t-thumbnail="/elks_newsletter/static/src/img/snippets_thumbs/ico_message.svg"/>
+            <t t-snippet="elks_newsletter.s_elks_mission" string="Elks Mission" group="lodge"
+               t-thumbnail="/elks_newsletter/static/src/img/snippets_thumbs/ico_message.svg"/>
+            <t t-snippet="elks_newsletter.s_elks_enf" string="Elks National Foundation" group="lodge"
+               t-thumbnail="/elks_newsletter/static/src/img/snippets_thumbs/ico_charity.svg"/>
+            <t t-snippet="elks_newsletter.s_elks_veterans" string="Veterans Service" group="lodge"
+               t-thumbnail="/elks_newsletter/static/src/img/snippets_thumbs/ico_message.svg"/>
+            <t t-snippet="elks_newsletter.s_elks_youth" string="Youth Programs" group="lodge"
+               t-thumbnail="/elks_newsletter/static/src/img/snippets_thumbs/ico_events.svg"/>
+            <t t-snippet="elks_newsletter.s_elks_sick_distressed" string="Sickness &amp; Distress" group="lodge"
+               t-thumbnail="/elks_newsletter/static/src/img/snippets_thumbs/ico_members.svg"/>
+            <t t-snippet="elks_newsletter.s_elks_lodge_info" string="Lodge Meetings &amp; Hours" group="lodge"
+               t-thumbnail="/elks_newsletter/static/src/img/snippets_thumbs/ico_calendar.svg"/>
             <t t-snippet="elks_newsletter.s_elks_continued" string="Continued On Page" group="lodge"
                t-thumbnail="/elks_newsletter/static/src/img/snippets_thumbs/ico_pagebreak.svg"/>
         </xpath>
@@ -419,6 +442,156 @@
             <div class="o_elks_bar" style="background:#5b3b8c;color:#ffffff;text-align:center;font-family:Georgia,serif;font-weight:bold;letter-spacing:1px;padding:2px;border-radius:3px;margin-bottom:3px;">Events</div>
             <div data-elks-block="events">
                 <p style="text-align:center;color:#777;font-style:italic;font-family:Arial,sans-serif;font-size:12px;margin:4px 0;">Auto-fills with the lodge's Events (Odoo Events app) when you Print / Preview.</p>
+            </div>
+        </div>
+    </template>
+
+    <!-- ============ Standard Elks widgets (19.0.1.44.0) ============ -->
+    <!-- Sections found in nearly every Elks lodge bulletin. All are INNER
+         content (bare div + o_snippet_drop_in_only) so they drop inside a
+         layout column in the original editor, and each is a Paper Studio
+         widget. Two families:
+           * Lodge-data blocks (data-elks-block): Birthdays, Membership
+             Milestones, Applications for Membership, Committee Chairs —
+             filled from elkscontacts at print / Studio refresh.
+           * Fraternal text blocks: Eleven O'Clock Toast, Elks Mission, ENF,
+             Veterans, Youth Programs, Sickness & Distress, Lodge Meetings.
+             The editable part carries data-paper-slot="html" so Paper Studio
+             makes it editable; styling sits on the slot element itself
+             because Studio's rich-text cleaner keeps only basic tags. -->
+
+    <!-- Member Birthdays: members born in the issue month (or the block's
+         Month shown override), grouped by day. Day + name only, no year/age. -->
+    <template id="s_elks_birthdays" name="Member Birthdays (Dynamic)">
+        <div class="s_elks_birthdays o_elks_inner o_snippet_drop_in_only" data-name="Member Birthdays (Dynamic)">
+            <div class="o_elks_bar" style="background:#5b3b8c;color:#ffffff;text-align:center;font-family:Georgia,serif;font-weight:bold;letter-spacing:1px;padding:2px;border-radius:3px;margin-bottom:3px;">Happy Birthday, Elks!</div>
+            <div data-elks-block="birthdays">
+                <p style="text-align:center;color:#777;font-style:italic;font-family:Arial,sans-serif;font-size:12px;margin:4px 0;">Auto-fills with members whose birthday falls in this issue's month when you Print / Preview.</p>
+            </div>
+        </div>
+    </template>
+
+    <!-- Membership Milestones: members reaching a 5-year multiple of
+         membership in the issue month (initiation anniversary, less lost
+         years), grouped by years. -->
+    <template id="s_elks_anniversaries" name="Membership Milestones (Dynamic)">
+        <div class="s_elks_anniversaries o_elks_inner o_snippet_drop_in_only" data-name="Membership Milestones (Dynamic)">
+            <div class="o_elks_bar" style="background:#5b3b8c;color:#ffffff;text-align:center;font-family:Georgia,serif;font-weight:bold;letter-spacing:1px;padding:2px;border-radius:3px;margin-bottom:3px;">Membership Milestones</div>
+            <div data-elks-block="anniversaries">
+                <p style="text-align:center;color:#777;font-style:italic;font-family:Arial,sans-serif;font-size:12px;margin:4px 0;">Auto-fills with members celebrating 5, 10, 15 … years of membership this month when you Print / Preview.</p>
+            </div>
+        </div>
+    </template>
+
+    <!-- Applications for Membership: pending applications (Proposed / Under
+         Investigation / Balloting) from elks.membership.application. -->
+    <template id="s_elks_applications" name="Applications for Membership (Dynamic)">
+        <div class="s_elks_applications o_elks_inner o_snippet_drop_in_only" data-name="Applications for Membership (Dynamic)">
+            <div class="o_elks_bar" style="background:#5b3b8c;color:#ffffff;text-align:center;font-family:Georgia,serif;font-weight:bold;letter-spacing:1px;padding:2px;border-radius:3px;margin-bottom:3px;">Applications for Membership</div>
+            <div data-elks-block="applications">
+                <p style="text-align:center;color:#777;font-style:italic;font-family:Arial,sans-serif;font-size:12px;margin:4px 0;">Auto-fills with pending membership applications and their proposers when you Print / Preview.</p>
+            </div>
+        </div>
+    </template>
+
+    <!-- Committee Chairs: current chairs for the issue's lodge year from
+         elks.committee.assignment. -->
+    <template id="s_elks_committees" name="Committee Chairs (Dynamic)">
+        <div class="s_elks_committees o_elks_inner o_snippet_drop_in_only" data-name="Committee Chairs (Dynamic)">
+            <div class="o_elks_bar" style="background:#5b3b8c;color:#ffffff;text-align:center;font-family:Georgia,serif;font-weight:bold;letter-spacing:1px;padding:2px;border-radius:3px;margin-bottom:3px;">Committee Chairs</div>
+            <div data-elks-block="committees">
+                <p style="text-align:center;color:#777;font-style:italic;font-family:Arial,sans-serif;font-size:12px;margin:4px 0;">Auto-fills with this lodge year's committee chairs when you Print / Preview.</p>
+            </div>
+        </div>
+    </template>
+
+    <!-- Eleven O'Clock Toast — the traditional tribute to absent members. -->
+    <template id="s_elks_eleven_oclock" name="Eleven O'Clock Toast">
+        <div class="s_elks_eleven_oclock o_elks_inner o_snippet_drop_in_only" data-name="Eleven O'Clock Toast">
+            <div style="border:2px solid #3f2566;border-radius:8px;background:#f3eefa;padding:10px 14px;text-align:center;">
+                <div class="o_elks_bar" style="background:#3f2566;color:#ffffff;font-family:Georgia,serif;font-weight:bold;letter-spacing:1px;padding:2px;border-radius:3px;">The Eleven O'Clock Toast</div>
+                <div data-paper-slot="html" style="font-family:Georgia,serif;font-style:italic;font-size:12.5px;line-height:1.4;color:#222222;text-align:justify;margin-top:6px;">
+                    <p>You have heard the tolling of eleven strokes. This is to remind you that with Elks the hour of eleven has a tender significance. Wherever Elks may roam, whatever their lot in life may be, when this hour falls upon the dial of night, the great heart of Elkdom swells and throbs. It is the golden hour of recollection, the homecoming of those who wander, the mystic roll call of those who will come no more. Living or dead, an Elk is never forgotten, never forsaken. Morning and noon may pass them by, the light of day may sink heedlessly in the West, but ere the shadows of midnight shall fall, the chimes of memory will be pealing forth the friendly message:</p>
+                </div>
+                <div style="font-family:Georgia,serif;font-weight:bold;font-size:13px;color:#3f2566;margin-top:4px;">To Our Absent Members.</div>
+            </div>
+        </div>
+    </template>
+
+    <!-- Elks Mission Statement. -->
+    <template id="s_elks_mission" name="Elks Mission">
+        <div class="s_elks_mission o_elks_inner o_snippet_drop_in_only" data-name="Elks Mission">
+            <div style="border-top:3px solid #c9a227;border-bottom:3px solid #c9a227;padding:8px 12px;text-align:center;">
+                <div style="font-family:Georgia,serif;font-weight:bold;color:#3f2566;letter-spacing:2px;text-transform:uppercase;font-size:13px;">Our Mission</div>
+                <div data-paper-slot="html" style="font-family:Georgia,serif;font-size:12px;line-height:1.4;color:#222222;margin-top:4px;">
+                    <p>To inculcate the principles of Charity, Justice, Brotherly Love and Fidelity; to recognize a belief in God; to promote the welfare and enhance the happiness of its Members; to quicken the spirit of American patriotism; to cultivate good fellowship; to perpetuate itself as a fraternal organization, and to provide for its government, the Benevolent and Protective Order of Elks of the United States of America will serve the people and communities through benevolent programs, demonstrating that Elks Care and Elks Share.</p>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <!-- Elks National Foundation appeal. -->
+    <template id="s_elks_enf" name="Elks National Foundation">
+        <div class="s_elks_enf o_elks_inner o_snippet_drop_in_only" data-name="Elks National Foundation">
+            <div class="o_elks_bar" style="background:#5b3b8c;color:#ffffff;text-align:center;font-family:Georgia,serif;font-weight:bold;letter-spacing:1px;padding:2px;border-radius:3px;margin-bottom:3px;">Elks National Foundation</div>
+            <div data-paper-slot="html" style="font-family:Arial,sans-serif;font-size:12px;line-height:1.4;color:#222222;">
+                <p>Every gift to the Elks National Foundation comes back to work in our community through Gratitude, Beacon, Promise, Spotlight and Anniversary Grants and ENF scholarships.</p>
+                <p><b>Help our lodge meet the Chairman's Challenge.</b> Give online at elks.org/enf or drop your donation at the lodge office.</p>
+            </div>
+        </div>
+    </template>
+
+    <!-- Veterans Service — the Order's pledge plus editable lodge news. -->
+    <template id="s_elks_veterans" name="Veterans Service">
+        <div class="s_elks_veterans o_elks_inner o_snippet_drop_in_only" data-name="Veterans Service">
+            <div style="border:2px solid #1f3a68;border-radius:6px;padding:8px 12px;">
+                <div style="background:#1f3a68;color:#ffffff;text-align:center;font-family:Georgia,serif;font-weight:bold;letter-spacing:1px;padding:2px;border-radius:3px;">Veterans Service</div>
+                <p style="font-family:Georgia,serif;font-style:italic;font-weight:bold;text-align:center;color:#b22234;font-size:13px;margin:6px 0;">&#8220;So long as there are veterans, the Benevolent and Protective Order of Elks will never forget them.&#8221;</p>
+                <div data-paper-slot="html" style="font-family:Arial,sans-serif;font-size:12px;line-height:1.4;color:#222222;">
+                    <p>Share this month's Veterans Committee news here &#8212; VA visits, Freedom Grants, Adopt-a-Veteran and how members can help.</p>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <!-- Youth Programs — Hoop Shoot, Soccer Shoot, Drug Awareness,
+         scholarships. Each line is editable. -->
+    <template id="s_elks_youth" name="Youth Programs">
+        <div class="s_elks_youth o_elks_inner o_snippet_drop_in_only" data-name="Youth Programs">
+            <div class="o_elks_bar" style="background:#5b3b8c;color:#ffffff;text-align:center;font-family:Georgia,serif;font-weight:bold;letter-spacing:1px;padding:2px;border-radius:3px;margin-bottom:3px;">Elks Youth Programs</div>
+            <div data-paper-slot="html" style="font-family:Arial,sans-serif;font-size:12px;line-height:1.4;color:#222222;">
+                <p><b>Hoop Shoot:</b> Contest date, location and results.</p>
+                <p><b>Soccer Shoot:</b> Contest date, location and results.</p>
+                <p><b>Drug Awareness:</b> School visits, Red Ribbon Week and program news.</p>
+                <p><b>Scholarships:</b> Most Valuable Student and Legacy Award deadlines and winners.</p>
+            </div>
+        </div>
+    </template>
+
+    <!-- Sickness & Distress — prefilled from the most recent lodge meeting
+         minutes' "Sickness and Distress" entry (elkssecretary), editable. -->
+    <template id="s_elks_sick_distressed" name="Sickness &amp; Distress">
+        <div class="s_elks_sick_distressed o_elks_inner o_snippet_drop_in_only" data-name="Sickness &amp; Distress">
+            <div style="border:1px solid #c9a227;border-radius:6px;background:#fbf7ea;padding:8px 12px;">
+                <div style="color:#3f2566;text-align:center;font-family:Georgia,serif;font-weight:bold;letter-spacing:1px;text-transform:uppercase;font-size:13px;">Sickness &amp; Distress</div>
+                <div data-paper-slot="html" style="font-family:Georgia,serif;font-size:12px;line-height:1.4;color:#222222;margin-top:4px;">
+                    <div data-elks-block="sick_distressed"><p>Please keep our members and their families who are ill or in distress in your thoughts.</p></div>
+                </div>
+                <p style="font-family:Arial,sans-serif;font-size:10.5px;font-style:italic;color:#666666;text-align:center;margin:6px 0 0;">Know of a member in need? Please let the lodge office know.</p>
+            </div>
+        </div>
+    </template>
+
+    <!-- Lodge Meetings & Hours — editable schedule lines plus the lodge's
+         contact details from FRS lodge settings. -->
+    <template id="s_elks_lodge_info" name="Lodge Meetings &amp; Hours">
+        <div class="s_elks_lodge_info o_elks_inner o_snippet_drop_in_only" data-name="Lodge Meetings &amp; Hours">
+            <div class="o_elks_bar" style="background:#5b3b8c;color:#ffffff;text-align:center;font-family:Georgia,serif;font-weight:bold;letter-spacing:1px;padding:2px;border-radius:3px;margin-bottom:3px;">Lodge Meetings &amp; Hours</div>
+            <div data-paper-slot="html" style="font-family:Arial,sans-serif;font-size:12px;line-height:1.4;color:#222222;">
+                <p><b>Lodge Meetings:</b> enter meeting nights and time</p>
+                <p><b>Office Hours:</b> enter office days and hours</p>
+                <p><b>Lounge &amp; Dining:</b> enter hours</p>
+                <div data-elks-block="lodge_contact"><p>Lodge address and phone fill in from Lodge Settings.</p></div>
             </div>
         </div>
     </template>

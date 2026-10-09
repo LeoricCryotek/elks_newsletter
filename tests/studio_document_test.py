@@ -13,6 +13,17 @@ class PaperDocumentTests(unittest.TestCase):
     def document(self, **block):
         return {'version': 1, 'pages': [{'id': 'page', 'blocks': [{'id': 'block', 'kind': 'text', 'html': '<p>Article</p>', **block}]}]}
 
+    def test_officer_photo_side_survives_save(self):
+        for side in ('left', 'right'):
+            doc = paper.normalise_document(self.document(kind='widget', source='message', side=side))
+            self.assertEqual(doc['pages'][0]['blocks'][0]['side'], side)
+        with self.assertRaises(ValueError):
+            paper.normalise_document(self.document(kind='widget', source='message', side='middle'))
+
+    def test_continuation_title_survives_save(self):
+        doc = paper.normalise_document(self.document(storyTitle='Officer Message (Exalted Ruler)', continuation=True, flowGroup='story'))
+        self.assertEqual(doc['pages'][0]['blocks'][0]['storyTitle'], 'Officer Message (Exalted Ruler)')
+
     def test_rich_text_keeps_formatting_without_executable_markup(self):
         html = paper.clean_text('<p onclick="attack()">Hello <strong>world</strong><script>attack()</script><img src="/private"/><a href="javascript:attack()">link</a></p>')
         self.assertIn('<strong>world</strong>', html)
@@ -58,6 +69,24 @@ class PaperDocumentTests(unittest.TestCase):
         for values in [{'span': 1.5}, {'vertical': 'unknown'}, {'month': '2026-13'}, {'month': 'bad'}]:
             with self.assertRaises(ValueError): paper.normalise_document(self.document(kind='dynamic', source='calendar', **values))
 
+    def test_compact_typography_is_preserved_and_bounded(self):
+        block = paper.normalise_document(self.document(compact=True, lineHeight=1.15, paragraphGap=4))['pages'][0]['blocks'][0]
+        self.assertTrue(block['compact'])
+        self.assertEqual(block['lineHeight'], 1.15)
+        for values in [{'lineHeight': 0.5}, {'paragraphGap': -1}, {'compact': 'yes'}]:
+            with self.assertRaises(ValueError): paper.normalise_document(self.document(**values))
+
+    def test_linked_event_slices_remain_server_resolved_and_validate_ranges(self):
+        doc = self.document(kind='dynamic', source='upcoming_events', flowRange=[0, 5], flowGroup='story')
+        duplicate = dict(doc['pages'][0]['blocks'][0], id='next', flowRange=[5, 10])
+        doc['pages'][0]['blocks'].append(duplicate)
+        calls=[]
+        result=paper.normalise_document(doc,lambda key:calls.append(key) or '<p>Server snapshot</p>')
+        self.assertEqual(calls,['upcoming_events'])
+        self.assertEqual(result['pages'][0]['blocks'][1]['flowRange'],[5,10])
+        for bounds in [[5,5],[-1,5],[0,1.5],[0,True]]:
+            with self.assertRaises(ValueError): paper.normalise_document(self.document(kind='dynamic',source='events',flowRange=bounds))
+
     def test_gallery_rejects_external_photos(self):
         with self.assertRaises(ValueError): paper.normalise_document(self.document(kind='gallery', photos=[{'src': 'https://private/photo'}]))
         self.assertEqual(len(paper.normalise_document(self.document(kind='gallery', photos=[{'src': '', 'caption': '<p>Member</p>'}]))['pages'][0]['blocks'][0]['photos']), 1)
@@ -83,9 +112,30 @@ class PaperDocumentTests(unittest.TestCase):
             block = paper.normalise_document(self.document(kind='columns', columns=columns))['pages'][0]['blocks'][0]
             self.assertEqual(len(block['columns']), len(columns))
 
-    def test_initial_document_escapes_issue_title(self):
+    def test_page_lock_survives_validation(self):
+        doc=self.document();doc['pages'][0]['locked']=True
+        self.assertTrue(paper.normalise_document(doc)['pages'][0]['locked'])
+        doc['pages'][0]['locked']='yes'
+        with self.assertRaises(ValueError):paper.normalise_document(doc)
+
+    def test_initial_document_is_one_blank_page(self):
         document = paper.normalise_document(paper.initial_document('Issue <script>attack()</script>'))
-        self.assertNotIn('<script>', document['pages'][0]['blocks'][0]['html'])
+        self.assertEqual(len(document['pages']), 1)
+        self.assertEqual(document['pages'][0]['blocks'], [])
+
+
+    def test_standard_elks_widgets_resolve_on_server(self):
+        keys = []
+        for source in ('birthdays', 'anniversaries', 'applications', 'committees'):
+            paper.normalise_document(self.document(kind='dynamic', source=source), lambda key: keys.append(key) or '<p>Lodge data</p>')
+        for source in ('eleven_oclock', 'mission', 'enf', 'veterans', 'youth', 'sick_distressed', 'lodge_info'):
+            doc = paper.normalise_document(self.document(kind='widget', source=source, html='<p>Edited <script>x</script></p>'), lambda key: keys.append(key) or '<p>Widget</p>')
+            self.assertNotIn('<script', doc['pages'][0]['blocks'][0]['html'])
+        self.assertIn('birthdays', keys)
+        doc = paper.normalise_document(self.document(kind='dynamic', source='birthdays', month='2026-11'), lambda key: key)
+        self.assertEqual(doc['pages'][0]['blocks'][0]['resolvedHTML'], 'birthdays:2026-11')
+        with self.assertRaises(ValueError):
+            paper.normalise_document(self.document(kind='widget', source='birthdays'))
 
 
 if __name__ == '__main__': unittest.main()

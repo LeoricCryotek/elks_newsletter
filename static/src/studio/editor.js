@@ -7,28 +7,53 @@
     let lastSelection = null;
     const undo = [];
     const uid = () => crypto.randomUUID().replaceAll('-', '');
-    const sources = { new_members: 'New members', in_memoriam: 'In memoriam', officers: 'Lodge officers', calendar: 'Lodge calendar', charity: 'Charity totals', leaderboard: 'Volunteer leaderboard', events: 'Events', upcoming_events: 'Upcoming events', project_dollars: 'Project dollars', delinquents: 'Dues reminder' };
+    const sources = { new_members: 'New members', in_memoriam: 'In memoriam', officers: 'Lodge officers', calendar: 'Lodge calendar', charity: 'Charity totals', leaderboard: 'Volunteer leaderboard', events: 'Events', upcoming_events: 'Upcoming events', project_dollars: 'Project dollars', delinquents: 'Dues reminder', birthdays: 'Member birthdays', anniversaries: 'Membership milestones', applications: 'Applications for membership', committees: 'Committee chairs' };
+    const monthSources = ['calendar','new_members','leaderboard','birthdays','anniversaries'];
     const labels = { text: 'Text', heading: 'Heading', columns: 'Columns', image: 'Photo', dynamic: 'Lodge data', widget: 'Bulletin widget', spacer: 'Spacer', gallery: 'Member photo grid', photo_text: 'Photo and text' };
     const officers = {'exalted_ruler': 'Exalted Ruler', 'leading_knight': 'Leading Knight', 'loyal_knight': 'Loyal Knight', 'lecturing_knight': 'Lecturing Knight', 'secretary': 'Secretary', 'treasurer': 'Treasurer', 'tiler': 'Tiler', 'esquire': 'Esquire', 'chaplain': 'Chaplain', 'inner_guard': 'Inner Guard', 'organist': 'Organist', 'pianist': 'Pianist', 'sergeant_at_arms': 'Sergeant At Arms', 'presiding_justice': 'Presiding Justice', 'boardchair': 'Boardchair', 'trustee1y': 'Trustee1Y', 'trustee2y': 'Trustee2Y', 'trustee3y': 'Trustee3Y', 'trustee4y': 'Trustee4Y', 'trustee5y': 'Trustee5Y', 'assistant_secretary': 'Assistant Secretary', 'assistant_treasurer': 'Assistant Treasurer', 'house_chair': 'House Chair', 'activities_chair': 'Activities Chair', 'membership_chair': 'Membership Chair', 'lodge_advisor': 'Lodge Advisor'};
     let galleryPhoto = 0;
     let resolveId = null;
-    function fitPages() {
-        if (!editable() || $('sheets').contains(document.activeElement)) return;
-        let moved = false;
-        for (let pass = 0; pass < 300; pass++) {
-            const sheet = [...$('sheets').querySelectorAll('.elks-paper-sheet')].find(sheet => {
-                const content = sheet.querySelector('.paper-content');
-                return content.scrollHeight > content.clientHeight + 1 && payload.document.pages.find(p => p.id === sheet.dataset.pageId).blocks.length > 1;
-            });
-            if (!sheet || payload.document.pages.length >= 60) break;
-            if (!moved) remember();
-            const page = payload.document.pages.find(p => p.id === sheet.dataset.pageId);
-            const next = followingPage(page);
-            next.blocks.unshift(page.blocks.pop()); moved = true; render();
-        }
-        if (moved) change();
-        measure();
+    function capturePosition() {
+        const desk=document.querySelector('.paper-desk');
+        const top=desk.getBoundingClientRect().top;
+        const anchor=[...$('sheets').querySelectorAll('[data-block-id]')].find(node=>node.getBoundingClientRect().bottom>top);
+        return {desk,top:desk.scrollTop,left:desk.scrollLeft,id:anchor?.dataset.blockId,offset:anchor?.getBoundingClientRect().top-top};
     }
+    function restorePosition(position) {
+        position.desk.scrollTop=position.top; position.desk.scrollLeft=position.left;
+        const anchor=position.id && [...$('sheets').querySelectorAll('[data-block-id]')].find(node=>node.dataset.blockId===position.id);
+        if(anchor)position.desk.scrollTop+=anchor.getBoundingClientRect().top-position.desk.getBoundingClientRect().top-position.offset;
+    }
+    async function runFlow(compact=false) {
+        if (!editable() || $('sheets').contains(document.activeElement)) return;
+        pending=true; setDisabled();
+        await Promise.all([document.fonts.ready,...[...$('sheets').querySelectorAll('img')].map(image=>image.decode().catch(()=>{}))]);
+        pending=false; const position=capturePosition(); remember();
+        const before=structuredClone(payload.document);
+        const shape=doc=>JSON.stringify(doc.pages.map(page=>page.blocks.map(block=>Object.fromEntries(Object.entries(block).filter(([key])=>key!=='id').sort(([a],[b])=>a.localeCompare(b))))));
+        try {
+            const result=window.ElksPaperPagination.paginate(payload,$('sheets'),{compact});
+            if(shape(before)===shape(payload.document)){payload.document=before;undo.pop();render();return;}
+            activePage=(payload.document.pages.find(page=>page.blocks.some(block=>block.id===selectedId)) || payload.document.pages.find(page=>page.id===activePage) || payload.document.pages[0]).id; change(); render();
+            showNotice(`${result.pages} page(s), ${result.continuations} continuation(s). Undo restores the previous layout.`);
+        } catch (error) { undo.pop(); render(); showNotice(error.message); } finally { restorePosition(position); }
+    }
+    function fitSelected() {
+        if(!editable())return;
+        const {page,block}=selected();if(!block)return;
+        remember();
+        Object.assign(block,{compact:true,boxHeight:0,gap:2,padding:Math.min(block.padding || 0,2),lineHeight:1.15,paragraphGap:2});
+        for(let font=Math.min(block.fontSize || 16,24);font>=12;font--) {
+            block.fitFont=font;render();
+            const sheet=$('sheets').querySelector(`[data-page-id="${page.id}"]`);
+            const content=sheet.querySelector('.paper-content');
+            if(content.scrollHeight<=content.clientHeight+1 && content.scrollWidth<=content.clientWidth+1)break;
+        }
+        change();render();
+        showNotice(`Selected widget fitted at ${block.fitFont}px. If it still overflows, use Flow pages for continuation. Undo restores its previous settings.`);
+    }
+    function fitPages() { return runFlow(false); }
+    function compactPages() { return runFlow(true); }
     function refreshData() {
         if (!editable()) return;
         if (!payload.document.pages.some(page => page.blocks.some(block => ['dynamic', 'widget'].includes(block.kind)))) return;
@@ -66,6 +91,7 @@
         dirty = false; pending = false;
         $('issue-title').textContent = payload.title;
         $('paper-size').value = payload.paperSize;
+        $('auto-flow').checked = payload.document.flowMode === 'auto';
         $('save-status').textContent = payload.readonly ? 'Final edition' : 'Saved';
         showNotice(payload.readonly ? (payload.mode === 'legacy' ? 'This issue is a final edition in the original editor. Reset it to Draft to create a separate paper layout.' : 'This is a final edition. Reset it to Draft in Odoo to edit its pages.')
             : payload.mode === 'legacy' ? 'This is a separate paper layout. Your existing newsletter stays available in the original editor. Saving here selects Paper Studio for the PDF.' : '');
@@ -75,7 +101,7 @@
     }
     function setDisabled() {
         const disabled = !editable();
-        document.querySelectorAll('[data-add],#save,#add-page,#paper-size,#page-up,#page-down,#delete-page,[data-format],#split-text,#undo,#widget-picker,#refresh-data,#fit-pages,#browse-widgets').forEach(node => node.disabled = disabled);
+        document.querySelectorAll('[data-add],#save,#add-page,#paper-size,#lock-page,#page-up,#page-down,#delete-page,[data-format],#split-text,#undo,#widget-picker,#refresh-data,#fit-pages,#auto-flow,#compact-pages,#browse-widgets').forEach(node => node.disabled = disabled);
         $('undo').disabled = disabled || !undo.length;
         $('preview').disabled = pending || (payload?.readonly && payload?.mode === 'legacy');
         $('reload').disabled = pending;
@@ -91,16 +117,29 @@
         $('page-problems').hidden = !issues.length;
         document.querySelectorAll('.page-thumb').forEach(thumb => {
             thumb.querySelector('.overflow-badge').hidden = !bad.has(thumb.dataset.pageId);
+            const sheet=$('sheets').querySelector(`[data-page-id="${thumb.dataset.pageId}"]`);
+            const content=sheet?.querySelector('.paper-content');
+            if (content) {
+                const used=content.classList.contains('paper-align-page')
+                    ? [...content.children].reduce((sum,row)=>sum+Math.max(0,...[...row.children].map(block=>block.getBoundingClientRect().height+parseFloat(getComputedStyle(block).marginBottom || 0))),0)
+                    : content.lastElementChild ? content.lastElementChild.getBoundingClientRect().bottom-content.getBoundingClientRect().top : 0;
+                let usage=thumb.querySelector('.page-usage');
+                if(!usage){usage=document.createElement('span');usage.className='page-usage';thumb.append(usage);}
+                usage.textContent=`${Math.round(100*used/content.clientHeight)}% used · ${Math.max(0,Math.round(content.clientHeight-used))}px free`;
+            }
         });
         return issues;
     }
     function render() {
+        const position=capturePosition();
+        const sidebar=document.querySelector('.properties-sidebar'), sidebarTop=sidebar.scrollTop;
         Renderer.render($('sheets'), payload);
         $('sheets').querySelectorAll('.paper-richtext').forEach(node => {
-            node.contentEditable = String(editable());
+            node.contentEditable = String(editable() && !payload.document.pages.find(page=>page.blocks.some(block=>block.id===node.dataset.owner))?.locked);
             node.spellcheck = true;
         });
         attachHandles(); renderPages(); highlight(); renderProperties(); setDisabled();
+        restorePosition(position); sidebar.scrollTop=sidebarTop;
         requestAnimationFrame(measure);
         document.fonts.ready.then(measure);
     }
@@ -128,6 +167,7 @@
     }
     function attachHandles() {
         $('sheets').querySelectorAll('[data-block-id]').forEach(node => {
+            if(payload.document.pages.some(page=>page.locked && page.blocks.some(block=>block.id===node.dataset.blockId)))return;
             const handle = document.createElement('span'); handle.tabIndex = 0; handle.className = 'block-drag-handle';
             handle.textContent = '⠿ Drag'; handle.title = 'Drag to reorder or move to another page';
             handle.draggable = false;
@@ -152,6 +192,7 @@
         const sheet = event.target.closest('.elks-paper-sheet'); if (!sheet) return;
         const targetId = event.target.closest('[data-block-id]')?.dataset.blockId;
         const targetPage = payload.document.pages.find(p => p.id === sheet.dataset.pageId);
+        if(targetPage.locked){dragging=null;return showNotice('Unlock the destination page before moving widgets into it.');}
         const move = dragging; dragging = null;
         if (move.widget) {
             activePage = targetPage.id; insertWidget(move.widget);
@@ -167,6 +208,7 @@
         activePage = targetPage.id; selectedId = block.id; change(); render();
     });
     function highlight() {
+        $('lock-page').textContent=payload.document.pages.find(page=>page.id===activePage)?.locked ? 'Unlock page' : 'Lock page';
         $('sheets').querySelectorAll('.paper-block').forEach(node => node.classList.toggle('selected', node.dataset.blockId === selectedId));
         document.querySelectorAll('.page-thumb').forEach(node => node.classList.toggle('active', node.dataset.pageId === activePage));
     }
@@ -181,7 +223,21 @@
             miniature.inert = true; miniature.setAttribute('aria-hidden', 'true');
             miniature.querySelectorAll('.paper-richtext').forEach(node => node.removeAttribute('contenteditable'));
             paper.append(miniature);
-            const title = document.createElement('span'); title.textContent = `Page ${index + 1}`;
+            const title = document.createElement('span'); title.textContent = `Page ${index + 1}${page.locked ? ' · Locked' : ''}`;
+            button.draggable=editable();button.title='Drag to reorder this page';
+            button.addEventListener('dragstart',event=>{dragging={pageId:page.id};event.dataTransfer.setData('text/plain',page.id);});
+            button.addEventListener('dragover',event=>{if(dragging?.pageId){event.preventDefault();button.classList.add('drop-before');}});
+            button.addEventListener('dragleave',()=>button.classList.remove('drop-before'));
+            button.addEventListener('drop',event=>{
+                if(!editable() || !dragging?.pageId)return;
+                event.preventDefault();const id=dragging.pageId;dragging=null;
+                if(id===page.id)return;
+                remember();const from=payload.document.pages.findIndex(item=>item.id===id);
+                const [moved]=payload.document.pages.splice(from,1);
+                const target=payload.document.pages.findIndex(item=>item.id===page.id);
+                payload.document.pages.splice(target,0,moved);activePage=id;change();render();
+            });
+            button.addEventListener('dragend',()=>{dragging=null;document.querySelectorAll('.drop-before').forEach(node=>node.classList.remove('drop-before'));});
             const badge = document.createElement('span'); badge.className = 'overflow-badge'; badge.textContent = 'Needs attention'; badge.hidden = true;
             button.append(paper, title, badge);
             button.addEventListener('click', () => {
@@ -189,6 +245,9 @@
                 $('sheets').querySelector(`[data-page-id="${page.id}"]`).scrollIntoView({ behavior: 'smooth', block: 'start' });
             });
             $('page-list').append(button);
+            const scale = (paper.clientWidth) / 816;
+            miniature.style.transform = `scale(${scale})`;
+            paper.style.height = `${(payload.paperSize === 'legal' ? 1344 : 1056) * scale + 2}px`;
         });
     }
     function field(title, key, options) {
@@ -199,11 +258,14 @@
             const option = document.createElement('option'); option.value = value; option.textContent = text; input.append(option);
         });
         else if (key === 'month') { input.type = 'month'; }
-        else { input.type = 'number'; input.min = key === 'fontSize' ? '8' : '0'; input.max = key === 'fontSize' ? '72' : ['height','boxHeight'].includes(key) ? '900' : '100'; }
-        input.value = selected().block[key] ?? ({ gap: 12, fontSize: 16, font: 'sans', align: 'left', ratio: 'equal', source: 'new_members', width: 100, height: 240, fit: 'contain', layout: 'columns', photoWidth: 33, padding: 0, border: 0, radius: 0, photoBorder: 0, photoRadius: 0, month: '', span: 3, horizontal: 'left', vertical: 'top', boxHeight: 0 }[key]);
+        else { input.type = 'number'; if (key === 'lineHeight') input.step = '0.05'; input.min = key === 'fontSize' ? '8' : '0'; input.max = key === 'fontSize' ? '72' : ['height','boxHeight'].includes(key) ? '900' : '100'; }
+        if (key === 'lineHeight') { input.min = '1'; input.max = '2.4'; }
+        if (key === 'paragraphGap') input.max = '32';
+        input.value = selected().block[key] ?? ({ side: selected().block.source === 'message' ? 'right' : 'left', gap: 12, fontSize: 16, font: 'sans', align: 'left', ratio: 'equal', source: 'new_members', width: 100, height: 240, fit: 'contain', layout: 'columns', photoWidth: 33, padding: 0, border: 0, radius: 0, photoBorder: 0, photoRadius: 0, lineHeight: 1.4, paragraphGap: 8, month: '', keepTogether: false, span: 3, horizontal: 'left', vertical: 'top', boxHeight: 0 }[key]);
         input.addEventListener('change', () => {
             if (!editable()) return;
-            remember(); selected().block[key] = options || key === 'month' ? input.value : Number(input.value);
+            remember(); selected().block[key] = key === 'keepTogether' ? input.value === 'true' : options || key === 'month' ? input.value : Number(input.value);
+            if(key==='fontSize')delete selected().block.fitFont;
             if (['source','officer','month'].includes(key)) { delete selected().block.resolvedHTML; refreshData(); }
             change(); render();
         });
@@ -216,7 +278,8 @@
     }
     function renderProperties() {
         const panel = $('properties'); panel.replaceChildren();
-        const { block } = selected();
+        const { block, page } = selected();
+        if(page?.locked){const text=document.createElement('p');text.textContent='Page locked. Unlock it to edit widgets or refresh their data.';panel.append(text);return;}
         if (!block) {
             const text = document.createElement('p'); text.className = 'muted'; text.textContent = 'Select a block on the page to change its appearance or position.'; panel.append(text); return;
         }
@@ -224,8 +287,8 @@
         panel.append(field('Widget width (columns out of 3)', 'span', {1:'1 column · one third',2:'2 columns · two thirds',3:'3 columns · full width'}),
                      field('Widget position', 'horizontal', {left:'Left',center:'Center',right:'Right'}),
                      field('Vertical alignment', 'vertical', {top:'Top',middle:'Middle',bottom:'Bottom'}), field('Minimum frame height (px)', 'boxHeight'));
-        if (block.kind === 'dynamic' && ['calendar','new_members','leaderboard'].includes(block.source)) {
-            panel.append(field('Month shown (blank = issue settings)', 'month'));
+        if (['dynamic','widget'].includes(block.kind) && monthSources.includes(block.source)) {
+            panel.append(field(block.source === 'calendar' ? 'Calendar month (blank = issue month)' : 'Month shown (blank = issue settings)', 'month'));
         }
         if (block.kind === 'dynamic' && ['new_members','in_memoriam'].includes(block.source)) {
             panel.append(actionButton('Choose members…',()=>send('manage-members',{source:block.source,month:block.month || ''})));
@@ -246,8 +309,12 @@
         if (block.kind === 'columns' && block.columns.length === 2) panel.append(field('Column widths', 'ratio', { equal: 'Half / half', 'wide-left': 'Two thirds / one third', 'wide-right': 'One third / two thirds' }));
         if (block.kind === 'photo_text') panel.append(field('Photo position', 'side', { left: 'Left', right: 'Right' }), field('Column widths', 'ratio', { equal: 'Half / half', 'wide-left': 'Two thirds / one third', 'wide-right': 'One third / two thirds' }));
         if (block.kind === 'image' || block.kind === 'photo_text') panel.append(actionButton(block.src ? 'Replace photo' : 'Choose photo', () => $('photo-file').click()), field('Photo width (%)', 'width'), field('Photo height (px)', 'height'), field('Photo fitting', 'fit', { contain: 'Show whole photo', cover: 'Fill and crop' }));
+        if (block.kind === 'widget' && block.source === 'message') panel.append(field('Photo position', 'side', {left:'Left',right:'Right'}));
         if (block.kind === 'photo_text' || (block.kind === 'widget' && block.source === 'message')) panel.append(field('Text around photo', 'layout', { columns: 'Separate columns', wrap: 'Wrap around photo' }), field('Photo area width (%)', 'photoWidth'));
+        if (['text','photo_text','dynamic','widget'].includes(block.kind)) panel.append(field('Page flow', 'keepTogether', {false:'Allow continuation',true:'Keep whole widget together'}));
         panel.append(field('Inside padding (px)', 'padding'), field('Block border (px; 0 = none)', 'border'), field('Block corners (px)', 'radius'), field('Picture border (px)', 'photoBorder'), field('Picture corners (px)', 'photoRadius'));
+        if (['text','photo_text','dynamic'].includes(block.kind) && block.source !== 'calendar' || block.kind==='widget' && block.source==='message') panel.append(actionButton('Fit selected widget',fitSelected));
+        panel.append(field('Line height (1 = tight)', 'lineHeight'),field('Paragraph spacing (px)', 'paragraphGap'));
         panel.append(field('Space after block (px)', 'gap'));
         const actions = document.createElement('div'); actions.className = 'block-actions';
         actions.append(actionButton('Move up', () => moveBlock(-1)), actionButton('Move down', () => moveBlock(1)), actionButton('Next page', nextPage), actionButton('Duplicate', duplicate), actionButton('Delete', () => {
@@ -262,7 +329,8 @@
     }
     function followingPage(page) {
         const index = payload.document.pages.indexOf(page);
-        if (index === payload.document.pages.length - 1) payload.document.pages.push({ id: uid(), blocks: [] });
+        if (index === payload.document.pages.length - 1 || payload.document.pages[index+1].locked)
+            payload.document.pages.splice(index+1,0,{id:uid(),blocks:[]});
         return payload.document.pages[index + 1];
     }
     function nextPage() {
@@ -272,7 +340,7 @@
         $('sheets').querySelector(`[data-page-id="${next.id}"]`).scrollIntoView({ block: 'start' });
     }
     function duplicate() {
-        const { page, block } = selected(); remember(); const copy = structuredClone(block); copy.id = uid();
+        const { page, block } = selected(); remember(); const copy = structuredClone(block); copy.id = uid(); delete copy.flowGroup; copy.continuation = false;
         page.blocks.splice(page.blocks.indexOf(block) + 1, 0, copy); selectedId = copy.id; change(); render();
     }
     function add(kind, source, preset) {
@@ -291,17 +359,21 @@
         if (preset === 'three_columns') block.columns.push('<p>Third column.</p>');
         if (preset === 'two_thirds') block.ratio = 'wide-left';
         if (preset === 'continued') block.html = '<p><i>Continued on page …</i></p>';
-        payload.document.pages.find(page => page.id === activePage).blocks.push(block); selectedId = block.id; change(); render(); refreshData();
+        if (preset === 'elk_of_month') { block.html = '<h2>Elk of the Month</h2><p>Tell members why this Elk was chosen and what they do for the lodge and community.</p>'; block.caption = '<p><b>Member name</b></p>'; }
+        let target=payload.document.pages.find(page=>page.id===activePage);
+        if(target.locked){target={id:uid(),blocks:[]};payload.document.pages.push(target);activePage=target.id;}
+        target.blocks.push(block); selectedId = block.id; change(); render(); refreshData();
     }
     const picker = $('widget-picker');
     const widgets = { masthead: 'Lodge masthead', message: 'Officer message', section_bar: 'Section bar', mailing: 'Mailing panel', ...sources,
+        eleven_oclock: "Eleven O'Clock Toast", mission: 'Elks mission', enf: 'Elks National Foundation', veterans: 'Veterans service', youth: 'Youth programs', sick_distressed: 'Sickness & distress', lodge_info: 'Lodge meetings & hours', elk_of_month: 'Elk of the Month',
         photo_text: 'Photo + text (two columns)', photo_grid: 'Member photo grid', two_thirds: 'Two-thirds + one-third', three_columns: 'Three columns', continued: 'Continued on page', spacer: 'Spacer', page_break: 'Page break' };
     for (const [key, title] of Object.entries(widgets)) { const option = document.createElement('option'); option.value = key; option.textContent = title; picker.append(option); }
     function insertWidget(source) {
         if (!source || !editable()) return;
         if (source === 'page_break') return $('add-page').click();
         const kind = sources[source] ? 'dynamic' : ['two_thirds', 'three_columns'].includes(source) ? 'columns'
-            : source === 'photo_text' ? 'photo_text' : source === 'photo_grid' ? 'gallery' : source === 'continued' ? 'text' : source === 'spacer' ? 'spacer' : 'widget';
+            : ['photo_text','elk_of_month'].includes(source) ? 'photo_text' : source === 'photo_grid' ? 'gallery' : source === 'continued' ? 'text' : source === 'spacer' ? 'spacer' : 'widget';
         add(kind, source, source);
     }
     picker.addEventListener('change', () => { const source = picker.value; picker.value = ''; insertWidget(source); });
@@ -309,9 +381,9 @@
         const photo = '<rect x="120" y="38" width="55" height="65" rx="4" fill="#d8cee5"/><circle cx="147" cy="57" r="10" fill="#927ba8"/><path d="M131 93v-10q16-24 32 0v10" fill="#927ba8"/>';
         const lines = '<path d="M14 48h90M14 60h90M14 72h90M14 84h90M14 96h70" stroke="#a7a0b2" stroke-width="5"/>';
         let body = '<rect x="10" y="13" width="170" height="17" rx="3" fill="#725198"/>' + lines;
-        if (['message','photo_text','masthead'].includes(source)) body += photo;
+        if (['message','photo_text','masthead','elk_of_month'].includes(source)) body += photo;
         if (source === 'calendar') body = '<rect x="10" y="13" width="170" height="17" fill="#725198"/><path d="M10 38h170M10 62h170M10 86h170M10 110h170M10 38v72M44 38v72M78 38v72M112 38v72M146 38v72M180 38v72" stroke="#a7a0b2" fill="none"/>';
-        if (['photo_grid','officers','new_members','in_memoriam'].includes(source)) body = '<rect x="10" y="13" width="170" height="17" fill="#725198"/>' + [35,95,155].map(x => `<circle cx="${x}" cy="64" r="17" fill="#d8cee5"/><path d="M${x-20} 93h40M${x-20} 105h40" stroke="#a7a0b2" stroke-width="4"/>`).join('');
+        if (['photo_grid','officers','new_members','in_memoriam','birthdays','anniversaries','applications','committees'].includes(source)) body = '<rect x="10" y="13" width="170" height="17" fill="#725198"/>' + [35,95,155].map(x => `<circle cx="${x}" cy="64" r="17" fill="#d8cee5"/><path d="M${x-20} 93h40M${x-20} 105h40" stroke="#a7a0b2" stroke-width="4"/>`).join('');
         if (['three_columns','two_thirds'].includes(source)) body = '<path d="M10 20h170" stroke="#725198" stroke-width="14"/>' + [15,75,135].map(x=>`<path d="M${x} 45h40M${x} 58h40M${x} 71h40M${x} 84h40M${x} 97h40" stroke="#a7a0b2" stroke-width="5"/>`).join('');
         return `<svg viewBox="0 0 190 125" aria-hidden="true"><rect width="190" height="125" fill="white"/>${body}</svg>`;
     }
@@ -327,6 +399,8 @@
     $('close-gallery').addEventListener('click', () => $('widget-gallery').close());
     $('refresh-data').addEventListener('click', refreshData);
     $('fit-pages').addEventListener('click', fitPages);
+    $('auto-flow').addEventListener('change',()=>{if(!editable())return;remember();payload.document.flowMode=$('auto-flow').checked?'auto':'manual';change();if($('auto-flow').checked)fitPages();});
+    $('compact-pages').addEventListener('click', compactPages);
     // Refresh draft data periodically and on return to the editor. Final editions
     // keep their saved snapshots. Text edits are never replaced by a data refresh.
     setInterval(() => { if (!document.hidden) refreshData(); }, 60000);
@@ -346,6 +420,7 @@
         else block[node.dataset.field] = node.innerHTML;
         change(); requestAnimationFrame(measure);
     });
+    $('sheets').addEventListener('focusout',()=>setTimeout(()=>{if(payload?.document.flowMode==='auto' && !$('sheets').contains(document.activeElement)) fitPages();},0));
     $('sheets').addEventListener('load', measure, true);
     $('sheets').addEventListener('error', measure, true);
     document.addEventListener('selectionchange', () => {
@@ -361,14 +436,16 @@
     $('split-text').addEventListener('mousedown', event => event.preventDefault());
     $('split-text').addEventListener('click', () => {
         const { page, block } = selected();
-        if (!editable() || !block || block.kind !== 'text' || !lastSelection) return showNotice('Place the cursor in a text block where the next page should begin.');
-        const rich = $('sheets').querySelector(`[data-block-id="${block.id}"] .paper-richtext`);
+        if (!editable() || !block || !['text','photo_text','widget'].includes(block.kind) || (block.kind === 'widget' && block.source !== 'message') || !lastSelection) return showNotice('Place the cursor in a text block where the next page should begin.');
+        const rich = $('sheets').querySelector(`[data-block-id="${block.id}"] .paper-richtext[data-field="html"]`);
         if (!rich.contains(lastSelection.startContainer)) return showNotice('Place the cursor in the selected text block first.');
         const before = document.createRange(); before.selectNodeContents(rich); before.setEnd(lastSelection.startContainer, lastSelection.startOffset);
         const after = document.createRange(); after.selectNodeContents(rich); after.setStart(lastSelection.startContainer, lastSelection.startOffset);
         const left = document.createElement('div'), right = document.createElement('div'); left.append(before.cloneContents()); right.append(after.cloneContents());
         if (!left.textContent.trim() || !right.textContent.trim()) return showNotice('Choose a position inside the text, with content on both sides.');
-        remember(); block.html = left.innerHTML; const continuation = { ...block, id: uid(), html: right.innerHTML };
+        remember(); block.html = left.innerHTML; block.flowGroup ||= block.id;
+        const continuation = { ...block, kind:'text', id: uid(), html: right.innerHTML, continuation:true, storyTitle:window.ElksPaperRenderer.storyTitle(block), boxHeight:0 };
+        for (const key of ['source','officer','resolvedHTML','src','caption','html2']) delete continuation[key];
         const next = followingPage(page); next.blocks.unshift(continuation); selectedId = continuation.id; activePage = next.id; change(); render();
         $('sheets').querySelector(`[data-page-id="${next.id}"]`).scrollIntoView({ block: 'start' });
     });
@@ -387,22 +464,29 @@
         };
         reader.readAsDataURL(file);
     });
-    $('paper-size').addEventListener('change', () => { if (editable()) { remember(); payload.paperSize = $('paper-size').value; change(); render(); } });
+    $('paper-size').addEventListener('change', () => { if (editable()) { remember(); payload.paperSize = $('paper-size').value; change(); render(); if(payload.document.flowMode==='auto')fitPages(); } });
     $('add-page').addEventListener('click', () => { if (editable()) { remember(); const page = { id: uid(), blocks: [] }; payload.document.pages.push(page); activePage = page.id; selectedId = null; change(); render(); $('sheets').lastElementChild.scrollIntoView({ block: 'start' }); } });
     function movePage(direction) {
         if (!editable()) return; const index = payload.document.pages.findIndex(page => page.id === activePage); const other = index + direction;
         if (other < 0 || other >= payload.document.pages.length) return;
         remember(); [payload.document.pages[index], payload.document.pages[other]] = [payload.document.pages[other], payload.document.pages[index]]; change(); render();
     }
+    $('lock-page').addEventListener('click',()=>{
+        if(!editable())return;remember();const page=payload.document.pages.find(page=>page.id===activePage);
+        page.locked=!page.locked;change();render();
+    });
     $('page-up').addEventListener('click', () => movePage(-1)); $('page-down').addEventListener('click', () => movePage(1));
     $('delete-page').addEventListener('click', () => {
         if (!editable()) return;
+        if(payload.document.pages.find(page=>page.id===activePage)?.locked)return showNotice('Unlock this page before deleting it.');
         if (payload.document.pages.length === 1) return showNotice('Keep at least one page in the newsletter.');
         remember(); payload.document.pages = payload.document.pages.filter(page => page.id !== activePage); activePage = payload.document.pages[0].id; selectedId = null; change(); render();
     });
     $('undo').addEventListener('click', () => { if (editable() && undo.length) { const previous = undo.pop(); payload.document = previous.document; payload.paperSize = previous.paperSize; activePage = payload.document.pages[0].id; selectedId = null; $('paper-size').value = payload.paperSize; change(); render(); } });
-    function save(preview) {
+    async function save(preview) {
         if (!payload || pending) return;
+        if (payload.document.flowMode === 'auto' && !payload.readonly) await runFlow();
+        if(pending)return;
         // New data blocks are filled during saving, then checked again by the
         // PDF renderer. Never pretend a placeholder is the final lodge data.
         const issues = measure().filter(issue => !issue.message.startsWith('Save to fill'));
@@ -420,7 +504,7 @@
             let changed = false;
             for (const item of event.data.blocks) {
                 const block = payload.document.pages.flatMap(page => page.blocks).find(block => block.id === item.id && block.source === item.source);
-                if (!block) continue;
+                if (!block || payload.document.pages.some(page=>page.locked && page.blocks.includes(block))) continue;
                 changed ||= block.resolvedHTML !== item.resolvedHTML;
                 block.resolvedHTML = item.resolvedHTML;
                 const replacement = Renderer.blockNode(block).querySelector('.paper-lodge-data');
@@ -433,7 +517,7 @@
             $('data-status').textContent = 'Odoo content updated ' + new Date().toLocaleTimeString();
             if (changed) change();
             renderPages(); setDisabled(); measure();
-            Promise.all([document.fonts.ready, ...[...$('sheets').querySelectorAll('img')].map(image => image.decode().catch(() => {}))]).then(() => { if (!pending) fitPages(); });
+            Promise.all([document.fonts.ready, ...[...$('sheets').querySelectorAll('img')].map(image => image.decode().catch(() => {}))]).then(() => { if (!pending && payload.document.flowMode === 'auto') fitPages(); });
         }
         if (event.data.type === 'resolve-error' && event.data.requestId === resolveId) {
             resolveId = null; $('data-status').textContent = 'Data refresh failed'; showNotice(event.data.message);

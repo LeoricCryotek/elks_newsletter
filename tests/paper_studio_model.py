@@ -28,7 +28,7 @@ class MemoryIssue:
 
 Issue = load_methods('models/elks_newsletter_studio.py', 'ElksBulletinIssueStudio',
                      {'write', 'action_studio_load', 'action_studio_save', '_studio_print_markup', '_studio_resolve_dynamic', 'action_studio_resolve', 'action_new_paper_newsletter', 'action_studio_manage_members'},
-                     {'normalise_document': paper.normalise_document, 'initial_document': paper.initial_document,
+                     {'MONTH_SOURCES': paper.MONTH_SOURCES, 'normalise_document': paper.normalise_document, 'initial_document': paper.initial_document,
                       'UserError': StudioError, '_': lambda value: value, 'Markup': str, 'json': json,
                       'lxml_html': lxml_html, 'date': date, 'ASSETS': ROOT / 'static/src/studio'}, MemoryIssue)
 
@@ -73,7 +73,28 @@ class StudioModelTests(unittest.TestCase):
         self.assertEqual(issue.page_size, 'legal')
         self.assertEqual(issue.editor_mode, 'paper')
         with self.assertRaises(StudioError): issue.action_studio_save(paper.initial_document('Other'), 'letter', 0)
-        self.assertEqual(issue.studio_document['pages'][0]['blocks'][0]['html'], '<p>Issue</p>')
+        self.assertEqual(issue.studio_document['pages'][0]['blocks'], [])
+
+    def test_locked_page_keeps_saved_snapshot_when_other_pages_save(self):
+        issue=self.issue();doc=paper.initial_document('Issue')
+        doc['pages'][0].update(locked=True,blocks=[{'id':'locked-data','kind':'dynamic','source':'calendar'}])
+        issue.action_studio_save(doc,'letter',0)
+        before=json.loads(json.dumps(issue.studio_document['pages'][0]))
+        issue._studio_resolve_dynamic=lambda source:'Changed source data'
+        updated=json.loads(json.dumps(issue.studio_document))
+        updated['pages'].append({'id':'new-page','blocks':[]})
+        issue.action_studio_save(updated,'letter',1)
+        self.assertEqual(issue.studio_document['pages'][0],before)
+
+    def test_locked_snapshot_cannot_restore_duplicate_widget_ids(self):
+        issue=self.issue();doc=paper.initial_document('Issue')
+        doc['pages'][0].update(locked=True,blocks=[{'id':'locked-text','kind':'text','html':'<p>Keep</p>'}])
+        issue.action_studio_save(doc,'letter',0)
+        moved=json.loads(json.dumps(issue.studio_document))
+        moved['pages'].append({'id':'other-page','blocks':moved['pages'][0]['blocks']})
+        moved['pages'][0]['blocks']=[]
+        with self.assertRaises(StudioError):issue.action_studio_save(moved,'letter',1)
+        self.assertEqual(len(issue.studio_document['pages']),1)
 
     def test_load_and_save_enforce_permissions(self):
         issue = self.issue(); issue.denied = True

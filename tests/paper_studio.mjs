@@ -226,6 +226,133 @@ try {
     await editor.locator('#widget-picker').selectOption('new_members');
     await editor.getByRole('button',{name:'Choose members…'}).click();
     await page.waitForFunction(()=>window.requests.some(r=>r.type==='manage-members' && r.source==='new_members'));
+    const compactFixture = structuredClone(fixture);
+    compactFixture.document.pages = [
+        {id:'compact1',blocks:[{id:'compact-text1',kind:'text',html:'<p>First compact article with all its content retained.</p>',fontSize:16,boxHeight:500,gap:24}]},
+        {id:'compact2',blocks:[{id:'compact-text2',kind:'text',html:'<p>Second compact article with all its content retained.</p>',fontSize:16,boxHeight:500,gap:24}]},
+        {id:'compact-empty',blocks:[]},
+    ];
+    await editor.evaluate(data=>window.ElksPaperEditor.load(data),compactFixture);
+    await editor.locator('#compact-pages').click();
+    await editor.waitForFunction(()=>window.ElksPaperEditor.getPayload().document.pages.length===1);
+    const compacted = await editor.evaluate(()=>window.ElksPaperEditor.getPayload());
+    assert.equal(compacted.document.pages[0].blocks.length,2);
+    assert.equal(compacted.document.pages[0].blocks[0].boxHeight,0);
+    assert.equal(await editor.locator('#sheets .paper-richtext').first().evaluate(n=>getComputedStyle(n).lineHeight),'18.4px');
+    await print.evaluate(data=>window.ElksPaperRenderer.render(document.querySelector('#print'),data),compacted);
+    const compactPdf = await print.pdf({width:'8.5in',height:'11in',margin:{top:0,bottom:0,left:0,right:0},printBackground:true});
+    assert.equal((await PDFDocument.load(compactPdf)).getPageCount(),1);
+    await editor.locator('#undo').click();
+    assert.equal((await editor.evaluate(()=>window.ElksPaperEditor.getPayload())).document.pages.length,3);
+    await print.addScriptTag({content:readFileSync(path.join(root,'static/src/studio/pagination.js'),'utf8')});
+    const flowEvents=Array.from({length:17},(_,i)=>`<div style="height:60px"><b>Event ${i+1}</b></div>`).join('');
+    const flowFixture={...structuredClone(fixture),document:{version:1,pages:[{id:'flow-page',blocks:[
+        {id:'flow-heading',kind:'spacer',height:650,gap:0},
+        {id:'flow-events',kind:'dynamic',source:'upcoming_events',resolvedHTML:`<h2>Upcoming Events</h2><div data-elks-block="upcoming_events">${flowEvents}</div>`,gap:0},
+    ]}]}};
+    const flowResult=await print.evaluate(data=>{window.flowPayload=data;return window.ElksPaperPagination.paginate(data,document.querySelector('#print'));},flowFixture);
+    assert.equal(flowResult.pages,2);
+    const flowedPdf=await print.pdf({width:'8.5in',height:'11in',margin:{top:0,bottom:0,left:0,right:0},printBackground:true,path:path.join(out,'flow-events.pdf')});
+    assert.equal((await PDFDocument.load(flowedPdf)).getPageCount(),2);assert.ok(flowResult.continuations>0);
+    assert.equal(await print.locator('[data-elks-block="upcoming_events"] > div').count(),17);
+    assert.ok(await print.locator('.elks-paper-sheet').first().locator('[data-elks-block="upcoming_events"] > div').count()>0,'event entries fill the remaining first-page space');
+    assert.equal((await print.evaluate(()=>window.ElksPaperRenderer.problems(document))).length,0);
+    await print.evaluate(()=>window.ElksPaperPagination.paginate(window.flowPayload,document.querySelector('#print')));
+    assert.equal(await print.locator('[data-elks-block="upcoming_events"] > div').count(),17,'repeated reflow must not duplicate or lose data rows');
+    const story=Array.from({length:1800},(_,i)=>`word${i}`).join(' ');
+    const storyFixture={...structuredClone(fixture),document:{version:1,pages:[{id:'story-page',blocks:[{id:'story',kind:'text',html:`<p><b>${story}</b></p>`,fontSize:16,gap:0}]}]}};
+    await print.evaluate(data=>{window.storyPayload=data;window.ElksPaperPagination.paginate(data,document.querySelector('#print'));},storyFixture);
+    const storyText=await print.locator('.paper-richtext').allTextContents();
+    assert.equal(storyText.join('').trim(),story,'word-boundary flow preserves the entire story including formatting');
+    assert.equal((await print.evaluate(()=>window.ElksPaperRenderer.problems(document))).length,0);
+    assert.ok(await print.locator('.elks-paper-sheet').count()>1);
+    await print.evaluate(()=>window.ElksPaperPagination.paginate(window.storyPayload,document.querySelector('#print')));
+    assert.equal((await print.locator('.paper-richtext').allTextContents()).join('').trim(),story);
+    const joined=await print.evaluate(()=>window.ElksPaperPagination.storyBlocks(window.storyPayload.document.pages.flatMap(p=>p.blocks))[0].html);
+    assert.equal(joined,`<p><b>${story}</b></p>`,'linked fragments rejoin without inventing paragraph breaks');
+    const aligned={...structuredClone(fixture),document:{version:1,pages:[{id:'align-page',blocks:[{id:'align-block',kind:'text',html:'<p>Aligned widget</p>',gap:0,vertical:'bottom'}]}]}};
+    await print.evaluate(data=>window.ElksPaperRenderer.render(document.querySelector('#print'),data),aligned);
+    const bottomGap=await print.locator('.paper-content').evaluate(content=>content.getBoundingClientRect().bottom-content.querySelector('.paper-block').getBoundingClientRect().bottom);
+    assert.ok(Math.abs(bottomGap)<2,'bottom alignment uses available page space with zero minimum frame height');
+    aligned.document.pages[0].blocks[0].vertical='middle';
+    await print.evaluate(data=>window.ElksPaperRenderer.render(document.querySelector('#print'),data),aligned);
+    const centerDelta=await print.locator('.paper-content').evaluate(content=>{const c=content.getBoundingClientRect(),b=content.querySelector('.paper-block').getBoundingClientRect();return (c.top+c.bottom-b.top-b.bottom)/2;});
+    assert.ok(Math.abs(centerDelta)<2,'middle alignment centers the widget on its page');
+    const anchored={...structuredClone(fixture),document:{version:1,pages:[{id:'anchor-page',blocks:[
+        {id:'bottom-widget',kind:'text',html:'<p>Bottom anchored</p>',vertical:'bottom',gap:0},
+        {id:'top-widget',kind:'text',html:'<p>Default top</p>',gap:0},
+        {id:'bottom-second',kind:'text',html:'<p>Second bottom widget</p>',vertical:'bottom',gap:0},
+        {id:'top-second',kind:'text',html:'<p>More top content</p>',gap:0},
+    ]}]}};
+    await print.evaluate(data=>window.ElksPaperRenderer.render(document.querySelector('#print'),data),anchored);
+    assert.deepEqual(await print.locator('#print .paper-block').evaluateAll(nodes=>nodes.map(n=>n.dataset.blockId)),['top-widget','top-second','bottom-widget','bottom-second']);
+    const anchorGap=await print.locator('.paper-content').evaluate(content=>content.getBoundingClientRect().bottom-content.lastElementChild.getBoundingClientRect().bottom);
+    assert.ok(Math.abs(anchorGap)<2,'multiple bottom widgets stack at the printable bottom');
+    await print.evaluate(data=>window.ElksPaperPagination.paginate(data,document.querySelector('#print')),anchored);
+    assert.equal(await print.locator('.elks-paper-sheet').count(),1,'top and bottom widgets share a page');
+    anchored.document.pages[0].blocks.find(b=>b.id==='top-widget').boxHeight=940;
+    await print.evaluate(data=>window.ElksPaperRenderer.render(document.querySelector('#print'),data),anchored);
+    assert.ok((await print.evaluate(()=>window.ElksPaperRenderer.problems(document.querySelector('#print')))).length>0,'colliding groups are detected as overflow');
+    const locked={...structuredClone(fixture),document:{version:1,pages:[{id:'locked-page',locked:true,blocks:[{id:'locked-story',kind:'text',html:'<p>Keep this layout</p>',boxHeight:700}]},{id:'unlocked-page',blocks:[{id:'new-story',kind:'text',html:'<p>New content</p>'}]}]}};
+    const lockedBefore=JSON.stringify(locked.document.pages[0]);
+    const lockedAfter=await print.evaluate(data=>{window.ElksPaperPagination.paginate(data,document.querySelector('#print'),{compact:true});return data.document;},locked);
+    assert.equal(JSON.stringify(lockedAfter.pages[0]),lockedBefore,'locked page remains byte-for-byte unchanged during compact flow');
+    await editor.evaluate(data=>window.ElksPaperEditor.load(data),locked);
+    await editor.locator('.page-thumb[data-page-id="locked-page"]').click();
+    assert.equal(await editor.locator('#lock-page').textContent(),'Unlock page');
+    await editor.locator('[data-add="text"]').click();
+    const addedLocked=await editor.evaluate(()=>window.ElksPaperEditor.getPayload());
+    assert.equal(addedLocked.document.pages[0].blocks.length,1,'adding cannot change the locked page');
+    assert.equal(addedLocked.document.pages.length,3,'adding from a locked page creates a blank destination page');
+    await editor.locator('.page-thumb[data-page-id="unlocked-page"]').dispatchEvent('dragstart',{dataTransfer:await editor.evaluateHandle(()=>new DataTransfer())});
+    await editor.locator('.page-thumb[data-page-id="locked-page"]').dispatchEvent('drop');
+    assert.equal((await editor.evaluate(()=>window.ElksPaperEditor.getPayload())).document.pages[0].id,'unlocked-page','thumbnail drag changes page order');
+    const scrolling={...structuredClone(fixture),document:{version:1,pages:[{id:'scroll-one',blocks:[{id:'scroll-first',kind:'text',html:'<p>First page</p>'}]},{id:'scroll-two',blocks:[{id:'scroll-second',kind:'text',html:'<p>Second page</p>'}]}]}};
+    await editor.evaluate(data=>window.ElksPaperEditor.load(data),scrolling);
+    await editor.locator('#sheets [data-block-id="scroll-second"] .paper-richtext').click();
+    const scrollBefore=await editor.locator('.paper-desk').evaluate(desk=>desk.scrollTop);
+    await editor.locator('#property-align').selectOption('center');
+    const scrollAfter=await editor.locator('.paper-desk').evaluate(desk=>desk.scrollTop);
+    assert.ok(Math.abs(scrollBefore-scrollAfter)<2,'property changes preserve the center page scroll position');
+    assert.equal(await print.evaluate(()=>window.ElksPaperRenderer.storyTitle({storyTitle:'Officer Message (Exalted Ruler)'})),'Officer Message Exalted Ruler','previously saved titles display without parentheses');
+    const cleanup=await print.evaluate(data=>{
+        const renderer=window.ElksPaperRenderer.render;
+        const before=document.head.querySelectorAll('style').length;
+        const original=JSON.stringify(data.document);let calls=0;
+        window.ElksPaperRenderer.render=(...args)=>{if(++calls===1)throw new Error('Simulated render failure');return renderer(...args);};
+        let failed=false;
+        try{window.ElksPaperPagination.paginate(data,document.querySelector('#print'));}catch(error){failed=error.message==='Simulated render failure';}
+        finally{window.ElksPaperRenderer.render=renderer;}
+        return failed && document.head.querySelectorAll('style').length===before && JSON.stringify(data.document)===original;
+    },structuredClone(fixture));
+    assert.ok(cleanup,'failed pagination restores the original layout and removes temporary styles');
+    const officerSides=await print.evaluate(()=>['columns','wrap'].flatMap(layout=>['left','right'].map(side=>{
+        const node=window.ElksPaperRenderer.blockNode({id:'side-check',kind:'widget',source:'message',layout,side,html:'<p>Message</p>',resolvedHTML:'<div style="display:flex"><div class="s_elks_story_flow" data-paper-slot="html"></div><div class="s_elks_msg_byline">Photo</div></div>'});
+        const byline=node.querySelector('.s_elks_msg_byline');
+        return layout==='wrap' ? byline.style.cssFloat===side : (side==='left' ? byline===byline.parentElement.firstElementChild : byline===byline.parentElement.lastElementChild);
+    })));
+    assert.ok(officerSides.every(Boolean),'officer photo supports both sides in columns and wrapping');
+    const thumbnailFits=await editor.locator('.page-thumb').evaluateAll(cards=>cards.every(card=>{
+        const frame=card.querySelector('.thumb-paper').getBoundingClientRect(),box=card.getBoundingClientRect();
+        return frame.left>=box.left && frame.right<=box.right;
+    }));
+    assert.ok(thumbnailFits,'thumbnail frames stay within their cards');
+    const officerFixture={...structuredClone(fixture),document:{version:1,pages:[{id:'officer-page',blocks:[{id:'officer-story',kind:'widget',source:'message',officer:'exalted_ruler',html:`<p>${story}</p>`,resolvedHTML:'<h2>Message from the Exalted Ruler</h2><div data-paper-slot="html"></div><div class="s_elks_msg_byline"><p>Officer Name<br><span>Exalted Ruler</span></p></div>',fontSize:16,gap:0}]}]}};
+    await print.evaluate(data=>{window.officerPayload=data;window.ElksPaperPagination.paginate(data,document.querySelector('#print'));},officerFixture);
+    assert.equal((await print.evaluate(()=>window.ElksPaperRenderer.problems(document))).length,0,'continuation footer must fit within the page');
+    assert.equal(await print.locator('.paper-continuation').first().textContent(),'Officer Message Exalted Ruler Continued....');
+    assert.equal(await print.locator('.paper-continuation-link').first().textContent(),'Continued on page 2');
+    await print.evaluate(()=>{window.officerPayload.document.pages.splice(1,0,{id:'inserted-page',blocks:[]});window.ElksPaperRenderer.render(document.querySelector('#print'),window.officerPayload);});
+    assert.equal(await print.locator('.paper-continuation-link').first().textContent(),'Continued on page 3','destination is recalculated after inserting a page');
+    await print.evaluate(()=>window.ElksPaperPagination.paginate(window.officerPayload,document.querySelector('#print')));
+    assert.equal(await print.locator('.paper-continuation-link').first().textContent(),'Continued on page 2');
+    assert.equal((await print.locator('.paper-richtext[data-field="html"]').allTextContents()).join('').trim(),story);
+    const changedFlow=await print.evaluate(()=>structuredClone(window.flowPayload));
+    for(const p of changedFlow.document.pages)for(const b of p.blocks)if(b.kind==='dynamic')b.resolvedHTML=b.resolvedHTML.replace('</div></div>','</div><div style="height:60px"><b>New event 18</b></div></div>');
+    await print.evaluate(data=>window.ElksPaperRenderer.render(document.querySelector('#print'),data),changedFlow);
+    assert.equal(await print.locator('[data-elks-block="upcoming_events"] > div').count(),18,'new source rows must not be hidden by a finite last-fragment range');
+    console.log('Publisher flow: event lists fill remaining space, long paragraphs continue without overset, repeat reflow preserves all rows/words');
+    console.log('Compaction: repacks sparse pages into one PDF page, preserves articles, removes fixed empty height and supports Undo');
     console.log('Options: widget width, vertical alignment, calendar month refresh and member-list action passed');
     console.log('Drag/gallery: same-page reorder, cross-page move and demo-card insertion passed');
     console.log('Auto-format: overflowing blocks moved to next sheet with undo recovery passed');

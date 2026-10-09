@@ -12,10 +12,15 @@ export class ElksPaperStudio extends Component {
         this.actionService = useService('action');
         this.notification = useService('notification');
         this.frame = useRef('frame');
-        this.issueId = this.props.action.params.issue_id;
+        const action = this.props.action;
+        this.issueId = Number(action.params?.issue_id || this.props.resId || action.params?.resId || action.context?.active_id);
+        if (!Number.isSafeInteger(this.issueId) || this.issueId <= 0) {
+            throw new Error('Open an existing newsletter or choose New Paper Newsletter. No newsletter was created.');
+        }
         this.busy = false;
         this.dirty = false;
         useSetupAction({
+            getGlobalState: () => ({resId:this.issueId}),
             beforeLeave: () => !this.dirty || window.confirm('Leave without saving your paper changes?'),
             beforeUnload: event => {
                 if (this.dirty) { event.preventDefault(); event.returnValue = ''; }
@@ -25,7 +30,10 @@ export class ElksPaperStudio extends Component {
             this.payload = await this.orm.call('elks.newsletter.issue', 'action_studio_load', [[this.issueId]]);
         });
         this.onMessage = this.onMessage.bind(this);
-        onMounted(() => window.addEventListener('message', this.onMessage));
+        onMounted(() => {
+            this.props.updateActionState?.({resId:this.issueId});
+            window.addEventListener('message', this.onMessage);
+        });
         onWillUnmount(() => window.removeEventListener('message', this.onMessage));
     }
     send(message) {

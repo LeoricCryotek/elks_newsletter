@@ -24,9 +24,9 @@ h2 { font-size: 13px; margin: 0 0 14px; }
 .sidebar-heading h2 { margin: 0; }
 .sidebar-heading button { padding: 4px 9px; }
 .sidebar-note { color: #8b8096; line-height: 1.5; font-size: 12px; }
-.page-thumb { width: 100%; padding: 9px; margin-bottom: 10px; text-align: left; font-size: 12px; }
+.page-thumb { display:block; min-width:0; overflow:hidden; width: 100%; padding: 9px; margin-bottom: 10px; text-align: left; font-size: 12px; }
 .page-thumb.active { border-color: var(--purple); background: #f4effa; }
-.page-thumb .thumb-paper { position: relative; display: block; background: white; border: 1px solid #ded7e6; width: 108px; margin-bottom: 8px; overflow: hidden; }
+.page-thumb .thumb-paper { position: relative; display: block; background: white; border: 1px solid #ded7e6; width: 100%; margin-bottom: 8px; overflow: hidden; }
 .page-thumb .thumb-paper .elks-paper-sheet { position: absolute; top: 0; left: 0; transform: scale(.13); transform-origin: top left; margin: 0; text-align: left; }
 .page-thumb .thumb-line { display: block; background: #d7cce7; height: 5px; margin-bottom: 5px; }
 .page-thumb .thumb-line:first-child { background: #8e73b4; width: 85%; }
@@ -66,3 +66,5 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 24px 0; }
 .widget-card svg { width: 100%; border: 1px solid #eee; }
 .widget-card span { font-size: 12px; }
 @media print { .block-drag-handle { display: none !important; } }
+
+.page-usage { display:block; font-size:10px; color:#776c84; margin-top:4px; }

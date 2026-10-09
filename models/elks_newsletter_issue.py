@@ -443,6 +443,7 @@ class ElksBulletinIssue(models.Model):
             "res_model": "elks.newsletter.new.member.wizard",
             "res_id": wiz.id,
             "view_mode": "form",
+            "views": [(False, "form")],
             "target": "new",
         }
 
@@ -458,6 +459,7 @@ class ElksBulletinIssue(models.Model):
             "res_model": "elks.newsletter.in.memoriam.wizard",
             "res_id": wiz.id,
             "view_mode": "form",
+            "views": [(False, "form")],
             "target": "new",
         }
 
@@ -1078,6 +1080,12 @@ class ElksBulletinIssue(models.Model):
             "officers": self._html_officers,
             "in_memoriam": self._html_in_memoriam,
             "leaderboard": self._html_leaderboard,
+            "birthdays": self._html_birthdays,
+            "anniversaries": self._html_anniversaries,
+            "applications": self._html_applications,
+            "committees": self._html_committees,
+            "sick_distressed": self._html_sick_distressed,
+            "lodge_contact": self._html_lodge_contact,
         }
         builder = builders.get(key)
         if not builder:
@@ -1086,7 +1094,8 @@ class ElksBulletinIssue(models.Model):
             # A few blocks read per-block Style-panel options off their element
             # (leaderboard: month + layout; calendar: month; new_members: month
             # /range). The rest take no element.
-            if key in ("leaderboard", "calendar", "new_members"):
+            if key in ("leaderboard", "calendar", "new_members",
+                       "birthdays", "anniversaries"):
                 return builder(el)
             return builder()
         except Exception:  # pragma: no cover - defensive
@@ -1940,3 +1949,174 @@ class ElksBulletinIssue(models.Model):
             )
         return ('<table style="width:100%;border-collapse:collapse;">'
                 + "".join(rows) + "</table>")
+
+    # =================================================================
+    # Standard Elks widgets (19.0.1.44.0)
+    # =================================================================
+    # === HUMAN ===
+    # The sections most Elks bulletins carry: birthdays, membership
+    # milestones, applications for membership, committee chairs, sickness &
+    # distress and the lodge contact lines. Each reads lodge data at
+    # print / Paper Studio refresh time, like the other dynamic blocks.
+    #
+    # === AI AGENT ===
+    # All builders are read-only, run under sudo (authors are trusted
+    # Editor/Publisher officers, same as the existing blocks), escape every
+    # value through _e(), and degrade to a short italic note when the source
+    # model is missing or empty. Birthdays and Milestones honour the per-block
+    # month override (data-elks-bd-month / data-elks-ann-month) through the
+    # shared _block_ref_date helper.
+
+    def _lodge_year_label(self):
+        d = self.issue_date or fields.Date.context_today(self)
+        return f"{d.year}-{d.year + 1}" if d.month >= 4 else f"{d.year - 1}-{d.year}"
+
+    def _empty_note(self, text):
+        return ('<p style="font-family:Arial,sans-serif;font-size:11px;'
+                f'color:#666666;font-style:italic;margin:4px 0;">{self._e(text)}</p>')
+
+    def _day_grouped_html(self, groups, label):
+        """groups: [(day_label, [names...])] -> compact one-line-per-group list."""
+        lines = []
+        for key, names in groups:
+            lines.append(
+                '<div style="padding:2px 4px;border-bottom:1px dotted #d9cbe8;'
+                'font-family:Georgia,serif;font-size:12px;line-height:1.3;">'
+                f'<b style="color:{self._PURPLE_DEEP};">{self._e(key)}</b>'
+                f'{label}' + ", ".join(names) + '</div>')
+        return '<div>' + "".join(lines) + '</div>'
+
+    def _html_birthdays(self, el=None):
+        ref = self._block_ref_date(el, "o_elks_bd_m", "data-elks-bd-month")
+        Partner = self.env["res.partner"].sudo()
+        members = Partner.search_fetch(
+            [("x_is_member", "=", True), ("x_date_of_birth", "!=", False)],
+            ["name", "x_date_of_birth", "x_is_veteran"])
+        members = members.filtered(lambda m: m.x_date_of_birth.month == ref.month)
+        if not members:
+            return self._empty_note("No member birthdays on file for %s." % ref.strftime("%B"))
+        by_day = {}
+        for mbr in members.sorted(lambda m: (m.x_date_of_birth.day, m.name or "")):
+            by_day.setdefault(mbr.x_date_of_birth.day, []).append(
+                self._e(mbr.name) + self._vet_flag(mbr))
+        month = ref.strftime("%b")
+        return self._day_grouped_html(
+            [(f"{month} {day}", names) for day, names in sorted(by_day.items())], " &#8212; ")
+
+    def _html_anniversaries(self, el=None):
+        ref = self._block_ref_date(el, "o_elks_ann_m", "data-elks-ann-month")
+        Partner = self.env["res.partner"].sudo()
+        members = Partner.search_fetch(
+            [("x_is_member", "=", True), ("x_date_initiated", "!=", False)],
+            ["name", "x_date_initiated", "x_lost_years", "x_is_veteran"])
+        by_years = {}
+        for mbr in members:
+            init = mbr.x_date_initiated
+            if init.month != ref.month:
+                continue
+            years = ref.year - init.year - (mbr.x_lost_years or 0)
+            if years >= 5 and years % 5 == 0:
+                by_years.setdefault(years, []).append(mbr)
+        if not by_years:
+            return self._empty_note("No 5-year membership milestones in %s." % ref.strftime("%B"))
+        groups = []
+        for years in sorted(by_years, reverse=True):
+            names = [self._e(m.name) + self._vet_flag(m)
+                     for m in sorted(by_years[years], key=lambda m: m.name or "")]
+            groups.append((f"{years} Years", names))
+        return (self._day_grouped_html(groups, " &#8212; ")
+                + '<p style="font-family:Arial,sans-serif;font-size:10.5px;font-style:italic;'
+                'color:#666666;text-align:center;margin:4px 0 0;">'
+                'Thank you for your years of service to Elkdom.</p>')
+
+    def _html_applications(self):
+        if "elks.membership.application" not in self.env:
+            return self._empty_note("Membership applications are not available.")
+        App = self.env["elks.membership.application"].sudo()
+        apps = App.search([
+            ("stage", "in", ("proposed", "investigation", "balloting")),
+        ], order="date_proposed asc, id asc")
+        if not apps:
+            return self._empty_note("No membership applications are pending.")
+        types = dict(App._fields["application_type"].selection)
+        rows = []
+        for app in apps:
+            name = app.applicant_display_name or " ".join(
+                filter(None, [app.applicant_first_name, app.applicant_last_name]))
+            kind = types.get(app.application_type, "") if app.application_type != "new" else ""
+            proposer = app.proposer_display or (app.proposer_id.name if app.proposer_id else "")
+            rows.append(
+                '<tr><td style="padding:2px 6px;border-bottom:1px solid #ddd;">'
+                f'<b>{self._e(name)}</b>'
+                + (f' <i style="color:#666;font-size:11px;">({self._e(kind)})</i>' if kind else "")
+                + '</td><td style="padding:2px 6px;border-bottom:1px solid #ddd;">'
+                f'{self._e(proposer)}</td></tr>')
+        return (self._dyn_table_open(["Applicant", "Proposed By"]) + "".join(rows) + "</table>"
+                '<p style="font-family:Arial,sans-serif;font-size:10.5px;font-style:italic;'
+                'color:#666666;margin:5px 0 0;">Members with information bearing on an '
+                'applicant&#8217;s qualifications should contact the Lodge Secretary.</p>')
+
+    def _html_committees(self):
+        if "elks.committee.assignment" not in self.env:
+            return self._empty_note("Committees are not available.")
+        lodge_year = self._lodge_year_label()
+        ref = self.issue_date or fields.Date.context_today(self)
+        Assign = self.env["elks.committee.assignment"].sudo()
+        chairs = Assign.search([
+            ("lodge_year", "=", lodge_year),
+            ("role", "=", "chair"),
+            ("committee_id.active", "=", True),
+            "|", ("date_ended", "=", False), ("date_ended", ">=", ref),
+        ])
+        if not chairs:
+            return self._empty_note(f"Committee chairs for {lodge_year} are not set yet.")
+        by_committee = {}
+        for a in chairs:
+            by_committee.setdefault(a.committee_id, []).append(a.partner_id.name or "")
+        cells = [f'<b>{self._e(c.name)}</b> &#8212; {self._e(", ".join(sorted(n)))}'
+                 for c, n in sorted(by_committee.items(),
+                                    key=lambda kv: (kv[0].sort_code or "", kv[0].name or ""))]
+        half = (len(cells) + 1) // 2
+        rows = []
+        for i in range(half):
+            lft = cells[i]
+            rgt = cells[half + i] if half + i < len(cells) else ""
+            rows.append(
+                '<tr>'
+                f'<td style="padding:1px 8px;font-family:Arial,sans-serif;font-size:12px;width:50%;vertical-align:top;">{lft}</td>'
+                f'<td style="padding:1px 8px;font-family:Arial,sans-serif;font-size:12px;width:50%;vertical-align:top;">{rgt}</td></tr>')
+        return '<table style="width:100%;border-collapse:collapse;">' + "".join(rows) + "</table>"
+
+    def _html_sick_distressed(self):
+        """Latest 'Sickness and Distress' entry from lodge meeting minutes in
+        the 60 days up to the issue date; a gentle default otherwise."""
+        default = ('<p>Please keep our members and their families who are ill '
+                   'or in distress in your thoughts.</p>')
+        if "elks.lodge.meeting" not in self.env:
+            return default
+        ref = self.issue_date or fields.Date.context_today(self)
+        meeting = self.env["elks.lodge.meeting"].sudo().search([
+            ("meeting_date", "<=", ref),
+            ("meeting_date", ">=", ref - timedelta(days=60)),
+            ("sickness_distress", "!=", False),
+        ], order="meeting_date desc", limit=1)
+        lines = [ln.strip() for ln in (meeting.sickness_distress or "").splitlines() if ln.strip()]
+        if not lines:
+            return default
+        return "".join(f"<p>{self._e(ln)}</p>" for ln in lines)
+
+    def _html_lodge_contact(self):
+        settings = self.lodge_settings_id
+        address = getattr(settings, "lodge_address", "") or ""
+        city = " ".join(filter(None, [self.city_state or "", getattr(settings, "lodge_zip", "") or ""]))
+        phone = getattr(settings, "lodge_phone", "") or ""
+        website = self.lodge_website or ""
+        parts = [p for p in (address, city) if p]
+        out = ""
+        if parts:
+            out += f"<p><b>Lodge:</b> {self._e(', '.join(parts))}</p>"
+        if phone:
+            out += f"<p><b>Office:</b> {self._e(phone)}</p>"
+        if website:
+            out += f"<p><b>Online:</b> {self._e(website)}</p>"
+        return out or "<p>Add the lodge address and phone in Lodge Settings.</p>"
