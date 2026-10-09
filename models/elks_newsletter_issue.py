@@ -2057,7 +2057,7 @@ class ElksBulletinIssue(models.Model):
                 'applicant&#8217;s qualifications should contact the Lodge Secretary.</p>')
 
     def _html_committees(self):
-        if "elks.committee.assignment" not in self.env:
+        if "elks.committee.assignment" not in self.env or "elks.committee" not in self.env:
             return self._empty_note("Committees are not available.")
         lodge_year = self._lodge_year_label()
         ref = self.issue_date or fields.Date.context_today(self)
@@ -2066,16 +2066,19 @@ class ElksBulletinIssue(models.Model):
             ("lodge_year", "=", lodge_year),
             ("role", "=", "chair"),
             ("committee_id.active", "=", True),
+            "|", ("date_appointed", "=", False), ("date_appointed", "<=", ref),
             "|", ("date_ended", "=", False), ("date_ended", ">=", ref),
         ])
-        if not chairs:
-            return self._empty_note(f"Committee chairs for {lodge_year} are not set yet.")
         by_committee = {}
         for a in chairs:
             by_committee.setdefault(a.committee_id, []).append(a.partner_id.name or "")
-        cells = [f'<b>{self._e(c.name)}</b> &#8212; {self._e(", ".join(sorted(n)))}'
-                 for c, n in sorted(by_committee.items(),
-                                    key=lambda kv: (kv[0].sort_code or "", kv[0].name or ""))]
+        committees = self.env["elks.committee"].sudo().search(
+            [("active", "=", True)], order="sort_code, name")
+        cells = []
+        for committee in committees:
+            names = sorted(set(filter(None, by_committee.get(committee, []))))
+            chair = self._e(", ".join(names)) if names else '<em style="color:#7c5700;">Vacant — volunteers welcome</em>'
+            cells.append(f'<b>{self._e(committee.name)}</b> &#8212; {chair}')
         half = (len(cells) + 1) // 2
         rows = []
         for i in range(half):
@@ -2085,7 +2088,21 @@ class ElksBulletinIssue(models.Model):
                 '<tr>'
                 f'<td style="padding:1px 8px;font-family:Arial,sans-serif;font-size:12px;width:50%;vertical-align:top;">{lft}</td>'
                 f'<td style="padding:1px 8px;font-family:Arial,sans-serif;font-size:12px;width:50%;vertical-align:top;">{rgt}</td></tr>')
-        return '<table style="width:100%;border-collapse:collapse;">' + "".join(rows) + "</table>"
+        invitation = (
+            '<p style="font-family:Arial,sans-serif;font-size:12px;line-height:1.4;'
+            'background:#f3eefa;border-left:3px solid #5b3b8c;padding:8px 10px;margin:8px 0 0;">'
+            '<b>Elks Care — Elks Share. Put your passion into action.</b> '
+            'Guided by Charity, Justice, Brotherly Love, and Fidelity, we serve our '
+            'neighbors, support our veterans and youth, and express our love of '
+            'country through service. Whether your passion is community outreach, '
+            'helping families, or bringing people together, there is a place for you. '
+            'Join a committee or step forward to chair a vacant position. Contact '
+            'the Exalted Ruler or Lodge Secretary to get involved. Together, we can '
+            'turn good intentions into lasting service and make amazing things happen.</p>')
+        listing = '<table style="width:100%;border-collapse:collapse;">' + "".join(rows) + "</table>"
+        if not cells:
+            listing = self._empty_note("No active committees are configured.")
+        return listing + invitation
 
     def _html_sick_distressed(self):
         """Latest 'Sickness and Distress' entry from lodge meeting minutes in
