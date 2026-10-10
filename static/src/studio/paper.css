@@ -64,3 +64,13 @@
 .paper-richtext img { max-width:100%; height:auto; vertical-align:middle; }
 
 .elks-paper-sheet.paper-full-page { padding:0; }
+
+.paper-decoration { position:absolute; inset:12px; pointer-events:none; border:1px solid #80649e; }
+.paper-decoration-double { border:4px double #80649e; }
+.paper-decoration-filigree { border:1px solid #80649e; }
+.paper-corner { position:absolute; color:#80649e; font-family:serif; font-size:36px; line-height:1; background:inherit; }
+.paper-corner.tl { top:-8px; left:-6px; }
+.paper-corner.tr { top:-8px; right:-6px; transform:scaleX(-1); }
+.paper-corner.bl { bottom:-8px; left:-6px; transform:scaleY(-1); }
+.paper-corner.br { bottom:-8px; right:-6px; transform:rotate(180deg); }
+.elks-paper-sheet { print-color-adjust:exact; -webkit-print-color-adjust:exact; }

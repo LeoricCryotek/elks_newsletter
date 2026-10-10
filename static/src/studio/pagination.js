@@ -83,7 +83,7 @@
     }
     function paginate(payload, root, {compact=false, reserve=0, attempt=0}={}) {
         const original=copy(payload.document);
-        if(original.pages.some(page=>page.locked || page.fullPage)) {
+        if(original.pages.some(page=>page.locked || page.fullPage || page.allowOverflow)) {
             const pages=[];let run=[],continuations=0;
             const flush=()=>{
                 if(!run.length)return;
@@ -91,7 +91,7 @@
                 const result=paginate(segment,root,{compact,reserve,attempt});
                 pages.push(...segment.document.pages);continuations+=result.continuations;run=[];
             };
-            for(const page of original.pages){if(page.locked || page.fullPage){flush();pages.push(page);}else run.push(page);}
+            for(const page of original.pages){if(page.locked || page.fullPage || page.allowOverflow){flush();pages.push(page);}else run.push(page);}
             flush();
             if(pages.length>60)throw new Error('Flow exceeded 60 pages. Unlock or reduce content.');
             payload.document.pages=pages;window.ElksPaperRenderer.render(root,payload);
@@ -107,7 +107,7 @@
         }).join('\n');
         document.head.append(styles);
         try {
-            payload.document.pages=[{id:original.pages[0].id,blocks:[]}];
+            payload.document.pages=[{...original.pages[0],blocks:[]}];
             const render=()=>window.ElksPaperRenderer.render(root,payload);
             const fits=()=>{const content=root.lastElementChild.querySelector('.paper-content');const top=content.getBoundingClientRect().top;
                 const used=Math.max(0,...[...content.children].map(row=>row.getBoundingClientRect().bottom-top));

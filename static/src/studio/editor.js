@@ -101,7 +101,8 @@
     }
     function setDisabled() {
         const disabled = !editable();
-        document.querySelectorAll('[data-add],#save,#add-page,#paper-size,#lock-page,#page-up,#page-down,#delete-page,[data-format],#insert-image,#split-text,#undo,#widget-picker,#refresh-data,#fit-pages,#auto-flow,#compact-pages,#browse-widgets,#import-pdf').forEach(node => node.disabled = disabled);
+        document.querySelectorAll('[data-add],#save,#add-page,#paper-size,#lock-page,#page-overflow,#page-background,#page-decoration,#page-up,#page-down,#delete-page,[data-format],#insert-image,#split-text,#undo,#widget-picker,#refresh-data,#fit-pages,#auto-flow,#compact-pages,#browse-widgets,#import-pdf').forEach(node => node.disabled = disabled);
+        for(const id of ['page-overflow','page-background','page-decoration'])$(id).disabled=disabled || !!payload?.document.pages.find(page=>page.id===activePage)?.locked;
         $('undo').disabled = disabled || !undo.length;
         $('preview').disabled = pending || (payload?.readonly && payload?.mode === 'legacy');
         $('reload').disabled = pending;
@@ -208,6 +209,12 @@
         activePage = targetPage.id; selectedId = block.id; change(); render();
     });
     function highlight() {
+        const currentPage=payload.document.pages.find(page=>page.id===activePage);
+        $('page-overflow').checked=!!currentPage?.allowOverflow;
+        $('page-background').value=currentPage?.background || '#ffffff';
+        $('page-decoration').value=currentPage?.decoration || 'none';
+        for(const id of ['page-overflow','page-background','page-decoration'])$(id).disabled=!editable() || !!currentPage?.locked;
+
         $('lock-page').textContent=payload.document.pages.find(page=>page.id===activePage)?.locked ? 'Unlock page' : 'Lock page';
         $('sheets').querySelectorAll('.paper-block').forEach(node => node.classList.toggle('selected', node.dataset.blockId === selectedId));
         document.querySelectorAll('.page-thumb').forEach(node => node.classList.toggle('active', node.dataset.pageId === activePage));
@@ -569,6 +576,13 @@
         if (!editable()) return; const index = payload.document.pages.findIndex(page => page.id === activePage); const other = index + direction;
         if (other < 0 || other >= payload.document.pages.length) return;
         remember(); [payload.document.pages[index], payload.document.pages[other]] = [payload.document.pages[other], payload.document.pages[index]]; change(); render();
+    }
+    for(const [id,key] of [['page-overflow','allowOverflow'],['page-background','background'],['page-decoration','decoration']]) {
+        $(id).addEventListener('change',()=>{
+            const page=payload.document.pages.find(page=>page.id===activePage);
+            if(!editable() || page.locked)return;
+            remember();page[key]=id==='page-overflow' ? $(id).checked : $(id).value;change();render();
+        });
     }
     $('lock-page').addEventListener('click',()=>{
         if(!editable())return;remember();const page=payload.document.pages.find(page=>page.id===activePage);

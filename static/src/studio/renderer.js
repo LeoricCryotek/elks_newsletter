@@ -153,6 +153,15 @@
         payload.document.pages.forEach((page, i) => {
             const sheet = element('article', 'elks-paper-sheet');
             sheet.dataset.pageId = page.id;
+            sheet.dataset.allowOverflow=String(!!page.allowOverflow);
+            sheet.style.backgroundColor=page.background || '#ffffff';
+            if(page.decoration && page.decoration!=='none' && !page.fullPage){
+                const border=element('div','paper-decoration paper-decoration-'+page.decoration);
+                border.setAttribute('aria-hidden','true');
+                if(page.decoration==='filigree')for(const corner of ['tl','tr','bl','br'])border.append(element('span','paper-corner '+corner,'❦'));
+                sheet.append(border);
+            }
+
             if(page.fullPage)sheet.classList.add('paper-full-page');
             sheet.style.height = payload.paperSize === 'legal' ? '1344px' : '1056px';
             const content = element('div', 'paper-content');
@@ -197,7 +206,7 @@
         return [...root.querySelectorAll('.elks-paper-sheet')].flatMap((sheet, i) => {
             const content = sheet.querySelector('.paper-content');
             const results = [];
-            if (content.scrollHeight > content.clientHeight + 1 || content.scrollWidth > content.clientWidth + 1) {
+            if (sheet.dataset.allowOverflow !== 'true' && (content.scrollHeight > content.clientHeight + 1 || content.scrollWidth > content.clientWidth + 1)) {
                 results.push({ page: i + 1, id: sheet.dataset.pageId, message: 'Content extends past the page margins.' });
             }
             if (content.querySelector('.paper-missing-photo')) results.push({ page: i + 1, id: sheet.dataset.pageId, message: 'Choose a photo or remove the empty photo block.' });

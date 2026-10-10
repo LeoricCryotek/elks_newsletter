@@ -128,6 +128,16 @@ def normalise_document(document, resolve=None):
         if page.get('fullPage') and (len(page['blocks']) != 1 or page['blocks'][0].get('kind') != 'image'):
             raise ValueError('A full-page insert must contain exactly one image.')
         cleaned = {'id': identifier(page.get('id')), 'blocks': [], 'locked': page.get('locked', False), 'fullPage':page.get('fullPage',False)}
+        if not isinstance(page.get('allowOverflow', False), bool):
+            raise ValueError('Choose a supported overflow setting.')
+        cleaned['allowOverflow'] = page.get('allowOverflow', False)
+        background = page.get('background', '#ffffff')
+        if not isinstance(background, str) or not re.fullmatch(r'#[0-9a-fA-F]{6}', background):
+            raise ValueError('Choose a supported page background color.')
+        cleaned['background'] = background
+        cleaned['decoration'] = page.get('decoration', 'none')
+        if cleaned['decoration'] not in ('none', 'line', 'double', 'filigree'):
+            raise ValueError('Choose a supported decorative border.')
         for block in page['blocks']:
             if not isinstance(block, dict) or block.get('kind') not in KINDS:
                 raise ValueError('This content block is not supported.')
