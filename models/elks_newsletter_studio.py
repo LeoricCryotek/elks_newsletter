@@ -117,7 +117,7 @@ class ElksBulletinIssueStudio(models.Model):
             contacts = [self.lodge_name or '', 'B.P.O.E. #' + (self.lodge_number or ''),
                         getattr(settings, 'lodge_address', '') or '',
                         ' '.join(filter(None, [self.city_state or '', getattr(settings, 'lodge_zip', '') or ''])),
-                        getattr(settings, 'lodge_phone', '') or '', getattr(settings, 'frs_email', '') or '']
+                        getattr(settings, 'lodge_phone', '') or '', self.env.company.email or '']
             for node in fragment.xpath('.//*[@data-paper-slot="html"]'):
                 for child in list(node): node.remove(child)
                 node.text = None
