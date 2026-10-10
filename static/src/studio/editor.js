@@ -54,12 +54,20 @@
     }
     function fitPages() { return runFlow(false); }
     function compactPages() { return runFlow(true); }
-    function refreshData() {
+    function refreshData(blockId) {
         if (!editable()) return;
         if (!payload.document.pages.some(page => page.blocks.some(block => ['dynamic', 'widget'].includes(block.kind)))) return;
         resolveId = uid();
         $('data-status').textContent = 'Loading Odoo content…';
-        send('resolve', { requestId: resolveId, document: payload.document });
+        let refreshDocument=payload.document;
+        if(typeof blockId==='string') {
+            const page=payload.document.pages.find(page=>page.blocks.some(block=>block.id===blockId));
+            const block=page?.blocks.find(block=>block.id===blockId);
+            if(!block || page.locked || !['dynamic','widget'].includes(block.kind)){resolveId=null;return;}
+            refreshDocument={...payload.document,pages:[{...page,blocks:[block]}]};
+            $('data-status').textContent='Updating selected widget from Odoo…';
+        }
+        send('resolve', { requestId: resolveId, document: refreshDocument });
     }
     function send(type, extras = {}) {
         if (window.parent === window) return showNotice('Open this editor from the newsletter’s Paper Studio button in Odoo.');
@@ -309,6 +317,7 @@
             const text = document.createElement('p'); text.className = 'muted'; text.textContent = 'Select a block on the page to change its appearance or position.'; panel.append(text); return;
         }
         const title = document.createElement('h2'); title.textContent = labels[block.kind]; panel.append(title);
+        if(['dynamic','widget'].includes(block.kind))panel.append(actionButton('Update lodge data for this widget',()=>refreshData(block.id)));
         panel.append(field('Widget width (columns out of 3)', 'span', {1:'1 column · one third',2:'2 columns · two thirds',3:'3 columns · full width'}),
                      field('Widget position', 'horizontal', {left:'Left',center:'Center',right:'Right'}),
                      field('Vertical alignment', 'vertical', {top:'Top',middle:'Middle',bottom:'Bottom'}), field('Minimum frame height (px)', 'boxHeight'));

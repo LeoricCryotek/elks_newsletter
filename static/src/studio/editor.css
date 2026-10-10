@@ -68,3 +68,8 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 24px 0; }
 @media print { .block-drag-handle { display: none !important; } }
 
 .page-usage { display:block; font-size:10px; color:#776c84; margin-top:4px; }
+
+/* One continuous toolbar; narrow windows scroll horizontally instead of wrapping. */
+.insert-toolbar { flex-wrap:nowrap; overflow-x:auto; min-width:0; }
+.insert-toolbar > * { flex-shrink:0; white-space:nowrap; }
+.insert-toolbar label { display:flex; align-items:center; gap:6px; }

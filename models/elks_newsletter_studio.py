@@ -113,11 +113,12 @@ class ElksBulletinIssueStudio(models.Model):
             if source == 'masthead':
                 node.text = self.lodge_name or ''
         if source == 'mailing':
-            settings = self.lodge_settings_id
-            contacts = [self.lodge_name or '', 'B.P.O.E. #' + (self.lodge_number or ''),
-                        getattr(settings, 'lodge_address', '') or '',
-                        ' '.join(filter(None, [self.city_state or '', getattr(settings, 'lodge_zip', '') or ''])),
-                        getattr(settings, 'lodge_phone', '') or '', self.env.company.email or '']
+            company = self.env.company
+            locality = ', '.join(filter(None, [company.city or '', company.state_id.name or '']))
+            contacts = [company.name or '', 'B.P.O.E. #' + (self.lodge_number or ''),
+                        company.street or '', company.street2 or '',
+                        ' '.join(filter(None, [locality, company.zip or ''])),
+                        company.phone or '', company.email or '']
             for node in fragment.xpath('.//*[@data-paper-slot="html"]'):
                 for child in list(node): node.remove(child)
                 node.text = None

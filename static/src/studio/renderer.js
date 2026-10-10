@@ -105,6 +105,8 @@
             if (block.kind === 'widget') {
                 for (const slot of data.querySelectorAll('[data-paper-slot]')) {
                     const field = slot.dataset.paperSlot;
+                    // Company contact details stay linked to Settings, including older saved widgets.
+                    if (block.source === 'mailing' && field === 'html') continue;
                     if (block[field]) slot.innerHTML = block[field];
                     slot.classList.add('paper-richtext'); slot.dataset.field = field; slot.dataset.owner = block.id;
                 }
