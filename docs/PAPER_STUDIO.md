@@ -209,3 +209,21 @@ Columns widgets offer Single column, two-column width ratios, and Three columns.
 Full-page PDF insert accepts an unencrypted PDF up to 12 MB and imports up to 12 pages, subject to the newsletter’s 60-page and 24 MB limits. Each page becomes a locked sheet after the selected page; drag thumbnails to reorder. Letter/Legal scaling contains the whole source without cropping, with no newsletter header/footer overlay. Imports render at up to 300 dpi (16 million pixels maximum per page) as JPEG images, so text is no longer selectable and PDF links/forms are flattened. PDF.js is bundled with its Apache 2.0 license in static/lib/pdfjs; conversion runs in the browser without a server PDF rasterizer. Source PDFs remain on your computer; the newsletter stores rendered page images.
 
 Page appearance: select a page thumbnail, then choose a background color and fine, double, or filigree border in Page settings. These print with the shared renderer. Allow content past margins bypasses only the margin check for that page and excludes it from automatic flow; physical paper still clips content beyond its edge. Empty or broken image warnings remain blocking. Unlock a locked page to change these settings.
+
+## Website publication and historical PDFs (v62)
+
+The controlled `/newsletter` page (also `/elks/newsletters`) lists published PDF snapshots for the current website, newest issue month first. It takes precedence over the existing manually designed `/newsletter` page without deleting that website page. Existing Google Drive links are not automatically imported.
+
+For a new issue, save its layout, mark it Final, then use Publish to Website. This generates the PDF and opens its archive record. Repeating Publish refreshes that issue's existing release on the company's first website; the website can be selected on the archive form. Unpublish removes public access immediately.
+
+For historical issues, open Elks Newsletter → Website Archive / Import PDFs → New. Enter a title, select the issue month/year (any day is normalized to the first), select the website, upload a PDF up to 30 MB, and Publish. Draft uploads are private. Both new and historical publications use the same list and download routes. The archive uses Odoo's website header/footer.
+
+The legacy `/elk/newsletter` link permanently redirects (HTTP 301) to `/newsletter`, preserving bookmarks and shared links.
+
+## Email Marketing draft (v65)
+
+Mark Final creates one linked draft in standard Odoo Email Marketing, titled Month Year Newsletter. It includes an email introduction and up to five authored content excerpts (900 characters each), a native unsubscribe link, and a Read the full newsletter button to the website's absolute `/elks/newsletter` URL. That URL redirects to the archive. This is an email summary, not a print-page embedding. Use Marketing Email on the newsletter form to review/edit it and choose recipients. No mail is queued or sent by marking Final, and repeat Final clicks do not overwrite an existing mailing. Publish to Website remains a separate action: publish the PDF before sending the email. Email Marketing create permissions are required.
+
+Marketing defaults (v66): new drafts reuse the current responsible user’s most recently sent newsletter mailing recipient model, domain/lists, From, and Reply-To. Preview text follows the new issue month/year. If no sent newsletter exists, a unique Newsletter Mailing List is selected and company email supplies sender/reply-to; ambiguous or absent lists leave recipients unselected. Existing drafts remain unchanged.
+
+Marketing digest (v67): email-safe table layout with explicit colors and mobile sizing. Saved ER message content receives its own titled section, preserving basic rich formatting where it fits the excerpt limit. Upcoming event snapshots contribute up to five deduplicated title/date/description entries. Two additional authored news excerpts follow. Editor placeholders, masthead text, and continuation fragments are excluded. Missing real content is omitted rather than invented. Rebuild Marketing Email replaces only the linked draft’s body; queued/sent mailings cannot be rebuilt. Newsletter links point to `/elks/newsletter`.

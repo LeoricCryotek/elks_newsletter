@@ -1,0 +1,25 @@
+.elks-newsletter-depot { background:#f8f6fb; color:#27202f; }
+.elks-newsletter-depot .newsletter-hero { position:relative; isolation:isolate; overflow:hidden; background:linear-gradient(115deg,#2c1846,#725294); color:white; }
+.newsletter-hero-photo { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; z-index:-2; }
+.newsletter-hero::after { content:''; position:absolute; inset:0; background:linear-gradient(90deg,rgba(30,15,48,.88),rgba(30,15,48,.25)); z-index:-1; }
+.newsletter-hero-content { padding-top:90px; padding-bottom:90px; }
+.newsletter-hero-content h1 { font-size:clamp(2.5rem,5vw,4.5rem); color:white; max-width:850px; margin:18px 0; }
+.newsletter-hero-content p { font-size:1.25rem; max-width:650px; margin-bottom:28px; }
+.newsletter-eyebrow { font-size:.72rem; font-weight:700; letter-spacing:.15em; }
+.newsletter-section-heading { display:flex; justify-content:space-between; gap:20px; align-items:end; margin-bottom:28px; }
+.newsletter-section-heading h2 { margin:8px 0 0; font-size:2rem; }
+.newsletter-section-heading p { color:#70647d; margin:0; }
+.newsletter-editions-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:24px; }
+.newsletter-edition { display:flex; border:1px solid #e6dfed; border-radius:16px; overflow:hidden; background:white; box-shadow:0 8px 24px #2c184609; }
+.newsletter-featured { grid-column:1 / -1; }
+.newsletter-edition-art { flex:0 0 30%; padding:28px 20px; display:flex; flex-direction:column; justify-content:space-between; gap:25px; background:linear-gradient(145deg,#604187,#35204f); color:white; }
+.newsletter-edition-art > span { font-size:.7rem; letter-spacing:.09em; }
+.newsletter-edition-art strong { font-family:Georgia,serif; font-size:clamp(1.1rem,2vw,2rem); line-height:1.15; }
+.newsletter-edition-body { padding:30px; min-width:0; }
+.newsletter-edition-body .newsletter-eyebrow { color:#725294; }
+.newsletter-edition-body h3 { font-size:1.6rem; margin:12px 0; }
+.newsletter-featured h3 { font-size:2.3rem; }
+.newsletter-edition-body p { color:#70647d; }
+.newsletter-edition-actions { display:flex; flex-wrap:wrap; gap:10px; margin-top:22px; }
+.newsletter-empty { background:white; border-radius:16px; padding:40px; border:1px solid #e6dfed; }
+@media(max-width:767px) { .newsletter-editions-grid { grid-template-columns:1fr; } .newsletter-section-heading { display:block; } .newsletter-section-heading p { margin-top:12px; } .newsletter-hero-content { padding-top:60px; padding-bottom:60px; } .newsletter-edition-body { padding:22px; } .newsletter-edition-art { padding:22px 12px; } }

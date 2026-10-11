@@ -43,8 +43,8 @@ except Exception as _wp_err:  # pragma: no cover - optional dependency
     # took down server startup entirely.
     weasyprint = None
     logging.getLogger(__name__).warning(
-        "elks_newsletter: WeasyPrint unavailable (%s); newsletter PDFs will "
-        "fall back to wkhtmltopdf until it is installed.", _wp_err)
+        "elks_newsletter: optional WeasyPrint engine unavailable (%s). "
+        "Paper Studio uses Chromium; only the optional WeasyPrint engine is affected.", _wp_err)
 
 BULLETIN_REPORTS = (
     "elks_newsletter.report_bulletin_letter",

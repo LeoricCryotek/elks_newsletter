@@ -302,6 +302,7 @@
             if (['source','officer','month'].includes(key)) { delete selected().block.resolvedHTML; refreshData(); }
             change(); render();
         });
+        if(input.type==='number')wrap.classList.add('property-compact');
         wrap.append(label, input); return wrap;
     }
     function actionButton(title, fn, danger) {
