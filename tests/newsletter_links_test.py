@@ -6,11 +6,13 @@ import unittest
 from types import SimpleNamespace
 from archive_test import methods
 
-namespace={'html':html,'urlsplit':urlsplit,'urlunsplit':urlunsplit}
+import re
+namespace={'re':re,'html':html,'urlsplit':urlsplit,'urlunsplit':urlunsplit}
 tree=ast.parse((Path(__file__).resolve().parents[1]/'models/newsletter_links.py').read_text())
 exec(compile(ast.Module(body=[n for n in tree.body if isinstance(n,ast.FunctionDef)],type_ignores=[]),'newsletter_links','exec'),namespace)
 newsletter_destination=namespace['newsletter_destination']
 direct_newsletter_links=namespace['direct_newsletter_links']
+referenced_tracker_codes=namespace['referenced_tracker_codes']
 
 class NewsletterLinksTests(unittest.TestCase):
     def test_canonical_url_discards_path_and_trailing_slashes(self):

@@ -5,7 +5,8 @@ from lxml import html
 from odoo import fields, models, _
 from odoo.exceptions import UserError
 from .newsletter_email import build_digest
-from .newsletter_links import newsletter_destination, direct_newsletter_links
+from .newsletter_links import newsletter_destination, direct_newsletter_links, referenced_tracker_codes
+from urllib.parse import urlsplit
 
 
 class NewsletterMarketing(models.Model):
@@ -96,13 +97,31 @@ class NewsletterMarketing(models.Model):
         self.ensure_one()
         self.check_access('write')
         mailing = self.marketing_mailing_id
-        if not mailing or mailing.state != 'draft':
-            raise UserError(_('Only draft marketing emails can have their links updated.'))
+        if not mailing:
+            raise UserError(_('There is no marketing email linked to this newsletter.'))
+        mailing.check_access('write')
         website = self.env['website'].search([('company_id', '=', self.env.company.id)], limit=1)
         destination = newsletter_destination(website.get_base_url() if website else self.get_base_url())
-        mailing.write({'body_arch':direct_newsletter_links(mailing.body_arch, destination),
-                       'body_html':direct_newsletter_links(mailing.body_html, destination)})
-        return self.action_open_marketing_email()
+        trackers = self.env['link.tracker'].search([('mass_mailing_id', '=', mailing.id)])
+        # A sent email can contain a tracker copied from an older newsletter.
+        codes = referenced_tracker_codes((mailing.body_html or '') + (mailing.body_arch or ''))
+        if codes:
+            references = self.env['link.tracker.code'].search([('code', 'in', codes)])
+            archive_paths = ('/newsletter', '/elk/newsletter', '/elks/newsletter', '/elks/newsletters')
+            related = references.mapped('link_id').filtered(lambda tracker:
+                urlsplit(tracker.url).path.rstrip('/') in archive_paths and
+                (not urlsplit(tracker.url).netloc or urlsplit(tracker.url).netloc == urlsplit(destination).netloc))
+            trackers |= related
+        # Preserve codes, original URL uniqueness, and click history. Only the
+        # final redirect changes, so links already delivered keep working.
+        trackers.write({'newsletter_redirect_url': destination})
+        if mailing.state == 'draft':
+            mailing.write({'body_arch':direct_newsletter_links(mailing.body_arch, destination),
+                           'body_html':direct_newsletter_links(mailing.body_html, destination)})
+        return {'type':'ir.actions.client', 'tag':'display_notification', 'params':{
+            'title':_('Newsletter links repaired'),
+            'message':_('%s existing tracked links now lead to %s. Future newsletter content links use this address directly.') % (len(trackers), destination),
+            'type':'success', 'sticky':True}}
 
     def action_open_marketing_email(self):
         self.ensure_one()

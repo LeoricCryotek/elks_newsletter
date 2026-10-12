@@ -4,7 +4,7 @@ from email.utils import formataddr
 from types import SimpleNamespace
 from lxml import html
 import unittest
-from newsletter_links_test import newsletter_destination
+from newsletter_links_test import newsletter_destination, direct_newsletter_links, referenced_tracker_codes
 import importlib.util
 from pathlib import Path
 spec=importlib.util.spec_from_file_location("email_digest",Path(__file__).resolve().parents[1]/"models/newsletter_email.py")
@@ -49,6 +49,23 @@ class MarketingTests(unittest.TestCase):
         self.assertIn('Exalted Ruler’s Message',result)
         self.assertNotIn('Write the story',result)
         self.assertNotIn('Replace this',result)
+
+    def test_fix_sent_mailing_repairs_existing_trackers_without_rewriting_email(self):
+        cls=methods('models/newsletter_marketing.py','NewsletterMarketing',{'newsletter_destination':newsletter_destination,'direct_newsletter_links':direct_newsletter_links,'referenced_tracker_codes':referenced_tracker_codes,'_':lambda s:s})
+        class Trackers(list):
+            def write(self,values):self.updated=values
+        trackers=Trackers([1,2]);domains=[]
+        class Env(dict):pass
+        issue=cls();issue.ensure_one=lambda:None;issue.check_access=lambda mode:None
+        def forbidden_write(values):raise AssertionError('Sent email must stay unchanged')
+        issue.marketing_mailing_id=SimpleNamespace(id=8,state='done',body_html='',body_arch='',check_access=lambda mode:None,write=forbidden_write)
+        issue.env=Env({'website':SimpleNamespace(search=lambda *a,**k:SimpleNamespace(get_base_url=lambda:'https://example.com/')),
+                      'link.tracker':SimpleNamespace(search=lambda domain:(domains.append(domain) or trackers))})
+        issue.env.company=SimpleNamespace(id=1)
+        result=issue.action_fix_marketing_links()
+        self.assertEqual(trackers.updated,{'newsletter_redirect_url':'https://example.com/elks/newsletter'})
+        self.assertEqual(domains,[[('mass_mailing_id','=',8)]])
+        self.assertIn('2 existing tracked links',result['params']['message'])
 
     def test_defaults_copy_sent_newsletter_settings(self):
         cls=methods('models/newsletter_marketing.py','NewsletterMarketing',{'formataddr':formataddr})
