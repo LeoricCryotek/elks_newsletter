@@ -29,6 +29,15 @@ class ArchiveTests(unittest.TestCase):
         cls=methods('controllers/archive.py','NewsletterArchive',{'request':request})
         self.assertEqual(cls().newsletter_legacy_link(),('/newsletter',301))
 
+    def test_malformed_sent_newsletter_link_recovers_but_other_mail_does_not(self):
+        class Trace:
+            def __init__(self,subject):self.mass_mailing_id=SimpleNamespace(subject=subject)
+            def exists(self):return self
+        for subject,expected in [('October Newsletter',('/elks/newsletter',302)),('Unrelated campaign','404')]:
+            request=SimpleNamespace(env={'mailing.trace':SimpleNamespace(sudo=lambda:SimpleNamespace(browse=lambda id:Trace(subject)))},redirect=lambda url,code:(url,code),not_found=lambda:'404')
+            cls=methods('controllers/archive.py','NewsletterArchive',{'request':request})
+            self.assertEqual(cls().broken_newsletter_tracking_link(4368),expected)
+
     def test_pdf_route_requires_publication_and_current_website(self):
         captured=[]
         class Records:

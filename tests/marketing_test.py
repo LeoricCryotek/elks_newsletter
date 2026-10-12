@@ -4,6 +4,7 @@ from email.utils import formataddr
 from types import SimpleNamespace
 from lxml import html
 import unittest
+from newsletter_links_test import newsletter_destination
 import importlib.util
 from pathlib import Path
 spec=importlib.util.spec_from_file_location("email_digest",Path(__file__).resolve().parents[1]/"models/newsletter_email.py")
@@ -12,7 +13,7 @@ from archive_test import methods
 
 class MarketingTests(unittest.TestCase):
     def test_email_uses_issue_content_and_requested_absolute_link(self):
-        cls=methods('models/newsletter_marketing.py','NewsletterMarketing',{'html':html,'escape':escape,'build_digest':digest.build_digest})
+        cls=methods('models/newsletter_marketing.py','NewsletterMarketing',{'html':html,'escape':escape,'build_digest':digest.build_digest,'newsletter_destination':newsletter_destination})
         issue=cls();issue.ensure_one=lambda:None;issue.issue_date=date(2026,10,1)
         issue.env=SimpleNamespace(company=SimpleNamespace(name='Lodge & Community',id=1,phone='123',email='office@example.com'))
         issue.lodge_name='Lodge';issue.editor_mode='paper';issue.studio_document={'pages':[{'blocks':[{'kind':'text','html':'<p>Our volunteers served &amp; shared.</p>'},{'kind':'columns','columns':['<p>Coming events</p>','<p>Youth program</p>']}]}]}
@@ -66,7 +67,7 @@ class MarketingTests(unittest.TestCase):
         self.assertNotIn('state',values)
 
     def test_excerpt_does_not_copy_executable_markup(self):
-        cls=methods('models/newsletter_marketing.py','NewsletterMarketing',{'html':html,'escape':escape,'build_digest':digest.build_digest})
+        cls=methods('models/newsletter_marketing.py','NewsletterMarketing',{'html':html,'escape':escape,'build_digest':digest.build_digest,'newsletter_destination':newsletter_destination})
         issue=cls();issue.ensure_one=lambda:None;issue.issue_date=date(2026,10,1)
         issue.env=SimpleNamespace(company=SimpleNamespace(name='Lodge',id=1,phone='',email=''))
         issue.lodge_name='Lodge';issue.editor_mode='paper';issue.studio_document={'pages':[{'blocks':[{'kind':'text','html':'<p>&lt;img onerror=bad()&gt;</p>'}]}]}

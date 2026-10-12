@@ -4,6 +4,15 @@ from odoo.http import request, content_disposition
 
 
 class NewsletterArchive(http.Controller):
+    @http.route(['/r//m/<int:trace_id>', '/r/m/<int:trace_id>'], type='http', auth='public', website=True, methods=['GET'], sitemap=False)
+    def broken_newsletter_tracking_link(self, trace_id, **kw):
+        # Only repair malformed links associated with newsletter mailings.
+        trace = request.env['mailing.trace'].sudo().browse(trace_id).exists()
+        subject = (trace.mass_mailing_id.subject or '').lower() if trace else ''
+        if not trace or not ('newsletter' in subject or 'news letter' in subject):
+            return request.not_found()
+        return request.redirect('/elks/newsletter', code=302)
+
     @http.route(['/elk/newsletter', '/elks/newsletter'], type='http', auth='public', website=True, methods=['GET'], sitemap=False)
     def newsletter_legacy_link(self, **kw):
         return request.redirect('/newsletter', code=301)

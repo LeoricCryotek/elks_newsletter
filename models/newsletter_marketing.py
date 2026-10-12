@@ -5,6 +5,7 @@ from lxml import html
 from odoo import fields, models, _
 from odoo.exceptions import UserError
 from .newsletter_email import build_digest
+from .newsletter_links import newsletter_destination, direct_newsletter_links
 
 
 class NewsletterMarketing(models.Model):
@@ -14,7 +15,7 @@ class NewsletterMarketing(models.Model):
 
     def _newsletter_email_body(self, base_url):
         self.ensure_one()
-        url = base_url.rstrip('/') + '/elks/newsletter'
+        url = newsletter_destination(base_url)
         month = self.issue_date.strftime('%B %Y')
         document = self.studio_document if self.editor_mode == 'paper' else None
         if not document:
@@ -90,6 +91,18 @@ class NewsletterMarketing(models.Model):
             mailing = self.env['mailing.mailing'].create(values)
             issue.marketing_mailing_id = mailing
         return result
+
+    def action_fix_marketing_links(self):
+        self.ensure_one()
+        self.check_access('write')
+        mailing = self.marketing_mailing_id
+        if not mailing or mailing.state != 'draft':
+            raise UserError(_('Only draft marketing emails can have their links updated.'))
+        website = self.env['website'].search([('company_id', '=', self.env.company.id)], limit=1)
+        destination = newsletter_destination(website.get_base_url() if website else self.get_base_url())
+        mailing.write({'body_arch':direct_newsletter_links(mailing.body_arch, destination),
+                       'body_html':direct_newsletter_links(mailing.body_html, destination)})
+        return self.action_open_marketing_email()
 
     def action_open_marketing_email(self):
         self.ensure_one()
