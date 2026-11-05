@@ -405,6 +405,33 @@ try {
     for(const p of changedFlow.document.pages)for(const b of p.blocks)if(b.kind==='dynamic')b.resolvedHTML=b.resolvedHTML.replace('</div></div>','</div><div style="height:60px"><b>New event 18</b></div></div>');
     await print.evaluate(data=>window.ElksPaperRenderer.render(document.querySelector('#print'),data),changedFlow);
     assert.equal(await print.locator('[data-elks-block="upcoming_events"] > div').count(),18,'new source rows must not be hidden by a finite last-fragment range');
+    const largeFixture=structuredClone(fixture);
+    largeFixture.document={version:1,flowMode:'manual',pages:[{id:'large-size-page',blocks:[]}],test_payload:'x'.repeat(24100000)};
+    await editor.evaluate(data=>window.ElksPaperEditor.load(data),largeFixture);
+    await editor.waitForFunction(()=>document.querySelector('#newsletter-size-label').textContent.includes('approval needed'));
+    page.once('dialog',dialog=>dialog.accept());
+    await editor.locator('#approve-large-size').click();
+    assert.ok((await editor.evaluate(()=>window.ElksPaperEditor.getPayload())).document.largeSizeApprovedBytes>=25000000);
+    assert.ok((await editor.locator('#newsletter-size-label').textContent()).includes('approved'));
+    assert.ok(await editor.locator('#approve-large-size').isHidden());
+    const scaledFixture=structuredClone(fixture);
+    scaledFixture.document={version:1,flowMode:'manual',pages:[{id:'sizing-page',blocks:[{id:'sizing-photo',kind:'image',width:30,height:120,fit:'contain',src:'',caption:''}]}]};
+    await editor.evaluate(data=>window.ElksPaperEditor.load(data),scaledFixture);
+    await editor.locator('#sheets [data-block-id="sizing-photo"]').click();
+    const largePhoto=await editor.evaluate(()=>{
+        const c=document.createElement('canvas');c.width=3000;c.height=2000;const ctx=c.getContext('2d');
+        const gradient=ctx.createLinearGradient(0,0,3000,2000);gradient.addColorStop(0,'#7328b8');gradient.addColorStop(1,'#e8ca61');ctx.fillStyle=gradient;ctx.fillRect(0,0,3000,2000);
+        ctx.fillStyle='white';ctx.font='100px Arial';ctx.fillText('Lodge community photo',200,300);return c.toDataURL('image/png').split(',')[1];
+    });
+    await editor.locator('#photo-file').setInputFiles({name:'large-photo.png',mimeType:'image/png',buffer:Buffer.from(largePhoto,'base64')});
+    await editor.waitForFunction(()=>window.ElksPaperEditor.getPayload().document.pages[0].blocks[0].src);
+    const imageSizing=await editor.evaluate(async()=>{
+        const src=window.ElksPaperEditor.getPayload().document.pages[0].blocks[0].src;const image=new Image();image.src=src;await image.decode();return {width:image.naturalWidth,height:image.naturalHeight,length:src.length};
+    });
+    assert.ok(imageSizing.width<=500 && imageSizing.height<=260,'small photo frame stores only the pixels needed at 200 DPI');
+    assert.ok(imageSizing.length<Buffer.from(largePhoto,'base64').length,'sized photo uses less storage');
+    assert.equal(await editor.getByRole('button',{name:'Optimize image for this frame'}).count(),1);
+    console.log(`Image scaler: 3000px upload reduced to ${imageSizing.width} x ${imageSizing.height} for small print frame`);
     if(process.env.ELKS_SCAN_INSERT_DIR) {
         const scanFixture=structuredClone(fixture);scanFixture.document={version:1,flowMode:'manual',pages:[{id:'scan-start',blocks:[]}]};
         await editor.evaluate(data=>window.ElksPaperEditor.load(data),scanFixture);

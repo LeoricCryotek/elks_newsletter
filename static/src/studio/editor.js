@@ -86,7 +86,30 @@
         if (undo.length > 12) undo.shift();
         $('undo').disabled = false;
     }
+    const SOFT_SIZE=24000000,HARD_SIZE=64000000;
+    let sizeTimer;
+    function documentSize(doc) { return new TextEncoder().encode(JSON.stringify(doc)).length; }
+    function updateSizeMeter() {
+        if(!payload)return;
+        const size=documentSize(payload.document),approved=payload.document.largeSizeApprovedBytes || 0;
+        $('newsletter-size-meter').value=size/1000000;
+        document.querySelector('.newsletter-size-panel').classList.toggle('large',size>SOFT_SIZE);
+        $('newsletter-size-label').textContent=`${(size/1000000).toFixed(1)} MB · ${size>HARD_SIZE ? 'over 64 MB safety limit' : size>SOFT_SIZE ? (size<=approved ? 'large newsletter approved' : 'above recommended 24 MB — approval needed') : 'recommended 24 MB; maximum 64 MB'}`;
+        $('approve-large-size').hidden=size<=SOFT_SIZE || size<=approved || payload.readonly;
+        $('approve-large-size').disabled=pending;
+    }
+    function scheduleSizeMeter() { clearTimeout(sizeTimer);sizeTimer=setTimeout(updateSizeMeter,200); }
+    function approveDocumentSize(doc) {
+        const size=documentSize(doc);
+        if(size>HARD_SIZE){showNotice('This newsletter exceeds the 64 MB safety limit. Optimize images or split it into separate issues.');return false;}
+        if(size<=SOFT_SIZE || size<=(doc.largeSizeApprovedBytes || 0))return true;
+        const approved=Math.min(HARD_SIZE,(Math.ceil(size/1000000)+1)*1000000);
+        if(!window.confirm(`This newsletter is ${(size/1000000).toFixed(1)} MB, above the recommended 24 MB. Larger newsletters may take longer to edit, save and print. Approve up to ${approved/1000000} MB for this newsletter?`))return false;
+        doc.largeSizeApprovedBytes=approved;return true;
+    }
+    $('approve-large-size').addEventListener('click',()=>{if(!editable())return;const candidate=structuredClone(payload.document);if(approveDocumentSize(candidate)){remember();payload.document=candidate;change();updateSizeMeter();}});
     function change() {
+        scheduleSizeMeter();
         dirty = true;
         $('save-status').textContent = 'Unsaved changes';
         send('dirty', { dirty: true });
@@ -119,6 +142,7 @@
     }
     function measure() {
         if (!payload) return [];
+        scheduleSizeMeter();
         const issues = Renderer.problems($('sheets'));
         const bad = new Set(issues.map(issue => issue.id));
         document.querySelectorAll('#sheets .elks-paper-sheet').forEach(sheet => sheet.classList.toggle('has-problem', bad.has(sheet.dataset.pageId)));
@@ -356,6 +380,7 @@
         if (block.kind === 'columns') panel.append(field('Column widths', 'ratio', { single:'Single column',three:'Three columns',equal: 'Half / half', 'wide-left': 'Two thirds / one third', 'wide-right': 'One third / two thirds' }));
         if (block.kind === 'photo_text') panel.append(field('Photo position', 'side', { left: 'Left', right: 'Right' }), field('Column widths', 'ratio', { equal: 'Half / half', 'wide-left': 'Two thirds / one third', 'wide-right': 'One third / two thirds' }));
         if (block.kind === 'image' || block.kind === 'photo_text') panel.append(actionButton(block.src ? 'Replace photo' : 'Choose photo', () => $('photo-file').click()), field('Photo width (%)', 'width'), field('Photo height (px)', 'height'), field('Photo fitting', 'fit', { contain: 'Show whole photo', cover: 'Fill and crop' }));
+        if(['image','photo_text','gallery'].includes(block.kind))panel.append(actionButton('Optimize image for this frame',optimizeSelectedPhoto));
         if (block.kind === 'widget' && block.source === 'message') panel.append(field('Photo position', 'side', {left:'Left',right:'Right'}));
         if (block.kind === 'photo_text' || (block.kind === 'widget' && block.source === 'message')) panel.append(field('Text around photo', 'layout', { columns: 'Separate columns', wrap: 'Wrap around photo' }), field('Photo area width (%)', 'photoWidth'));
         if (['text','photo_text','dynamic','widget'].includes(block.kind)) panel.append(field('Page flow', 'keepTogether', {false:'Allow continuation',true:'Keep whole widget together'}));
@@ -480,6 +505,50 @@
             if (editable() && lastSelection) { const selection = window.getSelection(); selection.removeAllRanges(); selection.addRange(lastSelection); document.execCommand(button.dataset.format,false,button.dataset.value || null); }
         });
     });
+    function photoBox(block, inlineWidth) {
+        const node=$('sheets').querySelector(`[data-block-id="${block?.id}"]`);
+        const image=node?.querySelector('img.paper-photo');
+        const page=payload.document.pages.find(p=>p.blocks.some(b=>b.id===block?.id));
+        if(page?.fullPage)return {width:816,height:payload.paperSize==='legal'?1344:1056};
+        let width=inlineWidth || image?.getBoundingClientRect().width || ((736-40)*(block?.span || 3)/3+((block?.span || 3)-1)*20);
+        if(!image && block?.kind==='photo_text')width*=block.layout==='wrap' ? (block.photoWidth || 33)/100 : .5;
+        if(!image && block?.kind==='gallery')width/=Math.max(1,block.photos?.length || 3);
+        return {width:Math.max(40,width),height:inlineWidth ? 0 : image?.getBoundingClientRect().height || block?.height || 240,fit:block?.kind==='gallery' ? 'cover' : block?.fit || 'contain'};
+    }
+    async function scalePhoto(source, box) {
+        const image=new Image();image.src=source;await image.decode();
+        if(image.naturalWidth*image.naturalHeight>50000000)throw Error('Choose an image smaller than 50 megapixels.');
+        // 200 pixels per printed inch; no enlargement or cropping of the source.
+        const widthScale=box.width*200/96/image.naturalWidth;
+        const heightScale=box.height ? box.height*200/96/image.naturalHeight : widthScale;
+        const scale=Math.min(1,box.fit==='cover' ? Math.max(widthScale,heightScale) : Math.min(widthScale,heightScale));
+        if(scale>=1 && source.length<700000)return source;
+        const canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(image.naturalWidth*scale));canvas.height=Math.max(1,Math.round(image.naturalHeight*scale));
+        const ctx=canvas.getContext('2d');ctx.drawImage(image,0,0,canvas.width,canvas.height);
+        let result=canvas.toDataURL('image/png');
+        const pixels=ctx.getImageData(0,0,canvas.width,canvas.height).data;
+        let transparent=false;for(let n=3;n<pixels.length;n+=4)if(pixels[n]<255){transparent=true;break;}
+        if(!transparent){const jpeg=canvas.toDataURL('image/jpeg',0.86);if(jpeg.length<result.length)result=jpeg;}
+        canvas.width=canvas.height=0;
+        if(result.length>6600000)throw Error('The optimized image is still too large. Use a smaller image.');
+        return result.length<source.length ? result : source;
+    }
+    async function readPhoto(file, box) {
+        const source=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(file);});
+        return scalePhoto(source,box);
+    }
+    async function optimizeSelectedPhoto() {
+        const {block,page}=selected();if(!editable() || !block || page.locked)return;
+        const target=block.kind==='gallery' ? block.photos[galleryPhoto] : block;
+        if(!target?.src)return showNotice('Choose an image first.');
+        pending=true;setDisabled();
+        try {
+            const before=target.src.length,src=await scalePhoto(target.src,photoBox(block));
+            remember();target.src=src;pending=false;change();render();
+            showNotice(`Image sized for this frame at 200 DPI. Saved ${Math.round((before-src.length)/1024)} KB. Re-upload the original if you later enlarge the frame substantially. Undo restores the previous image.`);
+        } catch(error){showNotice(error.message || 'Unable to optimize this image.');}
+        finally {pending=false;setDisabled();}
+    }
     let inlineTarget=null;
     $('insert-image').addEventListener('mousedown',event=>event.preventDefault());
     $('insert-image').addEventListener('click',()=>{
@@ -494,8 +563,8 @@
         const file=event.target.files[0];event.target.value='';
         try {
             if(!file || !inlineTarget)return;
-            if(file.size>5000000 || !['image/png','image/jpeg','image/webp','image/gif'].includes(file.type))return showNotice('Choose a PNG, JPEG, WebP or GIF image smaller than 5 MB.');
-            const src=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(file);});
+            if(file.size>25000000 || !['image/png','image/jpeg','image/webp','image/gif'].includes(file.type))return showNotice('Choose a PNG, JPEG, WebP or GIF image smaller than 25 MB.');
+            const src=await readPhoto(file,{width:inlineTarget.rich.clientWidth*.5,height:0});
             if(!inlineTarget.rich.isConnected)return showNotice('Select the insertion point again.');
             remember();
             const image=document.createElement('img');image.src=src;image.alt='';image.style.width='50%';
@@ -537,9 +606,9 @@
             if(pdf.numPages>12 || payload.document.pages.length+pdf.numPages>60)throw new Error('Insert up to 12 PDF pages at a time, with 60 newsletter pages maximum.');
             const pages=[];
             // Budget the encoded image stored in JSON, not the input PDF bytes.
-            const remaining=24000000-JSON.stringify(payload.document).length-262144;
+            const remaining=HARD_SIZE-documentSize(payload.document)-262144;
             const imageBudget=Math.min(600000,Math.floor(remaining/pdf.numPages));
-            if(imageBudget<100000)throw new Error('This newsletter is already near its 24 MB limit. Remove an existing image/PDF insert or start a new newsletter before adding more pages.');
+            if(imageBudget<100000)throw new Error('This newsletter is near the 64 MB safety limit. Optimize an existing image/PDF insert or start a new newsletter.');
             for(let index=1;index<=pdf.numPages;index++) {
                 showNotice(`Importing ${file.name}: page ${index} of ${pdf.numPages}…`);
                 const page=await pdf.getPage(index),base=page.getViewport({scale:1});
@@ -568,7 +637,7 @@
             }
             const candidateDocument=structuredClone(payload.document),index=candidateDocument.pages.findIndex(page=>page.id===activePage);
             candidateDocument.pages.splice(index+1,0,...pages);
-            if(JSON.stringify(candidateDocument).length>24000000)throw new Error('This newsletter has reached its 24 MB total storage limit. Remove existing image/PDF inserts or use another newsletter.');
+            if(!approveDocumentSize(candidateDocument))return;
             remember();payload.document=candidateDocument;activePage=pages[0].id;selectedId=null;pending=false;change();render();
             showNotice(`${pages.length} full-page insert(s) added after the selected page. Imported pages are locked; drag their thumbnails to change order.`);
         }catch(error){showNotice(error.message || 'This PDF could not be imported. Use an unencrypted PDF.');}
@@ -579,33 +648,34 @@
         if(!editable() || !files.length || block?.kind!=='gallery' || page.locked)return;
         const existing=block.photos.filter(photo=>photo.src);
         if(existing.length+files.length>12)return showNotice('A gallery supports up to 12 images.');
-        if(files.some(file=>file.size>5000000 || !['image/png','image/jpeg','image/webp','image/gif'].includes(file.type)))return showNotice('Choose PNG, JPEG, WebP or GIF images smaller than 5 MB each.');
+        if(files.some(file=>file.size>25000000 || !['image/png','image/jpeg','image/webp','image/gif'].includes(file.type)))return showNotice('Choose PNG, JPEG, WebP or GIF images smaller than 25 MB each.');
         pending=true;setDisabled();
         try {
             const photos=await Promise.all(files.map(async file=>{
-                const src=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(file);});
+                const src=await readPhoto(file,photoBox(block));
                 const caption=document.createElement('p');caption.textContent=file.name;
                 return {src,caption:caption.outerHTML};
             }));
             const candidate=structuredClone(payload.document);candidate.pages.flatMap(p=>p.blocks).find(b=>b.id===block.id).photos=[...existing,...photos];
-            if(JSON.stringify(candidate).length>24000000)return showNotice('These images exceed the newsletter size limit. Use smaller image files.');
-            remember();block.photos=[...existing,...photos];galleryPhoto=existing.length;pending=false;change();render();
+            if(!approveDocumentSize(candidate))return;
+            remember();if(candidate.largeSizeApprovedBytes)payload.document.largeSizeApprovedBytes=candidate.largeSizeApprovedBytes;block.photos=[...existing,...photos];galleryPhoto=existing.length;pending=false;change();render();
         }catch(error){showNotice('The images could not be uploaded. Try again.');}
         finally{pending=false;setDisabled();}
     });
     $('photo-file').addEventListener('change', async event => {
         const file = event.target.files[0]; const { block } = selected(); event.target.value = '';
         if (!file || !block || !['image', 'gallery', 'photo_text'].includes(block.kind) || !editable()) return;
-        if (file.size > 5000000 || !['image/png','image/jpeg','image/webp','image/gif'].includes(file.type)) return showNotice('Choose a PNG, JPEG, WebP or GIF photo smaller than 5 MB.');
+        if (file.size > 25000000 || !['image/png','image/jpeg','image/webp','image/gif'].includes(file.type)) return showNotice('Choose a PNG, JPEG, WebP or GIF photo smaller than 25 MB.');
         const photoIndex = galleryPhoto;
-        const reader = new FileReader();
-        reader.onload = () => {
-            if (!editable()) return;
-            const current = payload.document.pages.flatMap(page => page.blocks).find(item => item.id === block.id);
-            if (!current) return;
-            remember(); if (current.kind === 'gallery') current.photos[photoIndex].src = reader.result; else current.src = reader.result; change(); render();
-        };
-        reader.readAsDataURL(file);
+        pending=true;setDisabled();
+        try {
+            const src=await readPhoto(file,photoBox(block));
+            const current=payload.document.pages.flatMap(page=>page.blocks).find(item=>item.id===block.id);
+            if(!current)return;
+            remember();if(current.kind==='gallery')current.photos[photoIndex].src=src;else current.src=src;
+            pending=false;change();render();
+        }catch(error){showNotice(error.message || 'Unable to read this image.');}
+        finally{pending=false;setDisabled();}
     });
     $('paper-size').addEventListener('change', () => { if (editable()) { remember(); payload.paperSize = $('paper-size').value; change(); render(); if(payload.document.flowMode==='auto')fitPages(); } });
     $('add-page').addEventListener('click', () => { if (editable()) { remember(); const page = { id: uid(), blocks: [] }; payload.document.pages.push(page); activePage = page.id; selectedId = null; change(); render(); $('sheets').lastElementChild.scrollIntoView({ block: 'start' }); } });
@@ -637,6 +707,8 @@
         if (!payload || pending) return;
         if (payload.document.flowMode === 'auto' && !payload.readonly) await runFlow();
         if(pending)return;
+        if(!payload.readonly && !approveDocumentSize(payload.document))return;
+        updateSizeMeter();
         // New data blocks are filled during saving, then checked again by the
         // PDF renderer. Never pretend a placeholder is the final lodge data.
         const issues = measure().filter(issue => !issue.message.startsWith('Save to fill'));
