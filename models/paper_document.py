@@ -100,8 +100,16 @@ def normalise_document(document, resolve=None):
     """
     if not isinstance(document, dict) or document.get('version') != 1:
         raise ValueError('This paper document format is not supported.')
-    if len(json.dumps(document)) > 24000000:
-        raise ValueError('The newsletter is too large. Use smaller photos.')
+    approved = document.get('largeSizeApprovedBytes', 0)
+    if isinstance(approved, bool) or not isinstance(approved, int) or not 0 <= approved <= 64000000:
+        raise ValueError('Choose a supported large-newsletter approval size.')
+    def check_size(value):
+        size = len(json.dumps(value, ensure_ascii=False, separators=(',', ':')).encode('utf-8'))
+        if size > 64000000:
+            raise ValueError('This newsletter exceeds the 64 MB safety limit. Optimize images or split it into separate issues.')
+        if size > 24000000 and size > approved:
+            raise ValueError('This newsletter exceeds the recommended 24 MB. Approve the large newsletter in Paper Studio before saving.')
+    check_size(document)
     pages = document.get('pages')
     if not isinstance(pages, list) or not 1 <= len(pages) <= 60:
         raise ValueError('A newsletter must have between 1 and 60 pages.')
@@ -116,6 +124,8 @@ def normalise_document(document, resolve=None):
         return value
 
     result = {'version': 1, 'pages': [], 'flowMode': document.get('flowMode', 'manual')}
+    if approved:
+        result['largeSizeApprovedBytes'] = approved
     if result['flowMode'] not in ('manual', 'auto'):
         raise ValueError('Choose manual pages or automatic flow.')
     for page in pages:
@@ -270,8 +280,7 @@ def normalise_document(document, resolve=None):
                 item['resolvedHTML'] = resolved_sources[resolve_key]
             cleaned['blocks'].append(item)
         result['pages'].append(cleaned)
-    if len(json.dumps(result)) > 24000000:
-        raise ValueError('The resolved newsletter is too large. Use smaller photos or fewer lodge-data blocks.')
+    check_size(result)
     return result
 
 

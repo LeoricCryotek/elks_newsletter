@@ -13,6 +13,24 @@ class PaperDocumentTests(unittest.TestCase):
     def document(self, **block):
         return {'version': 1, 'pages': [{'id': 'page', 'blocks': [{'id': 'block', 'kind': 'text', 'html': '<p>Article</p>', **block}]}]}
 
+    def test_large_document_requires_explicit_size_approval(self):
+        doc=self.document();doc['test_payload']='x'*24000000
+        with self.assertRaisesRegex(ValueError,'Approve the large newsletter'):
+            paper.normalise_document(doc)
+        doc['largeSizeApprovedBytes']=26000000
+        self.assertEqual(paper.normalise_document(doc)['largeSizeApprovedBytes'],26000000)
+
+    def test_hard_size_limit_cannot_be_approved_away(self):
+        doc=self.document();doc['largeSizeApprovedBytes']=64000000;doc['test_payload']='x'*64000000
+        with self.assertRaisesRegex(ValueError,'64 MB safety limit'):
+            paper.normalise_document(doc)
+
+    def test_approval_values_are_validated(self):
+        for value in [True,-1,65000000,'large']:
+            doc=self.document();doc['largeSizeApprovedBytes']=value
+            with self.assertRaisesRegex(ValueError,'approval size'):
+                paper.normalise_document(doc)
+
     def test_officer_photo_side_survives_save(self):
         for side in ('left', 'right'):
             doc = paper.normalise_document(self.document(kind='widget', source='message', side=side))

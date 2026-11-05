@@ -91,3 +91,10 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 24px 0; }
 
 /* Thumbnail regeneration must not move the navigation scroll anchor. */
 .page-sidebar { overflow-anchor:none; }
+
+.newsletter-size-panel { display:flex; flex-wrap:wrap; align-items:center; gap:10px; padding:7px 20px; background:#fff; border-bottom:1px solid var(--line); font-size:12px; }
+.newsletter-size-panel label { margin:0; font-weight:bold; }
+.newsletter-size-panel progress { width:180px; height:12px; accent-color:#624492; }
+.newsletter-size-panel.large { background:#fff4df; color:#805209; }
+.newsletter-size-panel.large progress { accent-color:#b27c15; }
+.newsletter-size-panel button { font-size:12px; padding:4px 8px; }
