@@ -88,3 +88,6 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 24px 0; }
 .properties-sidebar > label { display:block; font-size:12px; margin-bottom:7px; }
 .properties-sidebar hr { margin:12px 0; }
 .properties-sidebar .sidebar-note, .properties-sidebar .muted { font-size:11px; line-height:1.35; margin:6px 0; }
+
+/* Thumbnail regeneration must not move the navigation scroll anchor. */
+.page-sidebar { overflow-anchor:none; }

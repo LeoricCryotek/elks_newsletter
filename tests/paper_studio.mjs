@@ -357,6 +357,17 @@ try {
     await editor.locator('#property-align').selectOption('center');
     const scrollAfter=await editor.locator('.paper-desk').evaluate(desk=>desk.scrollTop);
     assert.ok(Math.abs(scrollBefore-scrollAfter)<2,'property changes preserve the center page scroll position');
+    const navigationFixture=structuredClone(fixture);
+    navigationFixture.document={version:1,flowMode:'manual',pages:Array.from({length:14},(_,i)=>({id:`nav-${i}`,blocks:[{id:`nav-text-${i}`,kind:'text',html:`<p>Page ${i+1}</p>`}]}))};
+    await editor.evaluate(data=>window.ElksPaperEditor.load(data),navigationFixture);
+    await editor.locator('#sheets [data-block-id="nav-text-9"] .paper-richtext').click();
+    await editor.locator('.page-sidebar').evaluate(sidebar=>sidebar.scrollTop=1000);
+    const navTop=await editor.locator('.page-sidebar').evaluate(sidebar=>sidebar.scrollTop);
+    await editor.locator('#property-fontSize').fill('18');
+    await editor.locator('#property-fontSize').dispatchEvent('change');
+    assert.ok(Math.abs((await editor.locator('.page-sidebar').evaluate(sidebar=>sidebar.scrollTop))-navTop)<2,'widget edits preserve thumbnail navigation scroll');
+    await editor.evaluate(data=>window.ElksPaperEditor.load(data),scrolling);
+
     assert.equal(await print.evaluate(()=>window.ElksPaperRenderer.storyTitle({storyTitle:'Officer Message (Exalted Ruler)'})),'Officer Message Exalted Ruler','previously saved titles display without parentheses');
     const cleanup=await print.evaluate(data=>{
         const renderer=window.ElksPaperRenderer.render;

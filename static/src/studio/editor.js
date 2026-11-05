@@ -228,9 +228,12 @@
         document.querySelectorAll('.page-thumb').forEach(node => node.classList.toggle('active', node.dataset.pageId === activePage));
     }
     function renderPages() {
+        const navigation=document.querySelector('.page-sidebar');
+        const navigationTop=navigation.scrollTop;
         $('page-list').replaceChildren();
         payload.document.pages.forEach((page, index) => {
             const button = document.createElement('button'); button.className = 'page-thumb'; button.dataset.pageId = page.id;
+            button.classList.toggle('active',page.id===activePage);
             const paper = document.createElement('span'); paper.className = 'thumb-paper';
             paper.style.height = `${(payload.paperSize === 'legal' ? 1344 : 1056) * .13}px`;
             const miniature = $('sheets').querySelector(`[data-page-id="${page.id}"]`).cloneNode(true);
@@ -264,6 +267,10 @@
             miniature.style.transform = `scale(${scale})`;
             paper.style.height = `${(payload.paperSize === 'legal' ? 1344 : 1056) * scale + 2}px`;
         });
+        // Usage labels and warnings affect thumbnail height. Restore only after
+        // they exist, for edits and asynchronous lodge-data refreshes alike.
+        measure();
+        navigation.scrollTop=navigationTop;
     }
     function field(title, key, options) {
         const wrap = document.createElement('div'); wrap.className = 'property-field';

@@ -235,3 +235,5 @@ Sent-email repair (v72): Fix Email Links works for draft and sent mailings. It s
 In v73, Fix Email Links is in the newsletter form’s gear/action menu rather than the header toolbar. It operates on the open issue and uses the same draft/sent tracker repair function.
 
 PDF import compression (v74): imported pages are rendered at up to 200 dpi and compressed to fit a per-page encoded image budget, reducing quality and resolution only as needed. This budgets stored image data instead of input PDF file size. The total 24 MB document cap still applies, with an explicit near-full message. Existing saved inserts are not modified. Browser regression imported all 33 split LodgeOpeningMagazine pages into an empty document at approximately 17 MB.
+
+Thumbnail navigation (v75): rebuilding previews preserves the left sidebar scroll position after usage labels/warnings are measured. The active page highlight survives data-only preview refreshes. A browser regression checks a widget property edit while the 14-page navigation is scrolled down.
