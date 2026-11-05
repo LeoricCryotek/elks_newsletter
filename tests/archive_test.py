@@ -24,6 +24,29 @@ class ArchiveTests(unittest.TestCase):
             with self.assertRaises(ValueError):cls._check_pdf(RecordList([SimpleNamespace(pdf=base64.b64encode(data))]))
         cls._check_pdf(RecordList([SimpleNamespace(pdf=base64.b64encode(b'%PDF-1.7\n%%EOF'))]))
 
+    def test_large_archive_pdf_uses_approval_instead_of_old_30mb_limit(self):
+        import binascii
+        cls=methods('models/elks_newsletter_archive.py','NewsletterArchive',{'base64':base64,'binascii':binascii,'ValidationError':ValueError,'_':lambda s:s})
+        class Records(list):
+            def with_context(self,**kwargs):return self
+        data=b'%PDF-1.7\n'+b'x'*31000000+b'\n%%EOF'
+        record=SimpleNamespace(pdf=base64.b64encode(data),published=True,large_pdf_approved=False)
+        with self.assertRaisesRegex(ValueError,'Approve large PDF'):
+            cls._check_pdf(Records([record]))
+        record.large_pdf_approved=True
+        cls._check_pdf(Records([record]))
+        record.published=False;record.large_pdf_approved=False
+        cls._check_pdf(Records([record]))
+
+    def test_archive_hard_limit_cannot_be_bypassed(self):
+        import binascii
+        cls=methods('models/elks_newsletter_archive.py','NewsletterArchive',{'base64':base64,'binascii':binascii,'ValidationError':ValueError,'_':lambda s:s})
+        class Records(list):
+            def with_context(self,**kwargs):return self
+        record=SimpleNamespace(pdf=base64.b64encode(b'%PDF-1.7'+b'x'*64000000+b'%%EOF'),published=True,large_pdf_approved=True)
+        with self.assertRaisesRegex(ValueError,'64 MB website safety limit'):
+            cls._check_pdf(Records([record]))
+
     def test_old_newsletter_link_redirects_to_archive(self):
         request=SimpleNamespace(redirect=lambda url,code:(url,code))
         cls=methods('controllers/archive.py','NewsletterArchive',{'request':request})
