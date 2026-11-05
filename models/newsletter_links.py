@@ -1,5 +1,6 @@
 """Newsletter calls to action use the public archive directly, without short links."""
 from lxml import html
+from markupsafe import Markup, escape as escape_html
 from urllib.parse import urlsplit, urlunsplit
 import re
 from odoo import api, fields, models
@@ -14,6 +15,25 @@ def direct_newsletter_links(markup, destination):
     if not markup:
         return markup
     root = html.fragment_fromstring(str(markup), create_parent='div')
+    # Bootstrap alert/flex layouts and icon fonts are unreliable in mail clients.
+    # Preserve the author's text/links, but use one stable presentation cell.
+    for alert in list(root.xpath('.//*[contains(concat(" ", normalize-space(@class), " "), " alert-info ")]')):
+        for icon in list(alert.xpath('.//img|.//*[contains(concat(" ", normalize-space(@class), " "), " fa ")]')):
+            icon.drop_tree()
+        table=html.Element('table',role='presentation',width='100%',cellpadding='0',cellspacing='0',border='0')
+        table.set('style','width:100%;border-collapse:separate;margin:16px 0;')
+        row=html.Element('tr');cell=html.Element('td',align='center',bgcolor='#d8eef2')
+        cell.set('style','padding:18px 20px;border:1px solid #b9dfe6;border-radius:6px;color:#234953;font-family:Arial,sans-serif;font-size:15px;line-height:1.6;text-align:center;')
+        content=alert.xpath('.//*[contains(concat(" ", normalize-space(@class), " "), " s_alert_content ")]')
+        original=content[0] if content else alert
+        cell.text=original.text
+        for child in list(original):cell.append(child)
+        # Paragraphs get explicit typography instead of inheriting web-editor styles.
+        for node in cell.xpath('.//p|.//div|.//span'):
+            node.attrib.pop('class',None)
+            node.set('style','margin:0;font-family:Arial,sans-serif;font-size:15px;line-height:1.6;color:#234953;text-align:center;')
+        row.append(cell);table.append(row);table.tail=alert.tail
+        alert.getparent().replace(alert,table)
     for anchor in root.xpath('.//a[@href]'):
         href = anchor.get('href', '')
         path = urlsplit(href).path
@@ -23,7 +43,10 @@ def direct_newsletter_links(markup, destination):
                 href.lower().startswith(('mailto:', 'tel:', 'sms:'))):
             continue
         anchor.set('href', destination)
-    return (root.text or '') + ''.join(html.tostring(child, encoding='unicode') for child in root)
+    result = str(escape_html(root.text or '')) + ''.join(html.tostring(child, encoding='unicode') for child in root)
+    # Odoo wraps this result in its outgoing mail layout. Losing Markup makes
+    # that wrapper escape every tag, so recipients see the HTML source.
+    return Markup(result) if isinstance(markup, Markup) else result
 
 
 def referenced_tracker_codes(markup):

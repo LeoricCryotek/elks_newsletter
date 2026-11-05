@@ -2,12 +2,13 @@ import ast
 from pathlib import Path
 from urllib.parse import urlsplit, urlunsplit
 from lxml import html
+from markupsafe import Markup, escape as escape_html
 import unittest
 from types import SimpleNamespace
 from archive_test import methods
 
 import re
-namespace={'re':re,'html':html,'urlsplit':urlsplit,'urlunsplit':urlunsplit}
+namespace={'Markup':Markup,'escape_html':escape_html,'re':re,'html':html,'urlsplit':urlsplit,'urlunsplit':urlunsplit}
 tree=ast.parse((Path(__file__).resolve().parents[1]/'models/newsletter_links.py').read_text())
 exec(compile(ast.Module(body=[n for n in tree.body if isinstance(n,ast.FunctionDef)],type_ignores=[]),'newsletter_links','exec'),namespace)
 newsletter_destination=namespace['newsletter_destination']
@@ -36,6 +37,33 @@ class NewsletterLinksTests(unittest.TestCase):
         result=record._shorten_links('<a href="https://example.com/r//m/4368">Read</a>',{'mass_mailing_id':8})
         self.assertIn('href="https://example.com/elks/newsletter"',result)
         self.assertNotIn('/r/',result)
+
+    def test_outgoing_html_keeps_markup_type_through_mail_wrapper(self):
+        source=Markup('<div><h1>November Newsletter</h1><a href="/old">Read</a><a href="/unsubscribe_from_list">Unsubscribe</a></div>')
+        result=direct_newsletter_links(source,'https://example.com/elks/newsletter')
+        self.assertIsInstance(result,Markup)
+        # Same safe-string interpolation contract used by Odoo mail layouts.
+        wrapped=Markup('<main>%s</main>') % result
+        self.assertIn('<h1>November Newsletter</h1>',wrapped)
+        self.assertNotIn('&lt;div',wrapped)
+        self.assertIn('href="https://example.com/elks/newsletter"',wrapped)
+        self.assertIn('href="/unsubscribe_from_list"',wrapped)
+
+    def test_plain_string_stays_plain_and_root_text_is_escaped(self):
+        result=direct_newsletter_links('&lt;note&gt;<p>News</p>','https://example.com/elks/newsletter')
+        self.assertNotIsInstance(result,Markup)
+        self.assertTrue(result.startswith('&lt;note&gt;'))
+
+    def test_info_alert_becomes_stable_table_without_stretched_icon(self):
+        source=Markup('<div><div class="alert alert-info d-flex"><img src="info.png"/><div class="s_alert_content"><p>Bookmark <a href="/old">this page</a> for the next issue.</p></div></div><a class="o_unsubscribe" href="/unsubscribe_from_list">Unsubscribe</a></div>')
+        result=direct_newsletter_links(source,'https://example.com/elks/newsletter')
+        root=html.fromstring(result)
+        self.assertIsInstance(result,Markup)
+        self.assertFalse(root.xpath('.//img'))
+        self.assertFalse(root.xpath('.//*[contains(@class,"alert-info")]'))
+        self.assertTrue(root.xpath('.//table[@role="presentation"]//td[@bgcolor="#d8eef2"]'))
+        self.assertIn('Bookmark this page for the next issue.',root.text_content())
+        self.assertEqual(root.xpath('.//td//a/@href'),['https://example.com/elks/newsletter'])
 
     def test_missing_href_is_not_rewritten(self):
         self.assertEqual(direct_newsletter_links('', 'https://example.com/elks/newsletter'),'')
