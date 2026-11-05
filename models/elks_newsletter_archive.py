@@ -59,7 +59,8 @@ class NewsletterArchive(models.Model):
     def action_publish(self):
         self.check_access('write')
         self._check_pdf()
-        self.write({'large_pdf_approved': approved, 'published': len(pdf) <= 24000000 or approved})
+        # Keep the user's saved approval; the write constraint validates size.
+        self.write({'published': True})
 
     def action_unpublish(self):
         self.write({'published': False})

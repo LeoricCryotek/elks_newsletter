@@ -47,6 +47,27 @@ class ArchiveTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'64 MB website safety limit'):
             cls._check_pdf(Records([record]))
 
+    def test_publish_button_uses_saved_large_pdf_approval(self):
+        import binascii
+        cls=methods('models/elks_newsletter_archive.py','NewsletterArchive',{'base64':base64,'binascii':binascii,'ValidationError':ValueError,'_':lambda s:s})
+        record=SimpleNamespace(pdf=base64.b64encode(b'%PDF-1.7\n'+b'x'*31000000+b'\n%%EOF'),published=False,large_pdf_approved=True)
+        class Records(list):
+            def with_context(self,**kwargs):return self
+            def check_access(self,mode):self.access=mode
+            def _check_pdf(self):cls._check_pdf(self)
+            def write(self,values):
+                self.values=values
+                for item in self:
+                    for key,value in values.items():setattr(item,key,value)
+                cls._check_pdf(self)
+        records=Records([record]);cls.action_publish(records)
+        self.assertEqual(records.values,{'published':True})
+        self.assertTrue(record.published)
+        self.assertTrue(record.large_pdf_approved)
+        record.published=False;record.large_pdf_approved=False
+        with self.assertRaisesRegex(ValueError,'Approve large PDF'):
+            cls.action_publish(records)
+
     def test_old_newsletter_link_redirects_to_archive(self):
         request=SimpleNamespace(redirect=lambda url,code:(url,code))
         cls=methods('controllers/archive.py','NewsletterArchive',{'request':request})
