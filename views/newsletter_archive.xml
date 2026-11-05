@@ -4,6 +4,27 @@
     <record id="action_newsletter_archive" model="ir.actions.act_window"><field name="name">Website Newsletter Archive</field><field name="res_model">elks.newsletter.archive</field><field name="view_mode">list,form</field></record>
     <menuitem id="menu_newsletter_archive" name="Website Archive / Import PDFs" parent="menu_elks_newsletter_root" action="action_newsletter_archive" sequence="30"/>
     <record id="view_issue_publish_website" model="ir.ui.view"><field name="name">Newsletter website publishing</field><field name="model">elks.newsletter.issue</field><field name="inherit_id" ref="view_elks_newsletter_issue_form"/><field name="arch" type="xml"><xpath expr="//header" position="inside"><field name="marketing_mailing_id" invisible="1"/><button name="action_refresh_marketing_email" type="object" string="Rebuild Marketing Email" invisible="not marketing_mailing_id" confirm="Replace the draft email body with fresh excerpts from this newsletter? Recipients and sender settings will stay unchanged."/><button name="action_open_marketing_email" type="object" string="Marketing Email" invisible="not marketing_mailing_id"/><button name="action_publish_website" type="object" string="Publish to Website" class="oe_highlight" invisible="state != 'final'"/></xpath></field></record>
+    <record id="view_mailing_newsletter_formatting" model="ir.ui.view">
+        <field name="name">Newsletter email formatting repair</field>
+        <field name="model">mailing.mailing</field>
+        <field name="inherit_id" ref="mass_mailing.view_mail_mass_mailing_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header/button[@name='action_test']" position="after">
+                <field name="is_elks_newsletter_digest" invisible="1"/>
+                <button name="action_fix_newsletter_formatting" type="object" string="Fix Newsletter Formatting" invisible="state != 'draft' or not is_elks_newsletter_digest"/>
+            </xpath>
+        </field>
+    </record>
+    <record id="action_fix_newsletter_mailing_formatting" model="ir.actions.server">
+        <field name="name">Fix Newsletter Formatting</field>
+        <field name="model_id" ref="mass_mailing.model_mailing_mailing"/>
+        <field name="binding_model_id" ref="mass_mailing.model_mailing_mailing"/>
+        <field name="binding_view_types">form</field>
+        <field name="group_ids" eval="[(4, ref('mass_mailing.group_mass_mailing_user'))]"/>
+        <field name="state">code</field>
+        <field name="code">if records:
+    action = records.action_fix_newsletter_formatting()</field>
+    </record>
     <record id="action_fix_newsletter_email_links" model="ir.actions.server">
         <field name="name">Fix Email Links</field>
         <field name="model_id" ref="model_elks_newsletter_issue"/>

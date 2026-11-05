@@ -10,7 +10,7 @@ from lxml import etree, html
 
 DYNAMIC_SOURCES = (
     'new_members', 'in_memoriam', 'officers', 'calendar', 'charity',
-    'leaderboard', 'events', 'upcoming_events', 'project_dollars', 'delinquents',
+    'leaderboard', 'events', 'upcoming_events', 'project_dollars', 'meeting_fund', 'delinquents',
     'birthdays', 'anniversaries', 'applications', 'committees',
 )
 WIDGET_SOURCES = ('masthead', 'message', 'section_bar', 'mailing',
@@ -266,6 +266,11 @@ def normalise_document(document, resolve=None):
                         if item['officer'] not in OFFICERS:
                             raise ValueError('Choose a lodge officer.')
                 resolve_key = source + ':' + item['officer'] if source == 'message' else source
+                if source == 'meeting_fund':
+                    item['fund'] = block.get('fund', 'project')
+                    if item['fund'] not in ('project', 'enf', 'fines'):
+                        raise ValueError('Choose Project, ENF, or Fines.')
+                    resolve_key += ':' + item['fund']
                 if source in MONTH_SOURCES:
                     month = block.get('month', '')
                     if not isinstance(month, str) or (month and not re.fullmatch(r'\d{4}-\d{2}', month)):

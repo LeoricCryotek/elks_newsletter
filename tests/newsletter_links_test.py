@@ -14,6 +14,7 @@ exec(compile(ast.Module(body=[n for n in tree.body if isinstance(n,ast.FunctionD
 newsletter_destination=namespace['newsletter_destination']
 direct_newsletter_links=namespace['direct_newsletter_links']
 referenced_tracker_codes=namespace['referenced_tracker_codes']
+is_newsletter_digest=namespace['is_newsletter_digest']
 
 class NewsletterLinksTests(unittest.TestCase):
     def test_canonical_url_discards_path_and_trailing_slashes(self):
@@ -26,7 +27,7 @@ class NewsletterLinksTests(unittest.TestCase):
 
     def test_outgoing_newsletter_bypasses_shortener(self):
         cls=methods('models/newsletter_links.py','NewsletterDirectLinks',
-                    {'direct_newsletter_links':direct_newsletter_links,'newsletter_destination':newsletter_destination})
+                    {'direct_newsletter_links':direct_newsletter_links,'newsletter_destination':newsletter_destination,'is_newsletter_digest':is_newsletter_digest})
         class IssueModel:
             def sudo(self):return self
             def search(self,*args,**kwargs):return True
@@ -64,6 +65,22 @@ class NewsletterLinksTests(unittest.TestCase):
         self.assertTrue(root.xpath('.//table[@role="presentation"]//td[@bgcolor="#d8eef2"]'))
         self.assertIn('Bookmark this page for the next issue.',root.text_content())
         self.assertEqual(root.xpath('.//td//a/@href'),['https://example.com/elks/newsletter'])
+
+    def test_duplicated_newsletter_is_normalized_without_issue_link(self):
+        cls=methods('models/newsletter_links.py','NewsletterDirectLinks',{'direct_newsletter_links':direct_newsletter_links,'newsletter_destination':newsletter_destination,'is_newsletter_digest':is_newsletter_digest})
+        class Model:
+            def sudo(self):return self
+            def search(self,*args,**kwargs):return False
+        class Env(dict):pass
+        record=cls();record.env=Env({'elks.newsletter.issue':Model(),'website':SimpleNamespace(search=lambda *a,**k:SimpleNamespace(get_base_url=lambda:'https://example.com'))})
+        record.env.company=SimpleNamespace(id=1)
+        source=Markup('<div><a href="https://example.com/elks/newsletter">Get the full newsletter</a><section class="s_alert"><div class="alert alert-info"><img src="info.png"/><p>Bookmark this newsletter.</p></div></section></div>')
+        result=record._shorten_links(source,{'mass_mailing_id':99})
+        self.assertIsInstance(result,Markup)
+        self.assertNotIn('info.png',result)
+        self.assertIn('Bookmark this newsletter.',result)
+        self.assertEqual(len(html.fromstring(result).xpath('.//table[@role="presentation"]')),1)
+        self.assertFalse(is_newsletter_digest('<p>Ordinary campaign</p>'))
 
     def test_missing_href_is_not_rewritten(self):
         self.assertEqual(direct_newsletter_links('', 'https://example.com/elks/newsletter'),'')

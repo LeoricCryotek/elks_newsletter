@@ -76,6 +76,15 @@ class ElksBulletinIssueStudio(models.Model):
 
     def _studio_resolve_dynamic(self, source):
         source, _, officer = source.partition(':')
+        if source == 'meeting_fund':
+            fund = officer or 'project'
+            labels = {'project':'Project Dollars','enf':'ENF Funds','fines':'Meeting Fines'}
+            if fund not in labels:
+                raise UserError(_('Choose Project, ENF, or Fines.'))
+            return ('<div class="s_elks_meeting_fund o_elks_inner"><div class="o_elks_bar" '
+                    'style="background:#5b3b8c;color:white;text-align:center;font-family:Georgia,serif;font-weight:bold;padding:3px;">'
+                    + labels[fund] + '</div><div data-elks-block="meeting_fund">'
+                    + self._html_meeting_fund(fund) + '</div></div>')
         templates = {'masthead': 'masthead', 'message': 'message', 'section_bar': 'section_bar',
                      'mailing': 'mailing', 'new_members': 'new_members', 'in_memoriam': 'in_memoriam',
                      'officers': 'officers', 'calendar': 'calendar', 'charity': 'charity',

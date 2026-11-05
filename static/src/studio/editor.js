@@ -7,7 +7,7 @@
     let lastSelection = null;
     const undo = [];
     const uid = () => crypto.randomUUID().replaceAll('-', '');
-    const sources = { new_members: 'New members', in_memoriam: 'In memoriam', officers: 'Lodge officers', calendar: 'Lodge calendar', charity: 'Charity totals', leaderboard: 'Volunteer leaderboard', events: 'Events', upcoming_events: 'Upcoming events', project_dollars: 'Project dollars', delinquents: 'Dues reminder', birthdays: 'Member birthdays', anniversaries: 'Membership milestones', applications: 'Applications for membership', committees: 'Committee chairs' };
+    const sources = { new_members: 'New members', in_memoriam: 'In memoriam', officers: 'Lodge officers', calendar: 'Lodge calendar', charity: 'Charity totals', leaderboard: 'Volunteer leaderboard', events: 'Events', upcoming_events: 'Upcoming events', project_dollars: 'Project dollars', meeting_fund:'Meeting fund total (selectable)', delinquents: 'Dues reminder', birthdays: 'Member birthdays', anniversaries: 'Membership milestones', applications: 'Applications for membership', committees: 'Committee chairs' };
     const monthSources = ['calendar','new_members','leaderboard','birthdays','anniversaries'];
     const labels = { text: 'Text', heading: 'Heading', columns: 'Columns', image: 'Photo', dynamic: 'Lodge data', widget: 'Bulletin widget', spacer: 'Spacer', gallery: 'Image gallery', photo_text: 'Photo and text' };
     const officers = {'exalted_ruler': 'Exalted Ruler', 'leading_knight': 'Leading Knight', 'loyal_knight': 'Loyal Knight', 'lecturing_knight': 'Lecturing Knight', 'secretary': 'Secretary', 'treasurer': 'Treasurer', 'tiler': 'Tiler', 'esquire': 'Esquire', 'chaplain': 'Chaplain', 'inner_guard': 'Inner Guard', 'organist': 'Organist', 'pianist': 'Pianist', 'sergeant_at_arms': 'Sergeant At Arms', 'presiding_justice': 'Presiding Justice', 'boardchair': 'Boardchair', 'trustee1y': 'Trustee1Y', 'trustee2y': 'Trustee2Y', 'trustee3y': 'Trustee3Y', 'trustee4y': 'Trustee4Y', 'trustee5y': 'Trustee5Y', 'assistant_secretary': 'Assistant Secretary', 'assistant_treasurer': 'Assistant Treasurer', 'house_chair': 'House Chair', 'activities_chair': 'Activities Chair', 'membership_chair': 'Membership Chair', 'lodge_advisor': 'Lodge Advisor'};
@@ -315,7 +315,7 @@
         else { input.type = 'number'; if (key === 'lineHeight') input.step = '0.05'; input.min = key === 'fontSize' ? '8' : '0'; input.max = key === 'fontSize' ? '72' : ['height','boxHeight'].includes(key) ? '900' : '100'; }
         if (key === 'lineHeight') { input.min = '1'; input.max = '2.4'; }
         if (key === 'paragraphGap') input.max = '32';
-        input.value = selected().block[key] ?? ({ side: selected().block.source === 'message' ? 'right' : 'left', gap: 12, fontSize: 16, font: 'sans', align: 'left', ratio: 'equal', source: 'new_members', width: 100, height: 240, fit: 'contain', layout: 'columns', photoWidth: 33, padding: 0, border: 0, radius: 0, photoBorder: 0, photoRadius: 0, lineHeight: 1.4, paragraphGap: 8, month: '', keepTogether: false, span: 3, horizontal: 'left', vertical: 'top', boxHeight: 0 }[key]);
+        input.value = selected().block[key] ?? ({ side: selected().block.source === 'message' ? 'right' : 'left', gap: 12, fontSize: 16, font: 'sans', align: 'left', ratio: 'equal', source: 'new_members', fund:'project', width: 100, height: 240, fit: 'contain', layout: 'columns', photoWidth: 33, padding: 0, border: 0, radius: 0, photoBorder: 0, photoRadius: 0, lineHeight: 1.4, paragraphGap: 8, month: '', keepTogether: false, span: 3, horizontal: 'left', vertical: 'top', boxHeight: 0 }[key]);
         if(key==='ratio' && selected().block.kind==='columns') {
             if(selected().block.columns.length===1)input.value='single';
             if(selected().block.columns.length===3)input.value='three';
@@ -330,7 +330,7 @@
                 if(['single','three'].includes(input.value))block.ratio='equal';
             }
             if(key==='fontSize')delete selected().block.fitFont;
-            if (['source','officer','month'].includes(key)) { delete selected().block.resolvedHTML; refreshData(); }
+            if (['source','officer','month','fund'].includes(key)) { delete selected().block.resolvedHTML; refreshData(); }
             change(); render();
         });
         if(input.type==='number')wrap.classList.add('property-compact');
@@ -353,6 +353,7 @@
         panel.append(field('Widget width (columns out of 3)', 'span', {1:'1 column · one third',2:'2 columns · two thirds',3:'3 columns · full width'}),
                      field('Widget position', 'horizontal', {left:'Left',center:'Center',right:'Right'}),
                      field('Vertical alignment', 'vertical', {top:'Top',middle:'Middle',bottom:'Bottom'}), field('Minimum frame height (px)', 'boxHeight'));
+        if(block.source==='meeting_fund')panel.append(field('Meeting fund','fund',{project:'Project Dollars',enf:'ENF Funds',fines:'Meeting Fines'}));
         if (['dynamic','widget'].includes(block.kind) && monthSources.includes(block.source)) {
             panel.append(field(block.source === 'calendar' ? `Calendar month (blank = ${payload.defaultMonth || payload.month || 'issue month'})` : 'Month shown (blank = issue settings)', 'month'));
         }

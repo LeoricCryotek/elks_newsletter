@@ -1375,19 +1375,28 @@ class ElksBulletinIssue(models.Model):
     # Project Dollars taken in for the fiscal year — sum of the Trustees' cup
     # collections (elkssecretary meeting money) dated within the FY window.
     def _html_project_dollars(self):
+        return self._html_meeting_fund('project')
+
+    def _html_meeting_fund(self, fund='project'):
+        choices = {'project': ('project_dollars_amount', 'Project Dollars'),
+                   'enf': ('enf_funds_amount', 'ENF Funds'),
+                   'fines': ('fines_amount', 'Meeting Fines')}
+        if fund not in choices:
+            raise ValueError('Choose Project, ENF, or Fines.')
+        amount_field, label = choices[fund]
         fy_start, fy_end = self._fiscal_year_range()
         MM = self.env["elks.meeting.money"].sudo()
         recs = MM.search([
             ("meeting_date", ">=", fy_start),
             ("meeting_date", "<=", fy_end),
         ])
-        total = sum(recs.mapped("project_dollars_amount"))
+        total = sum(recs.mapped(amount_field))
         meetings = len(recs)
         fy_label = f"{fy_start.strftime('%b %Y')} – {fy_end.strftime('%b %Y')}"
         return (
             f'<div style="text-align:center;padding:6px 0;">'
             f'<div style="font-family:Arial,sans-serif;font-size:12px;'
-            f'color:#555;">Project Dollars raised · {fy_label}</div>'
+            f'color:#555;">{label} collected · {fy_label}</div>'
             f'<div style="font-family:Georgia,serif;font-weight:bold;'
             f'font-size:38px;color:{self._PURPLE_DEEP};line-height:1.1;">'
             f'${total:,.2f}</div>'

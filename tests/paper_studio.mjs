@@ -405,6 +405,14 @@ try {
     for(const p of changedFlow.document.pages)for(const b of p.blocks)if(b.kind==='dynamic')b.resolvedHTML=b.resolvedHTML.replace('</div></div>','</div><div style="height:60px"><b>New event 18</b></div></div>');
     await print.evaluate(data=>window.ElksPaperRenderer.render(document.querySelector('#print'),data),changedFlow);
     assert.equal(await print.locator('[data-elks-block="upcoming_events"] > div').count(),18,'new source rows must not be hidden by a finite last-fragment range');
+    const fundFixture=structuredClone(fixture);
+    fundFixture.document={version:1,flowMode:'manual',pages:[{id:'fund-page',blocks:[]}]};
+    await editor.evaluate(data=>window.ElksPaperEditor.load(data),fundFixture);
+    await editor.locator('#widget-picker').selectOption('meeting_fund');
+    await editor.locator('#property-fund').selectOption('enf');
+    assert.equal((await editor.evaluate(()=>window.ElksPaperEditor.getPayload())).document.pages[0].blocks[0].fund,'enf');
+    await editor.locator('#property-fund').selectOption('fines');
+    assert.equal((await editor.evaluate(()=>window.ElksPaperEditor.getPayload())).document.pages[0].blocks[0].fund,'fines');
     const largeFixture=structuredClone(fixture);
     largeFixture.document={version:1,flowMode:'manual',pages:[{id:'large-size-page',blocks:[]}],test_payload:'x'.repeat(24100000)};
     await editor.evaluate(data=>window.ElksPaperEditor.load(data),largeFixture);
