@@ -447,6 +447,16 @@ try {
         await print.locator('.paper-full-page').nth(1).screenshot({path:path.join(out,'compressed-scan-preview.png')});
         console.log(`Scanned magazine: all 33 individual inserts imported; stored document ${(JSON.stringify(scans.document).length/1000000).toFixed(1)} MB`);
     }
+    if(process.env.ELKS_LARGE_EXPORT_HTML) {
+        await print.setContent(readFileSync(process.env.ELKS_LARGE_EXPORT_HTML,'utf8'),{waitUntil:'load'});
+        await print.evaluate(()=>document.fonts.ready);
+        assert.equal(await print.locator('.elks-paper-mount .elks-paper-sheet').count(),1,'large real report pipeline retains and executes the paper renderer');
+        assert.ok((await print.locator('.paper-richtext').textContent()).includes('Large export: <safe> content.'));
+        assert.equal((await print.evaluate(()=>window.ElksPaperRenderer.problems(document))).length,0);
+        const largePdf=await PDFDocument.load(await print.pdf({preferCSSPageSize:true,printBackground:true}));
+        assert.equal(largePdf.getPageCount(),1);
+        console.log('Large export: 17 MB embedded JSON survived real report preprocessing and generated PDF');
+    }
     console.log('Publisher flow: event lists fill remaining space, long paragraphs continue without overset, repeat reflow preserves all rows/words');
     console.log('Compaction: repacks sparse pages into one PDF page, preserves articles, removes fixed empty height and supports Undo');
     console.log('Options: widget width, vertical alignment, calendar month refresh and member-list action passed');

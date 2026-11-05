@@ -187,7 +187,10 @@ class IrActionsReport(models.Model):
     # This is what lets Chromium render without hitting the Odoo HTTP stack.
     def _newsletter_inline_resources(self, html, base_url, fetcher):
         try:
-            frag = lxml_html.fromstring(html)
+            # The validated Studio JSON can exceed libxml2's default 10 MB
+            # text-node ceiling. Its recovering HTML parser otherwise silently
+            # discards the JSON script and the following renderer script.
+            frag = lxml_html.fromstring(html, parser=lxml_html.HTMLParser(huge_tree=True))
         except Exception:
             return html
 
@@ -285,7 +288,7 @@ class IrActionsReport(models.Model):
                             '@bottom-right { content: none; } }' % height))
                         problems = page.evaluate("""() => {
                             if (!window.ElksPaperRenderer || !document.querySelector('.elks-paper-mount .elks-paper-sheet'))
-                                return [{page: 1, message: 'The paper renderer did not load.'}];
+                                return [{page: 1, message: 'The PDF export renderer could not initialize. This is an export error, not page overflow.'}];
                             return window.ElksPaperRenderer.problems(document);
                         }""")
                         if problems:

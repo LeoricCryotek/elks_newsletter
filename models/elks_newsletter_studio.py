@@ -207,7 +207,7 @@ class ElksBulletinIssueStudio(models.Model):
         payload = self.action_studio_load()
         # JSON is data, never executable markup, even if an article contains a
         # literal closing script tag. Both contexts use this same JS renderer.
-        serialised = json.dumps(payload, ensure_ascii=True).replace('<', '\\u003c')
+        serialised = json.dumps(payload, ensure_ascii=True).replace('<', '\u003c')
         css = (ASSETS / 'paper.css').read_text(encoding='utf-8')
         renderer = (ASSETS / 'renderer.js').read_text(encoding='utf-8')
         return Markup('<style>' + css + '</style><div class="elks-paper-mount">'
