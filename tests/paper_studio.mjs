@@ -394,6 +394,21 @@ try {
     for(const p of changedFlow.document.pages)for(const b of p.blocks)if(b.kind==='dynamic')b.resolvedHTML=b.resolvedHTML.replace('</div></div>','</div><div style="height:60px"><b>New event 18</b></div></div>');
     await print.evaluate(data=>window.ElksPaperRenderer.render(document.querySelector('#print'),data),changedFlow);
     assert.equal(await print.locator('[data-elks-block="upcoming_events"] > div').count(),18,'new source rows must not be hidden by a finite last-fragment range');
+    if(process.env.ELKS_SCAN_INSERT_DIR) {
+        const scanFixture=structuredClone(fixture);scanFixture.document={version:1,flowMode:'manual',pages:[{id:'scan-start',blocks:[]}]};
+        await editor.evaluate(data=>window.ElksPaperEditor.load(data),scanFixture);
+        for(let n=1;n<=33;n++) {
+            const name=`LodgeOpeningMagazine-page-${String(n).padStart(2,'0')}.pdf`;
+            await editor.locator('#pdf-file').setInputFiles(path.join(process.env.ELKS_SCAN_INSERT_DIR,name));
+            await editor.waitForFunction(count=>window.ElksPaperEditor.getPayload().document.pages.filter(p=>p.fullPage).length===count,n,{timeout:30000}).catch(async()=>{throw Error(await editor.locator('#notice').textContent());});
+        }
+        const scans=await editor.evaluate(()=>window.ElksPaperEditor.getPayload());
+        assert.ok(JSON.stringify(scans.document).length<24000000);
+        assert.ok(scans.document.pages.filter(p=>p.fullPage).every(p=>p.blocks[0].src.length<=600000));
+        await print.evaluate(data=>window.ElksPaperRenderer.render(document.querySelector('#print'),data),scans);
+        await print.locator('.paper-full-page').nth(1).screenshot({path:path.join(out,'compressed-scan-preview.png')});
+        console.log(`Scanned magazine: all 33 individual inserts imported; stored document ${(JSON.stringify(scans.document).length/1000000).toFixed(1)} MB`);
+    }
     console.log('Publisher flow: event lists fill remaining space, long paragraphs continue without overset, repeat reflow preserves all rows/words');
     console.log('Compaction: repacks sparse pages into one PDF page, preserves articles, removes fixed empty height and supports Undo');
     console.log('Options: widget width, vertical alignment, calendar month refresh and member-list action passed');

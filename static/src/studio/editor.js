@@ -529,19 +529,39 @@
             pdf=await pdfjs.getDocument({data:new Uint8Array(await file.arrayBuffer()),isEvalSupported:false}).promise;
             if(pdf.numPages>12 || payload.document.pages.length+pdf.numPages>60)throw new Error('Insert up to 12 PDF pages at a time, with 60 newsletter pages maximum.');
             const pages=[];
+            // Budget the encoded image stored in JSON, not the input PDF bytes.
+            const remaining=24000000-JSON.stringify(payload.document).length-262144;
+            const imageBudget=Math.min(600000,Math.floor(remaining/pdf.numPages));
+            if(imageBudget<100000)throw new Error('This newsletter is already near its 24 MB limit. Remove an existing image/PDF insert or start a new newsletter before adding more pages.');
             for(let index=1;index<=pdf.numPages;index++) {
                 showNotice(`Importing ${file.name}: page ${index} of ${pdf.numPages}…`);
                 const page=await pdf.getPage(index),base=page.getViewport({scale:1});
-                const scale=Math.min(300/72,Math.sqrt(16000000/(base.width*base.height)));
+                const scale=Math.min(200/72,Math.sqrt(8000000/(base.width*base.height)));
                 const viewport=page.getViewport({scale});const canvas=document.createElement('canvas');canvas.width=Math.ceil(viewport.width);canvas.height=Math.ceil(viewport.height);
                 await page.render({canvasContext:canvas.getContext('2d'),viewport,background:'white'}).promise;
-                const src=canvas.toDataURL('image/jpeg',0.92);canvas.width=canvas.height=0;page.cleanup();
-                if(src.length>6600000)throw new Error('This PDF page is too large. Use a smaller source PDF.');
+                let src;
+                // Reduce JPEG quality first, then resolution, keeping at least
+                // 120 dpi for readable full-page text. Never upscale tiny PDFs.
+                for(const ratio of [1,0.85,0.7,0.6]) {
+                    const encoded=document.createElement('canvas');
+                    encoded.width=Math.max(1,Math.round(canvas.width*ratio));
+                    encoded.height=Math.max(1,Math.round(canvas.height*ratio));
+                    const ctx=encoded.getContext('2d');ctx.fillStyle='white';ctx.fillRect(0,0,encoded.width,encoded.height);
+                    ctx.drawImage(canvas,0,0,encoded.width,encoded.height);
+                    for(const quality of [0.8,0.68,0.55]) {
+                        src=encoded.toDataURL('image/jpeg',quality);
+                        if(src.length<=imageBudget)break;
+                    }
+                    encoded.width=encoded.height=0;
+                    if(src.length<=imageBudget)break;
+                }
+                canvas.width=canvas.height=0;page.cleanup();
+                if(src.length>imageBudget)throw new Error('There is not enough newsletter storage for this page at readable quality. Remove an existing image/PDF insert or use a new newsletter.');
                 pages.push({id:uid(),locked:true,fullPage:true,blocks:[{id:uid(),kind:'image',src,caption:'',height:900,width:100,fit:'contain',gap:0}]});
             }
             const candidateDocument=structuredClone(payload.document),index=candidateDocument.pages.findIndex(page=>page.id===activePage);
             candidateDocument.pages.splice(index+1,0,...pages);
-            if(JSON.stringify(candidateDocument).length>24000000)throw new Error('The PDF inserts exceed the newsletter size limit. Insert fewer pages or use a smaller PDF.');
+            if(JSON.stringify(candidateDocument).length>24000000)throw new Error('This newsletter has reached its 24 MB total storage limit. Remove existing image/PDF inserts or use another newsletter.');
             remember();payload.document=candidateDocument;activePage=pages[0].id;selectedId=null;pending=false;change();render();
             showNotice(`${pages.length} full-page insert(s) added after the selected page. Imported pages are locked; drag their thumbnails to change order.`);
         }catch(error){showNotice(error.message || 'This PDF could not be imported. Use an unencrypted PDF.');}
